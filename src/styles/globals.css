@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* shadcn/ui HSL tokens */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 0 65% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 0 65% 42%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+@layer components {
+
+  /* UNO Button Variants */
+  .btn-primary {
+    background-color: var(--action-primary);
+    color: var(--text-inverse);
+    min-height: var(--min-h-button);
+    border-radius: var(--radius-button);
+    font-weight: var(--font-weight-semibold);
+    transition: background-color 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--action-primary-hover);
+  }
+
+  .btn-primary:active {
+    background-color: var(--action-primary-hover);
+  }
+
+  .btn-secondary {
+    background-color: var(--action-secondary);
+    color: var(--action-primary);
+    border: 2px solid var(--border-brand);
+    min-height: var(--min-h-button);
+    border-radius: var(--radius-button);
+    font-weight: var(--font-weight-semibold);
+    transition: background-color 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--action-secondary-hover);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--text-secondary);
+    min-height: var(--min-h-button);
+    border-radius: var(--radius-button);
+    font-weight: var(--font-weight-medium);
+    transition: background-color 0.2s ease;
+  }
+
+  .btn-ghost:hover {
+    background-color: var(--bg-muted);
+  }
+
+  /* Card */
+  .card-uno {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-card-lg);
+    padding: var(--spacing-comfortable);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-default);
+    transition: box-shadow 0.2s ease;
+  }
+
+  .card-uno:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  /* Input Fields */
+  .input-uno {
+    min-height: var(--min-h-input);
+    border-radius: var(--radius-input-sm);
+    border: 1px solid var(--border-default);
+    padding: 0 var(--spacing-comfortable);
+    font-size: var(--font-size-body);
+    color: var(--text-primary);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .input-uno::placeholder {
+    color: var(--text-muted);
+  }
+
+  .input-uno:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(175, 37, 37, 0.12);
+  }
+
+  /* Status Badges */
+  .badge-verified {
+    @apply inline-flex items-center gap-1 px-2 py-0.5;
+    border-radius: var(--radius-tag);
+    background-color: color-mix(in srgb, var(--status-success-text) 12%, transparent);
+    color: var(--status-success-text);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center gap-1 px-2 py-0.5;
+    border-radius: var(--radius-tag);
+    background-color: color-mix(in srgb, var(--status-warning-text) 12%, transparent);
+    color: var(--status-warning-text);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .badge-error {
+    @apply inline-flex items-center gap-1 px-2 py-0.5;
+    border-radius: var(--radius-tag);
+    background-color: color-mix(in srgb, var(--status-error-text) 12%, transparent);
+    color: var(--status-error-text);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+  }
+
+  /* Price Display */
+  .price-display {
+    color: var(--action-primary);
+    font-weight: var(--font-weight-bold);
+  }
+
+  /* Touch Target */
+  .touch-target {
+    min-width: var(--min-h-touch);
+    min-height: var(--min-h-touch);
+  }
+
+  /* Page Container */
+  .page-container {
+    padding-left: var(--spacing-page-mobile);
+    padding-right: var(--spacing-page-mobile);
+    max-width: 80rem;
+    margin: 0 auto;
+  }
+
+  @media (min-width: 768px) {
+    .page-container {
+      padding-left: var(--spacing-page-desktop);
+      padding-right: var(--spacing-page-desktop);
+    }
+  }
+
+  /* Feed Grid */
+  .feed-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-comfortable);
+  }
+
+  @media (min-width: 430px) {
+    .feed-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .feed-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* Safe area for mobile nav */
+  .safe-bottom {
+    @apply pb-20 md:pb-0;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .naira::before {
+    content: "₦";
+  }
+}

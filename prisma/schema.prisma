@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  phone           String    @unique
+  phoneVerified   Boolean   @default(false)
+  email           String?   @unique
+  emailVerified   Boolean   @default(false)
+  name            String?
+  photo           String?
+  role            Role      @default(RENTER)
+
+  landlordProfile LandlordProfile?
+  properties      Property[]
+  favourites      Favourite[]
+  savedSearches   SavedSearch[]
+  contactsSent    ContactRequest[] @relation("TenantContacts")
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum Role {
+  RENTER
+  LANDLORD
+  AGENT
+  ADMIN
+}
+
+model LandlordProfile {
+  id                  String            @id @default(cuid())
+  userId              String            @unique
+  user                User              @relation(fields: [userId], references: [id])
+  whatsappNumber      String?
+  bio                 String?
+  landlordType        LandlordType      @default(INDIVIDUAL)
+  idVerified          Boolean           @default(false)
+  idDocumentType      String?
+  verificationLevel   VerificationLevel @default(BASIC)
+  contactMethod       ContactMethod     @default(WHATSAPP)
+  availableDays       String[]
+  availableHoursStart String?
+  availableHoursEnd   String?
+  totalProperties     Int               @default(0)
+  responseRate        Float             @default(0)
+  avgResponseTime     Int?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+enum LandlordType {
+  INDIVIDUAL
+  PROPERTY_MANAGER
+  AGENT
+}
+
+enum VerificationLevel {
+  BASIC
+  ADVANCED
+  PREMIUM
+}
+
+enum ContactMethod {
+  WHATSAPP
+  PHONE
+  EMAIL
+}
+
+model Property {
+  id                  String             @id @default(cuid())
+  landlordId          String
+  landlord            User               @relation(fields: [landlordId], references: [id])
+  title               String
+  propertyType        PropertyType
+  bedrooms            Int
+  bathrooms           Int
+  description         String?
+  size                Int?
+  yearBuilt           Int?
+  furnishing          Furnishing?
+  condition           String?
+  floorNumber         String?
+  amenities           String[]
+  customAmenities     String[]
+  photos              PropertyPhoto[]
+  city                String
+  area                String
+  streetAddress       String?
+  landmark            String?
+  latitude            Float?
+  longitude           Float?
+  fullAddressVisible  Boolean            @default(false)
+  rent                Int
+  rentPeriod          RentPeriod         @default(YEAR)
+  currency            String             @default("NGN")
+  agencyFee           Int?
+  cautionDeposit      Int?
+  serviceCharge       Int?
+  negotiable          Boolean            @default(false)
+  status              PropertyStatus     @default(PENDING)
+  availabilityStatus  AvailabilityStatus @default(AVAILABLE_NOW)
+  availableFrom       DateTime?
+  minimumLease        String?
+  isRented            Boolean            @default(false)
+  rentStartDate       DateTime?
+  rentExpiryDate      DateTime?
+  views               Int                @default(0)
+  contactCount        Int                @default(0)
+  savedCount          Int                @default(0)
+  verificationStatus  VerificationStatus @default(PENDING)
+  verifiedBy          String?
+  verifiedAt          DateTime?
+  rejectionReason     String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  submittedAt         DateTime?
+  approvedAt          DateTime?
+  goesLiveAt          DateTime?
+  favourites          Favourite[]
+  contactRequests     ContactRequest[]
+}
+
+enum PropertyType {
+  FLAT
+  HOUSE
+  DUPLEX
+  SELF_CONTAIN
+  BUNGALOW
+  COMMERCIAL
+  LAND
+}
+
+enum Furnishing {
+  UNFURNISHED
+  SEMI_FURNISHED
+  FULLY_FURNISHED
+}
+
+enum RentPeriod {
+  MONTH
+  YEAR
+}
+
+enum PropertyStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  PAUSED
+  RENTED
+  REJECTED
+}
+
+enum AvailabilityStatus {
+  AVAILABLE_NOW
+  AVAILABLE_FROM
+  RENTED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model PropertyPhoto {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  url        String
+  isMain     Boolean  @default(false)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+model Favourite {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+}
+
+model SavedSearch {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  name            String
+  criteria        Json
+  isActive        Boolean  @default(true)
+  notifyInstant   Boolean  @default(true)
+  notifyEmail     Boolean  @default(false)
+  lastCheckedAt   DateTime?
+  newResultsCount Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ContactRequest {
+  id            String        @id @default(cuid())
+  propertyId    String
+  property      Property      @relation(fields: [propertyId], references: [id])
+  tenantId      String
+  tenant        User          @relation("TenantContacts", fields: [tenantId], references: [id])
+  tenantName    String
+  tenantPhone   String
+  tenantEmail   String?
+  message       String?
+  contactMethod ContactMethod
+  status        ContactStatus @default(UNREAD)
+  readAt        DateTime?
+  respondedAt   DateTime?
+  source        String?
+  createdAt     DateTime      @default(now())
+}
+
+enum ContactStatus {
+  UNREAD
+  READ
+  RESPONDED
+  ARCHIVED
+}
