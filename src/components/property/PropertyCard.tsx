@@ -1,154 +1,151 @@
 "use client";
 
-import { Heart, MapPin, BadgeCheck, BedDouble, Bath, Tag } from "lucide-react";
+import Image from "next/image";
+import { Heart, MapPin, Bath, BedDouble } from "lucide-react";
 import { cn, formatRentPrice } from "@/lib/utils";
-import type { PropertyCardData } from "@/types";
+import type { PropertyCardData } from "@/types/property";
 
 interface PropertyCardProps {
-	property: PropertyCardData;
-	isFavourited?: boolean;
-	onToggleFavourite?: (id: string) => void;
-	className?: string;
+  data: PropertyCardData;
+  isFavourited?: boolean;
+  onToggleFavourite?: (id: string) => void;
+  className?: string;
 }
 
-const propertyTypeLabels: Record<string, string> = {
-	FLAT: "Flat",
-	HOUSE: "House",
-	DUPLEX: "Duplex",
-	SELF_CONTAIN: "Self Contain",
-	BUNGALOW: "Bungalow",
-	COMMERCIAL: "Commercial",
-	LAND: "Land",
+const BED_TYPE_LABELS: Record<string, string> = {
+  FLAT: "Flat",
+  HOUSE: "House",
+  DUPLEX: "Duplex",
+  SELF_CONTAIN: "Self Contain",
+  BUNGALOW: "Bungalow",
+  COMMERCIAL: "Commercial",
+  LAND: "Land",
 };
 
 export function PropertyCard({
-	property,
-	isFavourited = false,
-	onToggleFavourite,
-	className,
+  data,
+  isFavourited = false,
+  onToggleFavourite,
+  className,
 }: PropertyCardProps) {
-	const mainPhoto = property.photos.find((p) => p.isMain) || property.photos[0];
-	const isVerified = property.verificationStatus === "VERIFIED";
+  const mainPhoto = data.photos.find((p) => p.isMain) ?? data.photos[0];
+  const hasPhoto = !!mainPhoto?.url;
 
-	return (
-		<article
-			className={cn(
-				"group card-uno overflow-hidden cursor-pointer",
-				"active:scale-[0.98] transition-all duration-200",
-				className
-			)}
-		>
-			{/* Image Section */}
-			<div className="relative -mx-card-padding -mt-card-padding mb-3">
-				<div className="aspect-[16/10] bg-surface-tertiary overflow-hidden rounded-t-card">
-					{/* Placeholder gradient since we don't have real images yet */}
-					<div
-						className="w-full h-full bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 flex items-center justify-center"
-					>
-						<div className="text-center text-content-muted">
-							<BedDouble className="h-8 w-8 mx-auto mb-1 opacity-40" />
-							<span className="text-tiny opacity-60">
-								{property.bedrooms} Bed {propertyTypeLabels[property.propertyType]}
-							</span>
-						</div>
-					</div>
-				</div>
+  const features = [data.amenities[0], data.amenities[1], data.amenities[2]].filter(
+    Boolean
+  ) as string[];
 
-				{/* Favourite Button */}
-				<button
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						onToggleFavourite?.(property.id);
-					}}
-					className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors touch-target"
-					aria-label={isFavourited ? "Remove from favourites" : "Add to favourites"}
-				>
-					<Heart
-						className={cn(
-							"h-5 w-5 transition-colors",
-							isFavourited
-								? "fill-uno-red text-uno-red"
-								: "text-content-secondary"
-						)}
-					/>
-				</button>
+  const formattedPrice = formatRentPrice(data.rent, data.currency, data.rentPeriod);
 
-				{/* Verification Badge */}
-				{isVerified && (
-					<div className="absolute top-3 left-3 badge-verified bg-white/90 backdrop-blur-sm shadow-sm">
-						<BadgeCheck className="h-3.5 w-3.5" />
-						<span>Verified</span>
-					</div>
-				)}
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-[10px] bg-white border border-[rgba(0,0,0,0.13)] rounded-[20px] p-[10px]",
+        "w-[234px] md:w-[377px]",
+        "transition-shadow duration-200 hover:shadow-lg",
+        className
+      )}
+    >
+      {/* Image */}
+      <div className="relative w-full h-[140px] md:h-[216px] rounded-[15px] overflow-hidden flex-shrink-0">
+        {hasPhoto ? (
+          <Image
+            src={mainPhoto!.url}
+            alt={data.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 234px, 377px"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#e8e0e0] to-[#c9b8b8]" />
+        )}
 
-				{/* Availability Badge */}
-				{property.availabilityStatus === "AVAILABLE_FROM" && (
-					<div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-pending text-tiny font-medium px-2 py-0.5 rounded-full shadow-sm">
-						Available Soon
-					</div>
-				)}
-			</div>
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-[rgba(0,0,0,0.5)]" />
 
-			{/* Content Section */}
-			<div className="space-y-2">
-				{/* Price */}
-				<div className="flex items-baseline justify-between">
-					<span className="price-display">
-						{formatRentPrice(property.rent, property.rentPeriod)}
-					</span>
-					{property.negotiable && (
-						<span className="flex items-center gap-0.5 text-tiny text-pending font-medium">
-							<Tag className="h-3 w-3" />
-							Negotiable
-						</span>
-					)}
-				</div>
+        {/* Heart button */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleFavourite?.(data.id);
+          }}
+          className="absolute top-[10px] right-[10px] z-10 p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full"
+          aria-label={isFavourited ? "Remove from favourites" : "Add to favourites"}
+        >
+          <Heart
+            size={22}
+            className={cn(
+              "transition-colors duration-150",
+              isFavourited
+                ? "fill-[#af2525] stroke-[#af2525]"
+                : "fill-transparent stroke-white"
+            )}
+          />
+        </button>
+      </div>
 
-				{/* Property Info */}
-				<h3 className="text-body font-medium text-content-primary leading-snug line-clamp-2 group-hover:text-uno-red transition-colors">
-					{property.bedrooms} Bedroom {propertyTypeLabels[property.propertyType]} • {property.area}
-				</h3>
+      {/* Content */}
+      <div className="flex flex-col gap-[6px] px-[4px]">
+        {/* Price + badges row */}
+        <div className="flex items-center justify-between gap-[8px]">
+          <span className="font-extrabold text-[20px] md:text-[25px] text-[#161515] leading-tight truncate">
+            {formattedPrice}
+          </span>
 
-				{/* Location */}
-				<div className="flex items-center gap-1 text-small text-content-secondary">
-					<MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-					<span className="truncate">
-						{property.area}, {property.city}
-					</span>
-				</div>
+          <div className="flex items-center gap-[6px] flex-shrink-0">
+            <span className="flex items-center gap-[4px] border border-[rgba(0,0,0,0.15)] rounded-[14px] h-[27px] px-[12px] text-[12px] text-[rgba(0,0,0,0.7)] whitespace-nowrap">
+              <Bath size={12} />
+              {data.bathrooms} bath
+            </span>
+            <span className="flex items-center gap-[4px] border border-[rgba(0,0,0,0.15)] rounded-[14px] h-[27px] px-[12px] text-[12px] text-[rgba(0,0,0,0.7)] whitespace-nowrap">
+              <BedDouble size={12} />
+              {BED_TYPE_LABELS[data.propertyType] ?? data.propertyType}
+            </span>
+          </div>
+        </div>
 
-				{/* Key Details */}
-				<div className="flex items-center gap-3 text-small text-content-secondary">
-					<div className="flex items-center gap-1">
-						<BedDouble className="h-3.5 w-3.5" />
-						<span>{property.bedrooms} {property.bedrooms === 1 ? "Bed" : "Beds"}</span>
-					</div>
-					<div className="flex items-center gap-1">
-						<Bath className="h-3.5 w-3.5" />
-						<span>{property.bathrooms} {property.bathrooms === 1 ? "Bath" : "Baths"}</span>
-					</div>
-				</div>
+        {/* Location */}
+        <div className="flex items-center gap-[4px]">
+          <MapPin size={16} className="text-[rgba(0,0,0,0.6)] flex-shrink-0" />
+          <span className="text-[14px] text-[rgba(0,0,0,0.6)] truncate">
+            {data.area}, {data.city}
+          </span>
+        </div>
 
-				{/* Amenity Pills */}
-				{property.amenities.length > 0 && (
-					<div className="flex flex-wrap gap-1.5 pt-1">
-						{property.amenities.slice(0, 3).map((amenity) => (
-							<span
-								key={amenity}
-								className="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-tertiary text-tiny text-content-secondary"
-							>
-								{amenity}
-							</span>
-						))}
-						{property.amenities.length > 3 && (
-							<span className="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-tertiary text-tiny text-content-muted">
-								+{property.amenities.length - 3} more
-							</span>
-						)}
-					</div>
-				)}
-			</div>
-		</article>
-	);
+        {/* Features row */}
+        {features.length > 0 && (
+          <div className="flex items-center gap-[4px] flex-wrap">
+            {features.map((feature, index) => (
+              <span key={feature} className="flex items-center gap-[4px]">
+                <span className="text-[14px] text-[rgba(0,0,0,0.84)]">{feature}</span>
+                {index < features.length - 1 && (
+                  <span className="text-[rgba(0,0,0,0.4)] text-[14px] select-none">·</span>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* CTA */}
+        <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") e.currentTarget.click();
+          }}
+          className={cn(
+            "mt-[4px] flex items-center justify-center",
+            "bg-[#af2525] rounded-[50px] h-[41px] w-full",
+            "text-white text-[16px] font-semibold font-sans cursor-pointer select-none",
+            "transition-opacity duration-150 hover:opacity-90 active:opacity-80"
+          )}
+        >
+          View Home
+        </div>
+      </div>
+    </div>
+  );
 }
+
+export default PropertyCard;

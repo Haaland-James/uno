@@ -68,7 +68,7 @@ export default function FeedPage() {
 							href={`/property/${property.id}`}
 						>
 							<PropertyCard
-								property={property}
+								data={property}
 								isFavourited={isFavourited(property.id)}
 								onToggleFavourite={toggleFavourite}
 							/>

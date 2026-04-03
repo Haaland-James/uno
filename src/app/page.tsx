@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Search, BadgeCheck, Building2, ArrowRight } from "lucide-react";
-import { Header } from "@/components/layout/Header";
+import { GuestHeader } from "@/components/layout/GuestHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MobileNav } from "@/components/layout/MobileNav";
 
 export default function HomePage() {
 	return (
 		<>
-			<Header />
+			<GuestHeader />
 			<main>
 				<div className="min-h-screen">
 					{/* Hero Section */}

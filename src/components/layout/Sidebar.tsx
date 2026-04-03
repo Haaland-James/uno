@@ -2,84 +2,109 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-	LayoutDashboard,
-	Building2,
-	Plus,
-	MessageSquare,
-	BarChart3,
-	Settings,
-	LogOut,
-} from "lucide-react";
+import { Search, Rss, Heart, BookmarkCheck, Home, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const sidebarItems = [
-	{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-	{ href: "/properties", label: "My Properties", icon: Building2 },
-	{ href: "/properties/new", label: "Add Property", icon: Plus },
-	{ href: "/contacts", label: "Messages", icon: MessageSquare },
-	{ href: "/analytics", label: "Analytics", icon: BarChart3 },
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ReactNode;
+  iconBg: string;
+}
+
+const navItems: NavItem[] = [
+  {
+    label: "Find",
+    href: "/search",
+    icon: <Search size={18} strokeWidth={2} />,
+    iconBg: "#ffcfcf",
+  },
+  {
+    label: "Your feed",
+    href: "/feed",
+    icon: <Rss size={18} strokeWidth={2} />,
+    iconBg: "#68e382",
+  },
+  {
+    label: "Favourites",
+    href: "/favourites",
+    icon: <Heart size={18} strokeWidth={2} />,
+    iconBg: "#e36868",
+  },
+  {
+    label: "Saved Searches",
+    href: "/saved-searches",
+    icon: <BookmarkCheck size={18} strokeWidth={2} />,
+    iconBg: "#db8ff6",
+  },
+  {
+    label: "My House",
+    href: "/profile",
+    icon: <Home size={18} strokeWidth={2} />,
+    iconBg: "#dd6bb1",
+  },
+  {
+    label: "Profile",
+    href: "/profile",
+    icon: <User size={18} strokeWidth={2} />,
+    iconBg: "#81cdc8",
+  },
 ];
 
-const bottomItems = [
-	{ href: "/settings", label: "Settings", icon: Settings },
+const footerLinks = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+  { label: "Help", href: "/help" },
+  { label: "About", href: "/about" },
 ];
 
 export function Sidebar() {
-	const pathname = usePathname();
+  const pathname = usePathname();
 
-	return (
-		<aside className="hidden lg:flex flex-col w-64 border-r border-gray-100 bg-white h-[calc(100vh-4rem)] sticky top-16">
-			{/* Navigation */}
-			<nav className="flex-1 p-4 space-y-1">
-				{sidebarItems.map((item) => {
-					const isActive =
-						pathname === item.href || pathname?.startsWith(`${item.href}/`);
-					const Icon = item.icon;
+  return (
+    <aside className="hidden lg:flex flex-col w-[250px] h-full bg-[#fbfbfb] px-[14px] py-[35px] shrink-0">
+      <nav className="flex flex-col gap-1">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
 
-					return (
-						<Link
-							key={item.href}
-							href={item.href}
-							className={cn(
-								"flex items-center gap-3 px-3 py-2.5 rounded-button text-small font-medium transition-colors duration-200",
-								isActive
-									? "bg-uno-red-50 text-uno-red"
-									: "text-content-secondary hover:bg-surface-tertiary hover:text-content-primary"
-							)}
-						>
-							<Icon className="h-5 w-5 flex-shrink-0" />
-							<span>{item.label}</span>
-							{item.label === "Messages" && (
-								<span className="ml-auto bg-uno-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-									3
-								</span>
-							)}
-						</Link>
-					);
-				})}
-			</nav>
+          return (
+            <Link
+              key={`${item.label}-${item.href}`}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 h-[52px] px-[14px] py-[8px] rounded-[50px] transition-colors",
+                isActive ? "bg-[#fff1f1]" : "hover:bg-[#f5f5f5]"
+              )}
+            >
+              <span
+                className="inline-flex items-center justify-center w-[35px] h-[35px] rounded-[17.5px] shrink-0 text-white"
+                style={{ backgroundColor: item.iconBg }}
+              >
+                {item.icon}
+              </span>
+              <span className="text-[20px] font-medium text-black font-sans leading-none">
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
 
-			{/* Bottom Section */}
-			<div className="p-4 border-t border-gray-100 space-y-1">
-				{bottomItems.map((item) => {
-					const Icon = item.icon;
-					return (
-						<Link
-							key={item.href}
-							href={item.href}
-							className="flex items-center gap-3 px-3 py-2.5 rounded-button text-small font-medium text-content-secondary hover:bg-surface-tertiary hover:text-content-primary transition-colors"
-						>
-							<Icon className="h-5 w-5 flex-shrink-0" />
-							<span>{item.label}</span>
-						</Link>
-					);
-				})}
-				<button className="flex items-center gap-3 px-3 py-2.5 rounded-button text-small font-medium text-content-secondary hover:bg-red-50 hover:text-uno-red transition-colors w-full">
-					<LogOut className="h-5 w-5 flex-shrink-0" />
-					<span>Sign Out</span>
-				</button>
-			</div>
-		</aside>
-	);
+      <div className="mt-auto flex flex-wrap gap-x-2 gap-y-1">
+        {footerLinks.map((link, index) => (
+          <span key={link.href} className="flex items-center">
+            <Link
+              href={link.href}
+              className="text-[16px] font-medium text-black/60 hover:text-black transition-colors font-sans"
+            >
+              {link.label}
+            </Link>
+            {index < footerLinks.length - 1 && (
+              <span className="ml-2 text-[16px] text-black/40">·</span>
+            )}
+          </span>
+        ))}
+      </div>
+    </aside>
+  );
 }
