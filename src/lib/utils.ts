@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { CURRENCY } from "@/../../config/constants";
+
+const CURRENCY = { code: "NGN", symbol: "₦", locale: "en-NG" } as const;
 
 /**
  * Merge Tailwind CSS classes with clsx

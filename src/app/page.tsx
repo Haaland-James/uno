@@ -1,161 +1,570 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Search, BadgeCheck, Building2, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Home,
+  BedDouble,
+  Building2,
+  Search,
+  ChevronDown,
+} from "lucide-react";
 import { GuestHeader } from "@/components/layout/GuestHeader";
 import { Footer } from "@/components/layout/Footer";
-import { MobileNav } from "@/components/layout/MobileNav";
+import { PropertyCard } from "@/components/property/PropertyCard";
+import { LocationDropDown } from "@/components/property/LocationDropDown";
+import { BedsDropDown } from "@/components/property/BedsDropDown";
+import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
+import { PricingDropDown } from "@/components/property/PricingDropDown";
+import { SeeAllCard } from "@/components/property/SeeAllCard";
+import { mockProperties } from "@/lib/mock-data";
+
+const NEIGHBORHOOD_TABS = [
+  "Ewet Housing",
+  "Osongama Housing Estate",
+  "Nwaniba",
+  "Calabar Itu",
+  "Oron Road",
+  "Shelter Afrique",
+];
+
+function CarouselNav({
+  onPrev,
+  onNext,
+  canPrev,
+  canNext,
+}: {
+  onPrev: () => void;
+  onNext: () => void;
+  canPrev: boolean;
+  canNext: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-[14px] md:gap-[22px]">
+      <button
+        onClick={onPrev}
+        disabled={!canPrev}
+        className={`flex h-[28px] w-[28px] md:h-[36px] md:w-[36px] items-center justify-center rounded-full transition-opacity ${
+          canPrev ? "bg-[#af2525] hover:opacity-80" : "bg-[rgba(175,37,37,0.35)]"
+        }`}
+        aria-label="Previous"
+      >
+        <ChevronLeft className="h-[14px] w-[14px] md:h-[20px] md:w-[20px] text-white" />
+      </button>
+      <button
+        onClick={onNext}
+        disabled={!canNext}
+        className={`flex h-[28px] w-[28px] md:h-[36px] md:w-[36px] items-center justify-center rounded-full transition-opacity ${
+          canNext ? "bg-[#af2525] hover:opacity-90" : "bg-[rgba(175,37,37,0.35)]"
+        }`}
+        aria-label="Next"
+      >
+        <ChevronRight className="h-[14px] w-[14px] md:h-[20px] md:w-[20px] text-white" />
+      </button>
+    </div>
+  );
+}
+
+function useCarousel() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
+
+  const updateScroll = () => {
+    const el = ref.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 5);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 5);
+  };
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    updateScroll();
+    el.addEventListener("scroll", updateScroll, { passive: true });
+    window.addEventListener("resize", updateScroll);
+    return () => {
+      el.removeEventListener("scroll", updateScroll);
+      window.removeEventListener("resize", updateScroll);
+    };
+  });
+
+  const scroll = (dir: "left" | "right") => {
+    if (!ref.current) return;
+    ref.current.scrollBy({ left: dir === "left" ? -400 : 400, behavior: "smooth" });
+  };
+  return { ref, prev: () => scroll("left"), next: () => scroll("right"), canPrev, canNext };
+}
+
+type SearchField = "location" | "beds" | "type" | "price" | null;
 
 export default function HomePage() {
-	return (
-		<>
-			<GuestHeader />
-			<main>
-				<div className="min-h-screen">
-					{/* Hero Section */}
-					<section className="relative bg-gradient-to-br from-uno-red-900 via-uno-red to-uno-red-light overflow-hidden">
-						{/* Background Pattern */}
-						<div className="absolute inset-0 opacity-10">
-							<div className="absolute top-10 left-10 h-32 w-32 rounded-full bg-white" />
-							<div className="absolute bottom-20 right-20 h-48 w-48 rounded-full bg-white" />
-							<div className="absolute top-1/2 left-1/3 h-24 w-24 rounded-full bg-white" />
-						</div>
+  const [activeTab, setActiveTab] = useState("Ewet Housing");
+  const [favourites, setFavourites] = useState<Set<string>>(new Set());
+  const [openField, setOpenField] = useState<SearchField>(null);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [beds, setBeds] = useState(0);
+  const [baths, setBaths] = useState(0);
+  const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(100_000_000);
+  const [mobileOpenField, setMobileOpenField] = useState<SearchField>(null);
+  const searchBarRef = useRef<HTMLDivElement>(null);
 
-						<div className="page-container relative py-16 md:py-24 lg:py-32">
-							<div className="max-w-2xl">
-								<div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur text-white text-tiny font-medium mb-6">
-									<BadgeCheck className="h-3.5 w-3.5" />
-									<span>Verified Properties Only</span>
-								</div>
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchBarRef.current && !searchBarRef.current.contains(e.target as Node)) {
+        setOpenField(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-								<h1 className="text-[2rem] md:text-[3rem] lg:text-[3.5rem] font-extrabold text-white leading-tight mb-4">
-									Find Your Next Home{" "}
-									<span className="text-white/80">in Uyo</span>
-								</h1>
+  const toggleFavourite = (id: string) => {
+    setFavourites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
-								<p className="text-white/80 text-body md:text-lg mb-8 max-w-lg">
-									Making House Hunting Simple, Verified, and Transparent.
-									Browse verified rental properties with real photos and honest pricing.
-								</p>
+  const latest = mockProperties.slice(0, 7);
+  const topListings = mockProperties.slice(3, 10);
+  const hot = mockProperties.slice(7, 14);
 
-								{/* Search Bar */}
-								<div className="flex flex-col sm:flex-row gap-3 mb-8">
-									<div className="relative flex-1">
-										<Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-content-muted" />
-										<input
-											type="text"
-											placeholder="Search by area e.g. Ewet Housing..."
-											className="w-full h-12 md:h-14 pl-12 pr-4 bg-white rounded-button text-body outline-none focus:ring-2 focus:ring-white/30"
-										/>
-									</div>
-									<Link
-										href="/feed"
-										className="btn-primary flex items-center justify-center gap-2 px-8 h-12 md:h-14 bg-content-primary text-white hover:bg-gray-800 rounded-button"
-									>
-										<span className="font-semibold">Search</span>
-										<ArrowRight className="h-4 w-4" />
-									</Link>
-								</div>
+  const latestCarousel = useCarousel();
+  const topCarousel = useCarousel();
+  const hotCarousel = useCarousel();
 
-								{/* Quick Stats */}
-								<div className="flex gap-8 text-white/90">
-									<div>
-										<div className="text-heading-2 font-bold">200+</div>
-										<div className="text-tiny text-white/60">Verified Listings</div>
-									</div>
-									<div>
-										<div className="text-heading-2 font-bold">50+</div>
-										<div className="text-tiny text-white/60">Trusted Landlords</div>
-									</div>
-									<div>
-										<div className="text-heading-2 font-bold">18</div>
-										<div className="text-tiny text-white/60">Areas in Uyo</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</section>
+  return (
+    <>
+      <GuestHeader />
+      <main className="bg-white">
+        {/* ── Hero ─────────────────────────────────────────────── */}
+        <section className="relative overflow-visible pb-[50px] pt-[12px] md:pb-[70px]">
+          {/* Container — matches header and section widths */}
+          <div className="mx-auto max-w-[1440px] px-[4px] md:px-[40px]">
+            {/* Background image */}
+            <div className="relative h-[215px] overflow-hidden rounded-[15px] md:h-[260px] md:rounded-[20px]">
+              <Image
+                src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1440&q=80"
+                alt="Property hero"
+                fill
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-black/50 md:bg-black/40" />
 
-					{/* How It Works */}
-					<section className="page-container py-section-gap">
-						<h2 className="text-heading-2 text-content-primary text-center mb-2">
-							How UNO Works
-						</h2>
-						<p className="text-body text-content-secondary text-center mb-10 max-w-md mx-auto">
-							Finding your next home shouldn&apos;t be stressful. Here&apos;s how we make it simple.
-						</p>
+              {/* Hero heading */}
+              <div className="absolute inset-0 flex items-center justify-center px-[40px]">
+                <h1 className="text-center text-[35px] font-semibold leading-[40px] text-white md:text-[55px] md:font-normal md:leading-normal">
+                  Rent &amp; Buy Houses Easily
+                </h1>
+              </div>
+            </div>
+          </div>
 
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-							{[
-								{
-									step: "1",
-									title: "Browse Verified Listings",
-									description:
-										"Every property is verified with real photos and honest pricing. No surprises.",
-									icon: Search,
-								},
-								{
-									step: "2",
-									title: "Contact Landlord Directly",
-									description:
-										"Reach out via WhatsApp, phone call, or email. No middlemen, no hidden fees.",
-									icon: Building2,
-								},
-								{
-									step: "3",
-									title: "Move In With Confidence",
-									description:
-										"Verified properties, transparent pricing, and trusted landlords. Peace of mind.",
-									icon: BadgeCheck,
-								},
-							].map((item) => (
-								<div key={item.step} className="card-uno text-center group">
-									<div className="flex items-center justify-center h-14 w-14 rounded-2xl bg-uno-red-50 text-uno-red mx-auto mb-4 group-hover:bg-uno-red group-hover:text-white transition-colors duration-300">
-										<item.icon className="h-6 w-6" />
-									</div>
-									<div className="text-tiny text-uno-red font-bold mb-1">
-										Step {item.step}
-									</div>
-									<h3 className="text-heading-3 text-content-primary mb-2">
-										{item.title}
-									</h3>
-									<p className="text-small text-content-secondary">
-										{item.description}
-									</p>
-								</div>
-							))}
-						</div>
-					</section>
+          {/* Search bar — matches Figma node 100:3397 */}
+          <div
+            ref={searchBarRef}
+            className="relative mx-auto mt-[-38px] hidden md:block"
+            style={{ width: "fit-content" }}
+          >
+            <div className="flex items-center gap-[18px] rounded-[40px] border border-[rgba(0,0,0,0.11)] bg-white px-[7px] py-[4px]">
+              {/* Fields row */}
+              <div className="relative flex items-center gap-[12px]">
+                {/* Location */}
+                <button
+                  type="button"
+                  onClick={() => setOpenField(openField === "location" ? null : "location")}
+                  className={`flex h-[67px] w-[363px] flex-col justify-center gap-[4px] rounded-[40px] px-[23px] py-[13px] text-left transition-all ${
+                    openField === "location" ? "bg-[rgba(0,0,0,0.04)] shadow-[0_0_0_1.5px_rgba(0,0,0,0.12)]" : "hover:bg-[rgba(0,0,0,0.03)]"
+                  }`}
+                >
+                  <span className="text-[11px] font-semibold text-black">Location</span>
+                  <div className="flex items-center gap-[6px]">
+                    <MapPin size={20} className="shrink-0 text-[#0a0a0a]" />
+                    <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
+                      {selectedLocation ?? "select a location within uyo"}
+                    </span>
+                  </div>
+                </button>
 
-					{/* CTA Section */}
-					<section className="bg-content-primary">
-						<div className="page-container py-section-gap text-center">
-							<h2 className="text-heading-2 text-white mb-3">
-								Are You a Landlord?
-							</h2>
-							<p className="text-body text-white/70 mb-8 max-w-md mx-auto">
-								List your property for free and reach thousands of verified tenants
-								in Uyo. Get real enquiries, not time wasters.
-							</p>
-							<div className="flex flex-col sm:flex-row gap-3 justify-center">
-								<Link
-									href="/properties/new"
-									className="btn-primary px-8 py-3 flex items-center justify-center gap-2 text-body"
-								>
-									<Building2 className="h-5 w-5" />
-									List Your Property
-								</Link>
-								<Link
-									href="/feed"
-									className="px-8 py-3 rounded-button border border-white/30 text-white hover:bg-white/10 font-semibold transition-colors text-body text-center"
-								>
-									Browse Properties
-								</Link>
-							</div>
-						</div>
-					</section>
-				</div>
-			</main>
-			<Footer />
-			<MobileNav />
-		</>
-	);
+                {/* Divider 1 */}
+                <div className={`h-[61px] w-px shrink-0 bg-[rgba(0,0,0,0.12)] transition-opacity ${openField === "location" || openField === "beds" ? "opacity-0" : ""}`} />
+
+                {/* Beds/Baths */}
+                <button
+                  type="button"
+                  onClick={() => setOpenField(openField === "beds" ? null : "beds")}
+                  className={`flex h-[67px] w-[245px] shrink-0 flex-col justify-center gap-[4px] rounded-[40px] px-[31px] py-[11px] text-left transition-all ${
+                    openField === "beds" ? "bg-[rgba(0,0,0,0.04)] shadow-[0_0_0_1.5px_rgba(0,0,0,0.12)]" : "hover:bg-[rgba(0,0,0,0.03)]"
+                  }`}
+                >
+                  <span className="text-[11px] font-semibold text-black">Beds/Baths</span>
+                  <div className="flex items-center gap-[6px]">
+                    <BedDouble size={24} className="shrink-0 text-[#0a0a0a]" />
+                    <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
+                      {beds === 0 && baths === 0 ? "select bed/bath" : `${beds} bed / ${baths} bath`}
+                    </span>
+                  </div>
+                </button>
+
+                {/* Divider 2 */}
+                <div className={`h-[61px] w-px shrink-0 bg-[rgba(0,0,0,0.12)] transition-opacity ${openField === "beds" || openField === "type" ? "opacity-0" : ""}`} />
+
+                {/* Property Type */}
+                <button
+                  type="button"
+                  onClick={() => setOpenField(openField === "type" ? null : "type")}
+                  className={`flex h-[67px] w-[245px] shrink-0 flex-col justify-center gap-[4px] rounded-[40px] px-[31px] py-[11px] text-left transition-all ${
+                    openField === "type" ? "bg-[rgba(0,0,0,0.04)] shadow-[0_0_0_1.5px_rgba(0,0,0,0.12)]" : "hover:bg-[rgba(0,0,0,0.03)]"
+                  }`}
+                >
+                  <span className="text-[11px] font-semibold text-black">Property Type</span>
+                  <div className="flex items-center gap-[6px]">
+                    <Building2 size={23} className="shrink-0 text-[#0a0a0a]" />
+                    <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
+                      {propertyTypes.length === 0 ? "select property type" : propertyTypes.slice(0, 2).join(", ")}
+                    </span>
+                  </div>
+                </button>
+
+                {/* Divider 3 */}
+                <div className={`h-[61px] w-px shrink-0 bg-[rgba(0,0,0,0.12)] transition-opacity ${openField === "type" || openField === "price" ? "opacity-0" : ""}`} />
+
+                {/* Price Range */}
+                <button
+                  type="button"
+                  onClick={() => setOpenField(openField === "price" ? null : "price")}
+                  className={`flex h-[67px] w-[245px] shrink-0 flex-col justify-center gap-[4px] rounded-[40px] px-[31px] py-[11px] text-left transition-all ${
+                    openField === "price" ? "bg-[rgba(0,0,0,0.04)] shadow-[0_0_0_1.5px_rgba(0,0,0,0.12)]" : "hover:bg-[rgba(0,0,0,0.03)]"
+                  }`}
+                >
+                  <span className="text-[11px] font-semibold text-black">Price Range</span>
+                  <div className="flex items-center gap-[6px]">
+                    <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-[rgba(0,0,0,0.4)] text-[12px] font-semibold text-[#0a0a0a]">₦</span>
+                    <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
+                      {minPrice === 0 && maxPrice === 100_000_000 ? "select price range" : `₦${minPrice.toLocaleString("en-NG")} – ₦${maxPrice.toLocaleString("en-NG")}`}
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Search button */}
+              <button
+                type="button"
+                className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-[25px] bg-[#af2525] text-white transition-opacity hover:opacity-90"
+                aria-label="Search"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Dropdowns */}
+            {openField === "location" && (
+              <div className="absolute left-0 top-[calc(100%+8px)] z-50">
+                <LocationDropDown
+                  onSelect={(loc) => {
+                    setSelectedLocation(loc.name);
+                    setOpenField(null);
+                  }}
+                />
+              </div>
+            )}
+            {openField === "beds" && (
+              <div className="absolute left-[400px] top-[calc(100%+8px)] z-50">
+                <BedsDropDown
+                  beds={beds}
+                  baths={baths}
+                  onApply={(b, ba) => {
+                    setBeds(b);
+                    setBaths(ba);
+                    setOpenField(null);
+                  }}
+                />
+              </div>
+            )}
+            {openField === "type" && (
+              <div className="absolute left-[660px] top-[calc(100%+8px)] z-50">
+                <PropertyTypesDropDown
+                  selected={propertyTypes}
+                  onChange={setPropertyTypes}
+                />
+              </div>
+            )}
+            {openField === "price" && (
+              <div className="absolute right-0 top-[calc(100%+8px)] z-50">
+                <PricingDropDown
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  onApply={(min, max) => {
+                    setMinPrice(min);
+                    setMaxPrice(max);
+                    setOpenField(null);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Mobile search form */}
+          <div className="relative z-10 mx-auto mt-[-28px] max-w-[1440px] px-[16px] md:hidden">
+            <div className="flex flex-col gap-[14px] rounded-[16px] border border-[rgba(0,0,0,0.08)] bg-white px-[16px] py-[18px] shadow-md">
+              {/* Search input */}
+              <div className="flex items-center gap-[10px] border-b border-[rgba(0,0,0,0.08)] pb-[12px]">
+                <Search size={18} className="shrink-0 text-[rgba(0,0,0,0.4)]" />
+                <input
+                  type="text"
+                  placeholder="City, Address, Neighbourhood..."
+                  className="w-full bg-transparent text-[14px] text-[#161515] placeholder:text-[rgba(0,0,0,0.4)] outline-none"
+                />
+              </div>
+
+              {/* Property Type + Beds & Baths row */}
+              <div className="flex items-center gap-[12px]">
+                <button
+                  type="button"
+                  onClick={() => setMobileOpenField(mobileOpenField === "type" ? null : "type")}
+                  className="flex items-center gap-[6px] rounded-[8px] border border-[rgba(0,0,0,0.1)] px-[12px] py-[8px]"
+                >
+                  <Building2 size={16} className="shrink-0 text-[rgba(0,0,0,0.5)]" />
+                  <span className="truncate text-[13px] text-[rgba(0,0,0,0.6)]">
+                    {propertyTypes.length === 0 ? "Property Type" : propertyTypes.slice(0, 1).join(", ")}
+                  </span>
+                  <ChevronDown size={14} className="shrink-0 text-[rgba(0,0,0,0.4)]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileOpenField(mobileOpenField === "beds" ? null : "beds")}
+                  className="flex items-center gap-[6px] rounded-[8px] border border-[rgba(0,0,0,0.1)] px-[12px] py-[8px]"
+                >
+                  <BedDouble size={16} className="shrink-0 text-[rgba(0,0,0,0.5)]" />
+                  <span className="text-[13px] text-[rgba(0,0,0,0.6)] whitespace-nowrap">
+                    {beds === 0 && baths === 0 ? "Beds & Baths" : `${beds}bd / ${baths}ba`}
+                  </span>
+                </button>
+              </div>
+
+              {/* Mobile dropdowns — inline */}
+              {mobileOpenField === "type" && (
+                <div className="rounded-[12px] border border-[rgba(0,0,0,0.06)] bg-[#fbfbfb] p-[8px]">
+                  <PropertyTypesDropDown
+                    selected={propertyTypes}
+                    onChange={setPropertyTypes}
+                    className="w-full shadow-none rounded-none"
+                  />
+                </div>
+              )}
+              {mobileOpenField === "beds" && (
+                <div className="rounded-[12px] border border-[rgba(0,0,0,0.06)] bg-[#fbfbfb] p-[8px]">
+                  <BedsDropDown
+                    beds={beds}
+                    baths={baths}
+                    onApply={(b, ba) => {
+                      setBeds(b);
+                      setBaths(ba);
+                      setMobileOpenField(null);
+                    }}
+                    className="w-full shadow-none rounded-none"
+                  />
+                </div>
+              )}
+
+              {/* Price Range */}
+              <button
+                type="button"
+                onClick={() => setMobileOpenField(mobileOpenField === "price" ? null : "price")}
+                className="flex items-center gap-[6px] rounded-[8px] border border-[rgba(0,0,0,0.1)] px-[12px] py-[8px]"
+              >
+                <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border border-[rgba(0,0,0,0.3)] text-[10px] font-semibold text-[rgba(0,0,0,0.5)]">₦</span>
+                <span className="text-[13px] text-[rgba(0,0,0,0.6)]">
+                  {minPrice === 0 && maxPrice === 100_000_000 ? "Price Range" : `₦${minPrice.toLocaleString("en-NG")} – ₦${maxPrice.toLocaleString("en-NG")}`}
+                </span>
+                <ChevronDown size={14} className="ml-auto shrink-0 text-[rgba(0,0,0,0.4)]" />
+              </button>
+
+              {mobileOpenField === "price" && (
+                <div className="rounded-[12px] border border-[rgba(0,0,0,0.06)] bg-[#fbfbfb] p-[8px]">
+                  <PricingDropDown
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    onApply={(min, max) => {
+                      setMinPrice(min);
+                      setMaxPrice(max);
+                      setMobileOpenField(null);
+                    }}
+                    className="w-full shadow-none rounded-none"
+                  />
+                </div>
+              )}
+
+              {/* Search button */}
+              <button
+                type="button"
+                className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-[#af2525] text-[15px] font-medium text-white transition-opacity hover:opacity-90"
+              >
+                Search
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Latest Market Listings ─────────────────────────── */}
+        <section className="mt-[32px] md:mt-[32px]">
+          <div className="mx-auto max-w-[1440px] px-[16px] md:px-[40px]">
+            <div className="mb-[16px] flex items-center justify-between md:mb-[21px]">
+              <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
+                Latest Market Listings
+              </h2>
+              <CarouselNav onPrev={latestCarousel.prev} onNext={latestCarousel.next} canPrev={latestCarousel.canPrev} canNext={latestCarousel.canNext} />
+            </div>
+            <div
+              ref={latestCarousel.ref}
+              className="flex items-stretch gap-[11px] overflow-x-auto scroll-smooth pb-[8px] no-scrollbar md:gap-[20px]"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {latest.map((p) => (
+                <PropertyCard
+                  key={p.id}
+                  data={p}
+                  isFavourited={favourites.has(p.id)}
+                  onToggleFavourite={toggleFavourite}
+                  className="shrink-0"
+                />
+              ))}
+              <SeeAllCard href="/feed" images={latest.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+            </div>
+          </div>
+        </section>
+
+        {/* ── Top Listings Ewet Housing ──────────────────────── */}
+        <section className="mt-[36px] md:mt-[60px]">
+          <div className="mx-auto max-w-[1440px] px-[16px] md:px-[40px]">
+            {/* Header row */}
+            <div className="mb-[16px] flex items-start justify-between gap-[12px]">
+              <div className="flex items-center gap-[10px]">
+                <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
+                  Top Listings Ewet Housing
+                </h2>
+                <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#f5d0d0]">
+                  <MapPin size={14} className="text-[#af2525]" />
+                </div>
+              </div>
+              <CarouselNav onPrev={topCarousel.prev} onNext={topCarousel.next} canPrev={topCarousel.canPrev} canNext={topCarousel.canNext} />
+            </div>
+
+            {/* Neighbourhood tabs */}
+            <div className="mb-[16px] flex items-center gap-[18px] overflow-x-auto no-scrollbar md:mb-[20px] md:gap-[24px]">
+              {NEIGHBORHOOD_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={[
+                    "shrink-0 whitespace-nowrap pb-[6px] text-[13px] transition-colors md:text-[16px]",
+                    activeTab === tab
+                      ? "border-b-2 border-[#151515] font-medium text-[#151515]"
+                      : "text-[rgba(0,0,0,0.5)] hover:text-[rgba(0,0,0,0.8)]",
+                  ].join(" ")}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Cards */}
+            <div
+              ref={topCarousel.ref}
+              className="flex items-stretch gap-[11px] overflow-x-auto scroll-smooth pb-[8px] no-scrollbar md:gap-[20px]"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {topListings.map((p) => (
+                <PropertyCard
+                  key={p.id}
+                  data={p}
+                  isFavourited={favourites.has(p.id)}
+                  onToggleFavourite={toggleFavourite}
+                  className="shrink-0"
+                />
+              ))}
+              <SeeAllCard href="/feed" images={topListings.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+            </div>
+          </div>
+        </section>
+
+        {/* ── Hot Properties ─────────────────────────────────── */}
+        <section className="mt-[36px] md:mt-[60px]">
+          <div className="mx-auto max-w-[1440px] px-[16px] md:px-[40px]">
+            <div className="mb-[16px] flex items-center justify-between md:mb-[21px]">
+              <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
+                Hot Properties
+              </h2>
+              <CarouselNav onPrev={hotCarousel.prev} onNext={hotCarousel.next} canPrev={hotCarousel.canPrev} canNext={hotCarousel.canNext} />
+            </div>
+            <div
+              ref={hotCarousel.ref}
+              className="flex items-stretch gap-[11px] overflow-x-auto scroll-smooth pb-[8px] no-scrollbar md:gap-[20px]"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {hot.map((p) => (
+                <PropertyCard
+                  key={p.id}
+                  data={p}
+                  isFavourited={favourites.has(p.id)}
+                  onToggleFavourite={toggleFavourite}
+                  className="shrink-0"
+                />
+              ))}
+              <SeeAllCard href="/feed" images={hot.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA Banner ─────────────────────────────────────── */}
+        <section className="mx-auto mt-[40px] max-w-[1440px] px-[16px] md:mt-[80px] md:px-[40px]">
+          <div className="relative flex flex-col items-center overflow-hidden rounded-[15px] bg-[#af2525] px-[24px] py-[32px] text-center md:flex-row md:items-center md:justify-between md:px-[60px] md:py-[50px] md:text-left">
+            {/* Left: text + button */}
+            <div className="flex max-w-[520px] flex-col items-center gap-[12px] md:items-start md:gap-[16px]">
+              <h2 className="text-[26px] font-normal leading-[1.2] text-white md:text-[46px]">
+                Find your dream home today
+              </h2>
+              <p className="text-[12px] leading-[1.5] text-white/75 md:text-[14px]">
+                Professional property snagging that catches defects developers hope
+                you&apos;ll miss, ensuring your dream home meets the highest quality
+                standards.
+              </p>
+              <Link
+                href="/login"
+                className="mt-[4px] flex h-[36px] items-center rounded-full bg-[#0a0a0a] px-[24px] text-[14px] font-normal text-white transition-opacity hover:opacity-90 md:h-[41px] md:px-[28px] md:text-[15px]"
+              >
+                Join / Sign In
+              </Link>
+            </div>
+
+            {/* Right: house illustration */}
+            <div className="hidden shrink-0 items-center justify-center md:flex">
+              <Home
+                size={220}
+                strokeWidth={1}
+                className="text-white/90"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Spacer before footer */}
+        <div className="h-[40px] md:h-[80px]" />
+      </main>
+      <Footer />
+    </>
+  );
 }

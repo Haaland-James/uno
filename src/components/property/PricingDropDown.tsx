@@ -84,7 +84,7 @@ export function PricingDropDown({
   return (
     <div
       className={cn(
-        "w-[410px] rounded-[20px] bg-[#fbfbfb]",
+        "w-full max-w-[410px] rounded-[20px] bg-[#fbfbfb]",
         "shadow-[0px_4px_24px_0px_rgba(0,0,0,0.15)]",
         "overflow-hidden",
         className
@@ -100,11 +100,11 @@ export function PricingDropDown({
       {/* Body */}
       <div className="px-[25px] py-[20px] flex flex-col gap-[20px]">
         {/* Price range labels */}
-        <div className="flex items-center justify-between">
-          <span className="text-[18px] font-medium text-[#0a0a0a] font-sans">
+        <div className="flex items-center justify-between gap-[8px]">
+          <span className="text-[15px] md:text-[18px] font-medium text-[#0a0a0a] font-sans truncate">
             {formatNaira(localMin)}
           </span>
-          <span className="text-[18px] font-medium text-[#0a0a0a] font-sans">
+          <span className="text-[15px] md:text-[18px] font-medium text-[#0a0a0a] font-sans truncate text-right">
             {localMax >= ABSOLUTE_MAX ? "₦100,00,000 +" : formatNaira(localMax)}
           </span>
         </div>
@@ -141,13 +141,13 @@ export function PricingDropDown({
         </div>
 
         {/* Min / Max inputs */}
-        <div className="flex items-center gap-[14px]">
+        <div className="flex items-center gap-[10px]">
           {/* Min */}
-          <div className="flex flex-col gap-[6px]">
+          <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
             <span className="text-[12px] text-[rgba(10,10,10,0.5)] font-sans">
               Min price
             </span>
-            <div className="relative w-[180px]">
+            <div className="relative">
               <span className="absolute left-[14px] top-1/2 -translate-y-1/2 text-[14px] text-[rgba(10,10,10,0.5)] font-sans pointer-events-none">
                 ₦
               </span>
@@ -158,9 +158,9 @@ export function PricingDropDown({
                 onBlur={handleMinInputBlur}
                 placeholder="0"
                 className={cn(
-                  "w-full h-[48px] pl-[26px] pr-[14px] rounded-[40px]",
+                  "w-full h-[44px] md:h-[48px] pl-[26px] pr-[10px] rounded-[40px]",
                   "border border-[rgba(186,186,186,0.65)]",
-                  "text-[14px] text-[rgba(10,10,10,0.8)] font-normal font-sans",
+                  "text-[13px] md:text-[14px] text-[rgba(10,10,10,0.8)] font-normal font-sans",
                   "placeholder:text-[rgba(10,10,10,0.4)]",
                   "focus:border-[#af2525] focus:outline-none bg-transparent transition-colors"
                 )}
@@ -169,11 +169,11 @@ export function PricingDropDown({
           </div>
 
           {/* Max */}
-          <div className="flex flex-col gap-[6px]">
+          <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
             <span className="text-[12px] text-[rgba(10,10,10,0.5)] font-sans">
               Max price
             </span>
-            <div className="relative w-[180px]">
+            <div className="relative">
               <span className="absolute left-[14px] top-1/2 -translate-y-1/2 text-[14px] text-[rgba(10,10,10,0.5)] font-sans pointer-events-none">
                 ₦
               </span>
@@ -182,11 +182,11 @@ export function PricingDropDown({
                 value={maxInput}
                 onChange={handleMaxInputChange}
                 onBlur={handleMaxInputBlur}
-                placeholder="100,00,000"
+                placeholder="100,000,000"
                 className={cn(
-                  "w-full h-[48px] pl-[26px] pr-[14px] rounded-[40px]",
+                  "w-full h-[44px] md:h-[48px] pl-[26px] pr-[10px] rounded-[40px]",
                   "border border-[rgba(186,186,186,0.65)]",
-                  "text-[14px] text-[rgba(10,10,10,0.8)] font-normal font-sans",
+                  "text-[13px] md:text-[14px] text-[rgba(10,10,10,0.8)] font-normal font-sans",
                   "placeholder:text-[rgba(10,10,10,0.4)]",
                   "focus:border-[#af2525] focus:outline-none bg-transparent transition-colors"
                 )}

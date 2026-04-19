@@ -53,18 +53,18 @@ export function GuestHeader({ className }: { className?: string }) {
           Join / Sign In
         </Link>
 
-        <div className="flex items-center md:hidden">
+        <div className="flex items-center gap-[12px] md:hidden">
           <Link
             href="/login"
-            className="flex h-7 items-center px-[18px] text-[14px] font-normal tracking-[-0.28px] text-black/60"
+            className="text-[14px] font-normal tracking-[-0.28px] text-black/60"
           >
             Sign In
           </Link>
           <button
             aria-label="Open menu"
-            className="flex h-6 w-6 items-center justify-center"
+            className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#af2525]"
           >
-            <Menu className="h-6 w-6 text-black" strokeWidth={1.5} />
+            <Menu className="h-[16px] w-[16px] text-white" strokeWidth={2} />
           </button>
         </div>
       </div>

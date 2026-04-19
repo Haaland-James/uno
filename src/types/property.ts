@@ -100,6 +100,29 @@ export interface PropertyCardData {
 	createdAt: Date;
 }
 
+// Detailed property data for single-view page
+export interface PropertyDetailData extends PropertyCardData {
+	streetAddress?: string;
+	description?: string;
+	listingStatus: string;
+	daysOnUno: number;
+	views: number;
+	favourites: number;
+	fees: {
+		annualRent: number;
+		legalFeePercent: number;
+		agentFeePercent: number;
+		totalPackage: string;
+		additional: { label: string; amount: number; period: string }[];
+		additionalNote: string;
+	};
+	additionalInfo: { label: string; value: string }[];
+	features: string[];
+	listedBy: { name: string; company: string };
+	listingUpdated: string;
+	unoChecked: string;
+}
+
 // Search/filter types
 export interface PropertyFilters {
 	city?: string;

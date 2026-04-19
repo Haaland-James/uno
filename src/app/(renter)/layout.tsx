@@ -1,5 +1,4 @@
-import { Header } from "@/components/layout/Header";
-import { MobileNav } from "@/components/layout/MobileNav";
+import { GuestHeader } from "@/components/layout/GuestHeader";
 import { Footer } from "@/components/layout/Footer";
 
 export default function RenterLayout({
@@ -9,10 +8,9 @@ export default function RenterLayout({
 }) {
 	return (
 		<>
-			<Header />
-			<main className="safe-bottom">{children}</main>
+			<GuestHeader />
+			<main>{children}</main>
 			<Footer />
-			<MobileNav />
 		</>
 	);
 }
