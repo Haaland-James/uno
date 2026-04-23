@@ -4,7 +4,15 @@
       "Bash(xargs -0 rm -f)",
       "Read(//d/DOCUMENT/Project/ Store/Uno/uno/src/app/\\(landlord/\\)/properties/new/**)",
       "Read(//d/DOCUMENT/Project/ Store/Uno/uno/src/components/property/**)",
-      "Read(//d/DOCUMENT/Project/ Store/Uno/uno/src/app/\\(auth/\\)/signup/**)"
+      "Read(//d/DOCUMENT/Project/ Store/Uno/uno/src/app/\\(auth/\\)/signup/**)",
+      "Bash(git push *)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch -f --index-filter \"git rm --cached --ignore-unmatch .claude/settings.local.json .claude/worktrees/festive-keller-79c5b9\" ebe5c5e..HEAD)",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\)\")",
+      "Bash(awk 'END{print NR}' src/lib/mock-data.ts)",
+      "Bash(npx prisma *)",
+      "Bash(npm install *)",
+      "Bash(git check-ignore *)",
+      "Bash(git add *)"
     ]
   }
 }
