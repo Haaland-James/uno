@@ -406,48 +406,550 @@ export const mockProperties: PropertyCardData[] = [
 		isFavourited: false,
 		createdAt: new Date("2025-02-20"),
 	},
+
+	// ── Properties for Sale — Land ──
+	{
+		id: "prop_015",
+		title: "Half Plot of Land at Ikot Ekpene Road",
+		propertyType: "LAND",
+		bedrooms: 0,
+		bathrooms: 0,
+		area: "Ikot Ekpene Road",
+		city: "Uyo",
+		rent: 5000000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Fence/Wall", "Road Network"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&q=75", isMain: true },
+			...extra(0),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-01"),
+	},
+	{
+		id: "prop_016",
+		title: "Full Plot of Land at Uruan",
+		propertyType: "LAND",
+		bedrooms: 0,
+		bathrooms: 0,
+		area: "Uruan",
+		city: "Uyo",
+		rent: 3500000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Road Network", "Fence/Wall"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1628624747186-a941c476b7ef?w=600&q=75", isMain: true },
+			...extra(1),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-02"),
+	},
+	{
+		id: "prop_017",
+		title: "2 Plots of Land at Four Lanes",
+		propertyType: "LAND",
+		bedrooms: 0,
+		bathrooms: 0,
+		area: "Four Lanes",
+		city: "Uyo",
+		rent: 12000000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: false,
+		amenities: ["Road Network", "Electricity"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=75", isMain: true },
+			...extra(2),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-05"),
+	},
+
+	// ── Properties for Sale — Houses ──
+	{
+		id: "prop_018",
+		title: "4 Bedroom Detached House for Sale at Ewet Housing",
+		propertyType: "HOUSE",
+		bedrooms: 4,
+		bathrooms: 4,
+		area: "Ewet Housing",
+		city: "Uyo",
+		rent: 45000000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Borehole", "Generator", "Security/Gate", "Fence/Wall", "Parking Space", "CCTV"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=75", isMain: true },
+			...extra(3, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: true,
+		createdAt: new Date("2025-03-08"),
+	},
+	{
+		id: "prop_019",
+		title: "5 Bedroom Duplex for Sale at Shelter Afrique",
+		propertyType: "DUPLEX",
+		bedrooms: 5,
+		bathrooms: 5,
+		area: "Shelter Afrique",
+		city: "Uyo",
+		rent: 65000000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Borehole", "Generator", "Swimming Pool", "Security/Gate", "CCTV", "Solar Panel"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=75", isMain: true },
+			...extra(4, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-10"),
+	},
+	{
+		id: "prop_020",
+		title: "3 Bedroom Bungalow for Sale at Abak Road",
+		propertyType: "BUNGALOW",
+		bedrooms: 3,
+		bathrooms: 2,
+		area: "Abak Road",
+		city: "Uyo",
+		rent: 25000000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Borehole", "Generator", "Fence/Wall", "Parking Space"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=600&q=75", isMain: true },
+			...extra(5, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-12"),
+	},
+
+	// ── Commercial Properties ──
+	{
+		id: "prop_021",
+		title: "Open Plan Office Space at Udo Udoma Avenue",
+		propertyType: "COMMERCIAL",
+		bedrooms: 0,
+		bathrooms: 2,
+		area: "Udo Udoma Avenue",
+		city: "Uyo",
+		rent: 1800000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Electricity", "Parking Space", "Security/Gate", "Generator"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=75", isMain: true },
+			...extra(6, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-15"),
+	},
+	{
+		id: "prop_022",
+		title: "Shop Space at Itam Market",
+		propertyType: "COMMERCIAL",
+		bedrooms: 0,
+		bathrooms: 1,
+		area: "Itam",
+		city: "Uyo",
+		rent: 600000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Electricity", "Security/Gate"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=75", isMain: true },
+			...extra(0, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-16"),
+	},
+	{
+		id: "prop_023",
+		title: "Warehouse at Aka Road Industrial Area",
+		propertyType: "COMMERCIAL",
+		bedrooms: 0,
+		bathrooms: 1,
+		area: "Aka Road",
+		city: "Uyo",
+		rent: 3500000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: false,
+		amenities: ["Fence/Wall", "Security/Gate", "Parking Space", "Road Network"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=75", isMain: true },
+			...extra(1, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-18"),
+	},
+	{
+		id: "prop_024",
+		title: "Restaurant Space at Nwaniba Road",
+		propertyType: "COMMERCIAL",
+		bedrooms: 0,
+		bathrooms: 2,
+		area: "Nwaniba Road",
+		city: "Uyo",
+		rent: 2200000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Water Supply", "Electricity", "Generator", "Parking Space"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=75", isMain: true },
+			...extra(2, 3),
+		],
+		verificationStatus: "PENDING",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-20"),
+	},
+
+	// ── Properties for Lease ──
+	{
+		id: "prop_025",
+		title: "3 Bedroom Flat for Lease at Independence Layout",
+		propertyType: "FLAT",
+		bedrooms: 3,
+		bathrooms: 2,
+		area: "Independence Layout",
+		city: "Uyo",
+		rent: 2500000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: false,
+		amenities: ["Water Supply", "Generator", "Parking Space", "Security/Gate", "Fence/Wall"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=75", isMain: true },
+			...extra(3, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-22"),
+	},
+	{
+		id: "prop_026",
+		title: "Commercial Building for Lease at Oron Road",
+		propertyType: "COMMERCIAL",
+		bedrooms: 0,
+		bathrooms: 4,
+		area: "Oron Road",
+		city: "Uyo",
+		rent: 8000000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Generator", "Borehole", "Parking Space", "Security/Gate", "CCTV", "Fence/Wall"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=75", isMain: true },
+			...extra(4, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: false,
+		createdAt: new Date("2025-03-25"),
+	},
+	{
+		id: "prop_027",
+		title: "4 Bedroom Duplex for Lease at Ewet Housing",
+		propertyType: "DUPLEX",
+		bedrooms: 4,
+		bathrooms: 3,
+		area: "Ewet Housing",
+		city: "Uyo",
+		rent: 4500000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: true,
+		amenities: ["Borehole", "Generator", "Parking Space", "Security/Gate", "Fence/Wall"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=75", isMain: true },
+			...extra(5, 3),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		isFavourited: true,
+		createdAt: new Date("2025-03-28"),
+	},
 ];
 
-// Generate details for all mock properties using prop_001 as a template
+// Listing status mapping for properties
+const LISTING_STATUS_MAP: Record<string, string> = {
+	// For Sale — Land
+	prop_015: "For Sale",
+	prop_016: "For Sale",
+	prop_017: "For Sale",
+	// For Sale — Houses
+	prop_018: "For Sale",
+	prop_019: "For Sale",
+	prop_020: "For Sale",
+	// Commercial
+	prop_021: "For Rent",
+	prop_022: "For Rent",
+	prop_023: "For Rent",
+	prop_024: "For Rent",
+	// For Lease
+	prop_025: "For Lease",
+	prop_026: "For Lease",
+	prop_027: "For Lease",
+};
+
+// Descriptions per listing category
+const DESCRIPTIONS_MAP: Record<string, string> = {
+	prop_015: "Well located half plot of land in a developing area with good road access. Suitable for residential development. Survey plan and C of O available.",
+	prop_016: "A full plot of dry land in Uruan with clear documentation. Ideal for building a family home. Fenced and gated with neighbours already developed.",
+	prop_017: "Two adjoining plots of land on a tarred road at Four Lanes. Perfect for commercial or residential development. Title documents complete.",
+	prop_018: "Tastefully finished 4-bedroom detached house for sale with modern fixtures. Spacious compound, BQ, and ample parking. All documents in order.",
+	prop_019: "Luxury 5-bedroom duplex with swimming pool, BQ, and state-of-the-art finishing. Located in a serene and secure estate environment.",
+	prop_020: "Well-built 3-bedroom bungalow on a full plot. Includes fitted kitchen, modern bathroom, and security features. Ready to move in.",
+	prop_021: "Open plan office space suitable for corporate use. Well ventilated with dedicated parking slots. Located on a major business avenue.",
+	prop_022: "Lock-up shop in a busy market area with high foot traffic. Ideal for retail business. Electricity supply available.",
+	prop_023: "Large warehouse space suitable for storage, distribution, or light manufacturing. Accessible by heavy-duty vehicles with loading bays.",
+	prop_024: "Well-finished space suitable for a restaurant or lounge. Includes fitted kitchen area, customer seating, and parking.",
+	prop_025: "3-bedroom flat available on a 3-year lease. Fully serviced estate with 24/7 security and stable power supply. Ideal for expatriates.",
+	prop_026: "Multi-floor commercial building available on long-term lease. Suitable for offices, banks, or institutional use. High visibility location.",
+	prop_027: "Beautifully finished 4-bedroom duplex available for 2-year lease. Comes with BQ, generator, and borehole. Family-friendly neighbourhood.",
+};
+
+// Additional info per listing type
+function getAdditionalInfo(id: string): { label: string; value: string }[] {
+	if (["prop_015", "prop_016", "prop_017"].includes(id)) {
+		return [
+			{ label: "Land Size", value: id === "prop_017" ? "2 Plots (1200sqm)" : id === "prop_016" ? "1 Plot (600sqm)" : "Half Plot (300sqm)" },
+			{ label: "Documentation", value: "C of O" },
+			{ label: "Topography", value: "Flat & Dry" },
+			{ label: "Road Access", value: id === "prop_017" ? "Tarred" : "Graded" },
+			{ label: "Fencing", value: id === "prop_016" ? "Yes" : "No" },
+			{ label: "Survey Plan", value: "Available" },
+		];
+	}
+	if (["prop_021", "prop_022", "prop_023", "prop_024"].includes(id)) {
+		return [
+			{ label: "Floor Space", value: id === "prop_023" ? "500sqm" : id === "prop_021" ? "150sqm" : "80sqm" },
+			{ label: "Floor", value: id === "prop_021" ? "2nd Floor" : "Ground Floor" },
+			{ label: "Parking", value: id === "prop_022" ? "None" : "Available" },
+			{ label: "Power Supply", value: "Prepaid Meter" },
+			{ label: "Building Type", value: id === "prop_023" ? "Industrial" : "Commercial" },
+			{ label: "Lease Term", value: "Minimum 1 Year" },
+		];
+	}
+	if (["prop_025", "prop_026", "prop_027"].includes(id)) {
+		return [
+			{ label: "Lease Duration", value: id === "prop_026" ? "5 Years" : id === "prop_027" ? "2 Years" : "3 Years" },
+			{ label: "Renewal", value: "Negotiable" },
+			{ label: "Building Type", value: id === "prop_026" ? "Commercial" : "Residential" },
+			{ label: "Year Built", value: "2024" },
+			{ label: "Gated Compound", value: "Yes" },
+			{ label: "Road Network", value: "Tarred" },
+		];
+	}
+	return [
+		{ label: "Age of house", value: "Virgin House" },
+		{ label: "No. of Tenants", value: "5 tenants total" },
+		{ label: "Building Type", value: "2 Storey building" },
+		{ label: "Year Built", value: "2025" },
+		{ label: "Gated Compound", value: "Yes" },
+		{ label: "Road Network", value: "Local" },
+	];
+}
+
+// Features per listing type
+function getFeatures(id: string): string[] {
+	if (["prop_015", "prop_016", "prop_017"].includes(id)) {
+		return ["Survey Plan Available", "C of O", "Flat Terrain", "No Disputes"];
+	}
+	if (["prop_021", "prop_022", "prop_023", "prop_024"].includes(id)) {
+		return ["Air Conditioning", "Reception Area", "Restrooms", "Backup Generator"];
+	}
+	if (["prop_025", "prop_026", "prop_027"].includes(id)) {
+		return ["Fully Fitted Kitchen", "Parking Space", "24/7 Security", "Backup Generator", "Borehole"];
+	}
+	if (["prop_018", "prop_019", "prop_020"].includes(id)) {
+		return ["Fully Fitted Kitchen", "Parking Space", "BQ", "Backup Generator", "Modern Finishing"];
+	}
+	return ["Fully Fitted Kitchen", "Parking Space", "Swimming Pool", "Gym", "Backup Generator"];
+}
+
+// Fees per listing type
+function getFees(prop: PropertyCardData, id: string) {
+	if (["prop_015", "prop_016", "prop_017", "prop_018", "prop_019", "prop_020"].includes(id)) {
+		// For Sale — no rent fees, show sale price breakdown
+		return {
+			annualRent: prop.rent,
+			legalFeePercent: 5,
+			agentFeePercent: 5,
+			totalPackage: `${(prop.rent / 1000000).toFixed(1)}M`,
+			additional: [
+				{ label: "Survey Fee", amount: 150000, period: "one-time" },
+				{ label: "Documentation Fee", amount: 200000, period: "one-time" },
+			],
+			additionalNote: "All documentation and transfer fees are handled by our legal team.",
+		};
+	}
+	if (["prop_025", "prop_026", "prop_027"].includes(id)) {
+		// For Lease
+		return {
+			annualRent: prop.rent,
+			legalFeePercent: 10,
+			agentFeePercent: 10,
+			totalPackage: `${(prop.rent * 1.2 / 1000000).toFixed(1)}M`,
+			additional: [
+				{ label: "Refundable Deposit", amount: prop.rent * 0.5, period: "one-time" },
+				{ label: "Legal Fee", amount: prop.rent * 0.1, period: "one-time" },
+			],
+			additionalNote: "Deposit is fully refundable at the end of the lease term.",
+		};
+	}
+	// Default (For Rent including commercial)
+	return {
+		annualRent: prop.rent,
+		legalFeePercent: 10,
+		agentFeePercent: 10,
+		totalPackage: `${Math.round((prop.rent * 1.2) / 1000)}k`,
+		additional: [
+			{ label: "Security Fee", amount: 50000, period: "annually" },
+			{ label: "Cleaning Fee", amount: 10000, period: "annually" },
+			{ label: "Service Fee", amount: 50000, period: "annually" },
+		],
+		additionalNote: "Additional fees are compulsory before you move in.",
+	};
+}
+
+// Listed by agents
+const AGENTS = [
+	{ name: "Ryan Cherney", company: "Circle One Realty" },
+	{ name: "Emem Bassey", company: "Prime Properties Uyo" },
+	{ name: "Aniekan Udoh", company: "Royal Estates" },
+	{ name: "Iboro Ekpo", company: "Landmark Realtors" },
+];
+
+// ── Landlord "My Listings" mock data ──
+// Represents listings owned by the current mock user. Covers each lifecycle state
+// so the My Listings page can demo empty/populated/all-verification-states.
+export const mockMyListings: PropertyCardData[] = [
+	{
+		id: "my_001",
+		title: "You are almost done",
+		propertyType: "FLAT",
+		bedrooms: 0,
+		bathrooms: 0,
+		area: "Nwaniba Road",
+		city: "Uyo",
+		streetAddress: "Use-Ofot, Nwaniba Road",
+		rent: 0,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: false,
+		amenities: [],
+		photos: [],
+		verificationStatus: "IN_PROGRESS",
+		availabilityStatus: "AVAILABLE_NOW",
+		createdAt: new Date("2026-04-20"),
+		status: "AVAILABLE",
+	},
+	{
+		id: "my_002",
+		title: "2 Bedroom Flat at Nwaniba Road",
+		propertyType: "FLAT",
+		bedrooms: 2,
+		bathrooms: 2,
+		area: "Nwaniba Road",
+		city: "Uyo",
+		streetAddress: "Use-Ofot, Nwaniba Road",
+		rent: 300000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: false,
+		amenities: ["Water Supply", "Generator", "Parking Space"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=75", isMain: true },
+			...extra(1, 2),
+		],
+		verificationStatus: "PENDING",
+		availabilityStatus: "AVAILABLE_NOW",
+		createdAt: new Date("2026-04-15"),
+		status: "AVAILABLE",
+	},
+	{
+		id: "my_003",
+		title: "2 Bedroom Flat at Oron Road",
+		propertyType: "FLAT",
+		bedrooms: 2,
+		bathrooms: 2,
+		area: "Oron Road",
+		city: "Uyo",
+		streetAddress: "Use-Ofot, Nwaniba Road",
+		rent: 300000,
+		rentPeriod: "YEAR",
+		currency: "NGN",
+		negotiable: false,
+		amenities: ["Water Supply", "Generator", "Parking Space", "Security/Gate"],
+		photos: [
+			{ url: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=75", isMain: true },
+			...extra(2, 2),
+		],
+		verificationStatus: "VERIFIED",
+		availabilityStatus: "AVAILABLE_NOW",
+		createdAt: new Date("2026-03-20"),
+		status: "PUBLISHED",
+		views: 126,
+		inquiryCount: 17,
+		savedCount: 201,
+	},
+];
+
+export function getMyListings(_userId?: string): PropertyCardData[] {
+	return mockMyListings;
+}
+
+// Generate details for all mock properties
 for (const prop of mockProperties) {
 	if (!mockPropertyDetails[prop.id]) {
+		const listingStatus = LISTING_STATUS_MAP[prop.id] || "For Rent";
+		const description = DESCRIPTIONS_MAP[prop.id] ||
+			"A sharp & spacious self contained apartment. Good light, serene environment, wardrobe kitchen cabinet & other modern facilities available for rent.";
+
 		mockPropertyDetails[prop.id] = {
 			...prop,
 			streetAddress: `234 ${prop.area}, ${prop.city}, Akwa Ibom`,
-			description:
-				"A sharp & spacious self contained apartment. Good light, serene environment, wardrobe kitchen cabinet & other modern facilities available for rent.",
-			listingStatus: "For Rent",
+			description,
+			listingStatus,
 			daysOnUno: Math.floor(Math.random() * 60) + 5,
 			views: Math.floor(Math.random() * 2000) + 200,
 			favourites: Math.floor(Math.random() * 80) + 5,
-			fees: {
-				annualRent: prop.rent,
-				legalFeePercent: 10,
-				agentFeePercent: 10,
-				totalPackage: `${Math.round((prop.rent * 1.2) / 1000)}k`,
-				additional: [
-					{ label: "Security Fee", amount: 50000, period: "annually" },
-					{ label: "Cleaning Fee", amount: 10000, period: "annually" },
-					{ label: "Service Fee", amount: 50000, period: "annually" },
-				],
-				additionalNote: "Additional fees are compulsory before you move in.",
-			},
-			additionalInfo: [
-				{ label: "Age of house", value: "Virgin House" },
-				{ label: "No. of Tenants", value: "5 tenants total" },
-				{ label: "Building Type", value: "2 Storey building" },
-				{ label: "Year Built", value: "2025" },
-				{ label: "Gated Compound", value: "Yes" },
-				{ label: "Road Network", value: "Local" },
-			],
-			features: [
-				"Fully Fitted Kitchen",
-				"Parking Space",
-				"Swimming Pool",
-				"Gym",
-				"Backup Generator",
-			],
-			listedBy: { name: "Ryan Cherney", company: "Circle One Realty" },
+			fees: getFees(prop, prop.id),
+			additionalInfo: getAdditionalInfo(prop.id),
+			features: getFeatures(prop.id),
+			listedBy: AGENTS[Math.floor(Math.random() * AGENTS.length)],
 			listingUpdated: "Dec 23, 2025 at 02:04pm",
 			unoChecked: "a few seconds ago",
 			photos: [

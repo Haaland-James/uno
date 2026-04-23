@@ -7,6 +7,7 @@ interface UserState {
 	isLoading: boolean;
 
 	setUser: (user: User | null) => void;
+	updateUser: (patch: Partial<User>) => void;
 	setLoading: (loading: boolean) => void;
 	logout: () => void;
 }
@@ -22,6 +23,13 @@ export const useUserStore = create<UserState>((set) => ({
 			isAuthenticated: !!user,
 			isLoading: false,
 		}),
+
+	updateUser: (patch) =>
+		set((state) =>
+			state.user
+				? { user: { ...state.user, ...patch, updatedAt: new Date() } }
+				: state
+		),
 
 	setLoading: (isLoading) => set({ isLoading }),
 

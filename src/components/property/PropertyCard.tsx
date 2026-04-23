@@ -201,7 +201,7 @@ export function PropertyCard({
           }}
           className={cn(
             "flex items-center justify-center",
-            "bg-[#af2525] rounded-[50px] h-[30px] md:h-[41px] w-[222px] md:w-full mx-auto",
+            "bg-[#af2525] rounded-[50px] h-[30px] md:h-[41px] w-full",
             "text-white text-[14px] md:text-[15px] font-normal tracking-[-0.3px] cursor-pointer select-none",
             "transition-opacity duration-150 hover:opacity-90 active:opacity-80"
           )}

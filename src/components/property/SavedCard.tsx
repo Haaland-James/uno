@@ -27,7 +27,7 @@ export function SavedCard({
   return (
     <div
       className={cn(
-        "flex flex-col justify-between h-[228px] w-[384px] bg-[#fafafa] border border-[rgba(0,0,0,0.1)] rounded-[18px] p-[20px]",
+        "flex flex-col justify-between w-full min-h-[180px] md:min-h-[228px] bg-[#fafafa] border border-[rgba(0,0,0,0.1)] rounded-[18px] p-[20px] gap-4",
         "transition-shadow duration-200 hover:shadow-md",
         className
       )}

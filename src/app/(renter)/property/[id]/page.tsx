@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   Heart,
   Share2,
@@ -17,12 +17,12 @@ import {
   ChevronRight as PlayIcon,
   Camera,
   User,
-  Home,
   X,
 } from "lucide-react";
 import { cn, formatNaira } from "@/lib/utils";
 import { mockPropertyDetails, mockProperties } from "@/lib/mock-data";
 import { PropertyCard } from "@/components/property/PropertyCard";
+import { useFavourites } from "@/hooks/useFavourites";
 
 // ─── Photo Gallery (Desktop) ───────────────────────────────────────
 
@@ -370,12 +370,23 @@ function BulletItem({
 
 export default function PropertyDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const propertyId = params.id as string;
   const property = mockPropertyDetails[propertyId];
+  const { toggleFavourite, isFavourited } = useFavourites();
+  const saved = isFavourited(propertyId);
   const [showPhotoGrid, setShowPhotoGrid] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState("about");
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/find");
+    }
+  };
 
   useEffect(() => {
     const ids = ["about", "fees", "things-to-know"];
@@ -441,7 +452,14 @@ export default function PropertyDetailPage() {
       {/* ── DESKTOP SUB-NAV BAR (sticky below header) ── */}
       <div className="hidden md:block sticky top-16 z-40 bg-white border-b border-black/10">
         <div className="flex items-center justify-between px-[42px] max-w-[1440px] mx-auto w-full">
-          <nav className="flex items-center gap-[28px]">
+          <nav className="flex items-center gap-[20px]">
+            <button
+              onClick={handleBack}
+              aria-label="Go back"
+              className="flex items-center justify-center h-[36px] w-[36px] rounded-full bg-[#af2525] hover:bg-[#93191d] transition-colors"
+            >
+              <ChevronLeft size={20} className="text-white" />
+            </button>
             {([["About", "about"], ["Fees", "fees"], ["Things to Know", "things-to-know"]] as const).map(([label, id]) => (
               <button
                 key={id}
@@ -460,9 +478,19 @@ export default function PropertyDetailPage() {
             ))}
           </nav>
           <div className="flex items-center gap-[20px]">
-            <button className="flex items-center gap-[6px] text-[14px] text-[#161515] hover:text-[#af2525] transition-colors">
-              <Heart size={18} />
-              <span>Save</span>
+            <button
+              onClick={() => toggleFavourite(propertyId)}
+              className={cn(
+                "flex items-center gap-[6px] text-[14px] transition-colors",
+                saved ? "text-[#af2525]" : "text-[#161515] hover:text-[#af2525]"
+              )}
+              aria-pressed={saved}
+            >
+              <Heart
+                size={18}
+                className={saved ? "fill-[#af2525] text-[#af2525]" : ""}
+              />
+              <span>{saved ? "Saved" : "Save"}</span>
             </button>
             <button className="flex items-center gap-[6px] text-[14px] text-[#161515] hover:text-[#af2525] transition-colors">
               <Share2 size={18} />
@@ -473,7 +501,7 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* ── PHOTO GALLERY ── */}
-      <section className="md:px-[42px] md:max-w-[1440px] md:mx-auto md:w-full">
+      <section className="md:px-[42px] md:max-w-[1440px] md:mx-auto md:w-full md:mt-[20px]">
         <DesktopGallery
           photos={photos}
           onSeeMore={() => setShowPhotoGrid(true)}
@@ -482,18 +510,23 @@ export default function PropertyDetailPage() {
         <MobileGallery photos={photos} onPhotoClick={(i) => setLightboxIndex(i)} />
       </section>
 
-      {/* ── MOBILE DRAWER HANDLE ── */}
-      <div className="md:hidden flex justify-center pt-[12px] -mb-[6px]">
-        <div className="w-[66px] h-[8px] rounded-[50px] bg-[#af2525]" />
-      </div>
-
       {/* Mobile action buttons (heart + share) overlaying the photo */}
-      <div className="md:hidden absolute right-[15px] top-[73px] z-30 flex flex-col gap-[15px]">
-        <button className="flex items-center justify-center w-[27px] h-[27px] rounded-full bg-black">
-          <Heart size={15} className="text-white" />
+      <div className="md:hidden absolute right-[15px] top-[80px] z-30 flex flex-col gap-[15px]">
+        <button
+          onClick={() => toggleFavourite(propertyId)}
+          aria-label={saved ? "Remove from favourites" : "Save to favourites"}
+          className={cn(
+            "flex items-center justify-center w-[32px] h-[32px] rounded-full",
+            saved ? "bg-[#af2525]" : "bg-black"
+          )}
+        >
+          <Heart
+            size={16}
+            className={cn("text-white", saved && "fill-white")}
+          />
         </button>
-        <button className="flex items-center justify-center w-[27px] h-[27px] rounded-full bg-[#ffcfcf]">
-          <Share2 size={14} className="text-[#af2525]" />
+        <button className="flex items-center justify-center w-[32px] h-[32px] rounded-full bg-[#ffcfcf]">
+          <Share2 size={15} className="text-[#af2525]" />
         </button>
       </div>
 
@@ -730,31 +763,6 @@ export default function PropertyDetailPage() {
           </div>
         </section>
 
-        {/* ── CTA Banner ── */}
-        <section className="mt-[40px] md:mt-[60px] px-[16px] md:px-0">
-          <div className="relative flex flex-col items-center overflow-hidden rounded-[15px] bg-[#af2525] px-[24px] py-[32px] text-center md:flex-row md:items-center md:justify-between md:px-[60px] md:py-[50px] md:text-left">
-            <div className="flex max-w-[520px] flex-col items-center gap-[12px] md:items-start md:gap-[16px]">
-              <h2 className="text-[26px] font-normal leading-[1.2] text-white md:text-[46px]">
-                Find your dream home today
-              </h2>
-              <p className="text-[12px] leading-[1.5] text-white/75 md:text-[14px]">
-                Professional property snagging that catches defects developers hope
-                you&apos;ll miss, ensuring your dream home meets the highest quality
-                standards.
-              </p>
-              <Link
-                href="/login"
-                className="mt-[4px] flex h-[36px] items-center rounded-full bg-[#0a0a0a] px-[24px] text-[14px] font-normal text-white transition-opacity hover:opacity-90 md:h-[41px] md:px-[28px] md:text-[15px]"
-              >
-                Join / Sign In
-              </Link>
-            </div>
-            <div className="hidden shrink-0 items-center justify-center md:flex">
-              <Home size={220} strokeWidth={1} className="text-white/90" />
-            </div>
-          </div>
-        </section>
-
         <div className="h-[40px] md:h-[60px]" />
       </main>
 
@@ -763,8 +771,18 @@ export default function PropertyDetailPage() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-[8px]">
             <div className="flex items-center gap-[7px]">
-              <button className="flex items-center justify-center w-[27px] h-[27px] rounded-full bg-black">
-                <Heart size={15} className="text-white" />
+              <button
+                onClick={() => toggleFavourite(propertyId)}
+                aria-label={saved ? "Remove from favourites" : "Save to favourites"}
+                className={cn(
+                  "flex items-center justify-center w-[27px] h-[27px] rounded-full",
+                  saved ? "bg-[#af2525]" : "bg-black"
+                )}
+              >
+                <Heart
+                  size={15}
+                  className={cn("text-white", saved && "fill-white")}
+                />
               </button>
               <button className="flex items-center justify-center w-[27px] h-[27px] rounded-full bg-[#ffcfcf]">
                 <Share2 size={14} className="text-[#af2525]" />

@@ -11,20 +11,14 @@ export type Furnishing = "UNFURNISHED" | "SEMI_FURNISHED" | "FULLY_FURNISHED";
 
 export type RentPeriod = "MONTH" | "YEAR";
 
-export type PropertyStatus =
-	| "DRAFT"
-	| "PENDING"
-	| "ACTIVE"
-	| "PAUSED"
-	| "RENTED"
-	| "REJECTED";
+export type PropertyStatus = "AVAILABLE" | "PUBLISHED" | "UNPUBLISHED";
 
 export type AvailabilityStatus =
 	| "AVAILABLE_NOW"
 	| "AVAILABLE_FROM"
 	| "RENTED";
 
-export type VerificationStatus = "PENDING" | "VERIFIED" | "REJECTED";
+export type VerificationStatus = "IN_PROGRESS" | "PENDING" | "VERIFIED" | "REJECTED";
 
 export interface PropertyPhoto {
 	id: string;
@@ -98,6 +92,12 @@ export interface PropertyCardData {
 	availabilityStatus: AvailabilityStatus;
 	isFavourited?: boolean;
 	createdAt: Date;
+	// Landlord-side fields (optional; populated for "My Listings" view)
+	status?: PropertyStatus;
+	views?: number;
+	inquiryCount?: number;
+	savedCount?: number;
+	streetAddress?: string;
 }
 
 // Detailed property data for single-view page

@@ -367,9 +367,9 @@ export default function SearchPage() {
                 <p className="text-[15px] text-[rgba(0,0,0,0.4)]">No properties match your filters</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-x-[20px] gap-y-[40px]">
+              <div className="grid grid-cols-2 gap-[20px]">
                 {paginated.map((p) => (
-                  <PropertyCard key={p.id} data={p} isFavourited={favourites.has(p.id)} onToggleFavourite={toggleFav} className="w-full" />
+                  <PropertyCard key={p.id} data={p} isFavourited={favourites.has(p.id)} onToggleFavourite={toggleFav} className="w-full md:w-full" />
                 ))}
               </div>
             )}

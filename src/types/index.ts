@@ -21,5 +21,8 @@ export type {
 	LandlordType,
 	VerificationLevel,
 	ContactMethod,
-	ContactStatus
+	ContactStatus,
+	Gender,
+	NotificationChannel,
+	NotificationFrequency
 } from "./user";

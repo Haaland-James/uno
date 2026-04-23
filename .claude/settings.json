@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs -0 rm -f)"
+      "Bash(xargs -0 rm -f)",
+      "Read(//d/DOCUMENT/Project/ Store/Uno/uno/src/app/\\(landlord/\\)/properties/new/**)",
+      "Read(//d/DOCUMENT/Project/ Store/Uno/uno/src/components/property/**)",
+      "Read(//d/DOCUMENT/Project/ Store/Uno/uno/src/app/\\(auth/\\)/signup/**)"
     ]
   }
 }

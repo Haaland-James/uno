@@ -8,6 +8,8 @@ export type ContactMethod = "WHATSAPP" | "PHONE" | "EMAIL";
 
 export type ContactStatus = "UNREAD" | "READ" | "RESPONDED" | "ARCHIVED";
 
+export type Gender = "MALE" | "FEMALE" | "NON_BINARY" | "PREFER_NOT_TO_SAY";
+
 export interface User {
 	id: string;
 	phone: string;
@@ -16,6 +18,8 @@ export interface User {
 	emailVerified: boolean;
 	name?: string | null;
 	photo?: string | null;
+	gender?: Gender | null;
+	address?: string | null;
 	role: Role;
 	createdAt: Date;
 	updatedAt: Date;
@@ -54,14 +58,19 @@ export interface ContactRequest {
 	createdAt: Date;
 }
 
+export type NotificationChannel = "email" | "push" | "whatsapp";
+export type NotificationFrequency = "never" | "instant" | "daily" | "weekly";
+
 export interface SavedSearch {
 	id: string;
 	userId: string;
 	name: string;
+	searchType: string;
 	criteria: Record<string, unknown>;
 	isActive: boolean;
-	notifyInstant: boolean;
-	notifyEmail: boolean;
+	notificationsEnabled: boolean;
+	notificationChannels: NotificationChannel[];
+	notificationFrequency: NotificationFrequency;
 	newResultsCount: number;
 	createdAt: Date;
 	updatedAt: Date;

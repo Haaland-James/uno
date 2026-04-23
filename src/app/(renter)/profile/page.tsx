@@ -1,118 +1,188 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
 	User,
-	Heart,
-	Bell,
-	Search,
-	Settings,
-	ChevronRight,
-	LogOut,
-	Building2,
+	Mail,
+	Phone,
+	MapPin,
+	Settings as SettingsIcon,
+	CircleMinus,
 } from "lucide-react";
 
-export default function ProfilePage() {
+function GenderIcon({ size = 20 }: { size?: number }) {
 	return (
-		<div className="page-container py-4 md:py-6">
-			{/* Profile Header */}
-			<div className="card-uno mb-6">
-				<div className="flex items-center gap-4">
-					<div className="h-16 w-16 rounded-full bg-uno-red-50 flex items-center justify-center">
-						<User className="h-8 w-8 text-uno-red" />
-					</div>
-					<div className="flex-1">
-						<h1 className="text-heading-3 text-content-primary">
-							Guest User
-						</h1>
-						<p className="text-small text-content-secondary">
-							Sign in to save your preferences
-						</p>
-					</div>
-				</div>
-				<div className="mt-4 flex gap-3">
-					<Link
-						href="/login"
-						className="btn-primary flex-1 py-2.5 text-center text-small"
-					>
-						Sign In
-					</Link>
-					<Link
-						href="/signup"
-						className="btn-secondary flex-1 py-2.5 text-center text-small"
-					>
-						Sign Up
-					</Link>
-				</div>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width={size}
+			height={size}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="1.75"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<circle cx="10" cy="14" r="5" />
+			<path d="M19 5l-5.5 5.5" />
+			<path d="M14 5h5v5" />
+		</svg>
+	);
+}
+import { useUserStore } from "@/stores/userStore";
+import { AvatarRow } from "@/components/profile/AvatarRow";
+import { ProfileRow } from "@/components/profile/ProfileRow";
+import {
+	NameEditor,
+	GenderEditor,
+	SimpleEditor,
+} from "@/components/profile/editors";
+import type { Gender } from "@/types";
+
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((n) => n[0].toUpperCase())
+		.join("");
+}
+
+const GENDER_LABELS: Record<Gender, string> = {
+	MALE: "Male",
+	FEMALE: "Female",
+	NON_BINARY: "Non-binary",
+	PREFER_NOT_TO_SAY: "Prefer not to say",
+};
+
+type RowKey = "name" | "gender" | "email" | "phone" | "address";
+
+export default function ProfilePage() {
+	const router = useRouter();
+	const user = useUserStore((s) => s.user);
+	const updateUser = useUserStore((s) => s.updateUser);
+
+	const [openRow, setOpenRow] = useState<RowKey | null>(null);
+
+	if (!user) return null;
+
+	const toggle = (key: RowKey) =>
+		setOpenRow((prev) => (prev === key ? null : key));
+	const close = () => setOpenRow(null);
+
+	const initials = user.name ? getInitials(user.name) : "U";
+
+	return (
+		<div className="mx-auto w-full max-w-[720px] px-4 py-6 md:px-8 md:py-10">
+			<div className="mb-6 flex items-center gap-2">
+				<CircleMinus className="h-6 w-6 text-[#af2525]" strokeWidth={2} />
+				<h1 className="text-[22px] font-semibold text-black md:text-[26px]">
+					Profile
+				</h1>
 			</div>
 
-			{/* Menu Items */}
-			<div className="space-y-2">
-				<h2 className="text-tiny font-semibold text-content-muted uppercase tracking-wider px-1 mb-2">
-					Your Activity
-				</h2>
-				{[
-					{ href: "/favourites", label: "Saved Properties", icon: Heart, count: "0" },
-					{ href: "/saved-searches", label: "Saved Searches", icon: Search, count: "0" },
-				].map((item) => (
-					<Link
-						key={item.href}
-						href={item.href}
-						className="card-uno flex items-center gap-3 !p-4"
-					>
-						<div className="h-10 w-10 rounded-xl bg-uno-red-50 flex items-center justify-center">
-							<item.icon className="h-5 w-5 text-uno-red" />
-						</div>
-						<span className="flex-1 text-body text-content-primary font-medium">
-							{item.label}
-						</span>
-						<span className="text-small text-content-muted mr-1">{item.count}</span>
-						<ChevronRight className="h-4 w-4 text-content-muted" />
-					</Link>
-				))}
+			<div className="overflow-hidden rounded-[14px]">
+				<AvatarRow
+					currentPhoto={user.photo}
+					initials={initials}
+					onSave={(photo) => updateUser({ photo })}
+				/>
 
-				<h2 className="text-tiny font-semibold text-content-muted uppercase tracking-wider px-1 mb-2 mt-6">
-					Settings
-				</h2>
-				{[
-					{ href: "/settings", label: "Notifications", icon: Bell },
-					{ href: "/settings", label: "App Settings", icon: Settings },
-				].map((item, idx) => (
-					<Link
-						key={idx}
-						href={item.href}
-						className="card-uno flex items-center gap-3 !p-4"
-					>
-						<div className="h-10 w-10 rounded-xl bg-surface-tertiary flex items-center justify-center">
-							<item.icon className="h-5 w-5 text-content-secondary" />
-						</div>
-						<span className="flex-1 text-body text-content-primary font-medium">
-							{item.label}
-						</span>
-						<ChevronRight className="h-4 w-4 text-content-muted" />
-					</Link>
-				))}
-
-				<h2 className="text-tiny font-semibold text-content-muted uppercase tracking-wider px-1 mb-2 mt-6">
-					Landlord
-				</h2>
-				<Link
-					href="/dashboard"
-					className="card-uno flex items-center gap-3 !p-4"
+				<ProfileRow
+					icon={<User size={20} strokeWidth={1.75} />}
+					label="Name"
+					value={user.name}
+					isOpen={openRow === "name"}
+					onToggle={() => toggle("name")}
 				>
-					<div className="h-10 w-10 rounded-xl bg-verified/10 flex items-center justify-center">
-						<Building2 className="h-5 w-5 text-verified" />
-					</div>
-					<span className="flex-1 text-body text-content-primary font-medium">
-						Switch to Landlord
-					</span>
-					<ChevronRight className="h-4 w-4 text-content-muted" />
-				</Link>
-			</div>
+					<NameEditor
+						current={user.name}
+						onSave={(name) => {
+							updateUser({ name });
+							close();
+						}}
+					/>
+				</ProfileRow>
 
-			{/* Version */}
-			<div className="mt-8 text-center">
-				<p className="text-tiny text-content-muted">UNO v0.1.0 (Beta)</p>
+				<ProfileRow
+					icon={<GenderIcon size={20} />}
+					label="Gender"
+					value={user.gender ? GENDER_LABELS[user.gender] : null}
+					isOpen={openRow === "gender"}
+					onToggle={() => toggle("gender")}
+				>
+					<GenderEditor
+						current={user.gender ?? null}
+						onSave={(gender) => {
+							updateUser({ gender });
+							close();
+						}}
+					/>
+				</ProfileRow>
+
+				<ProfileRow
+					icon={<Mail size={20} strokeWidth={1.75} />}
+					label="Email"
+					value={user.email}
+					isOpen={openRow === "email"}
+					onToggle={() => toggle("email")}
+				>
+					<SimpleEditor
+						current={user.email}
+						placeholder="your@email.com"
+						type="email"
+						onSave={(email) => {
+							updateUser({ email });
+							close();
+						}}
+					/>
+				</ProfileRow>
+
+				<ProfileRow
+					icon={<Phone size={20} strokeWidth={1.75} />}
+					label="Phone Number"
+					value={user.phone}
+					isOpen={openRow === "phone"}
+					onToggle={() => toggle("phone")}
+				>
+					<SimpleEditor
+						current={user.phone}
+						placeholder="+234 801 234 5678"
+						type="tel"
+						onSave={(phone) => {
+							updateUser({ phone });
+							close();
+						}}
+					/>
+				</ProfileRow>
+
+				<ProfileRow
+					icon={<MapPin size={20} strokeWidth={1.75} />}
+					label="Address"
+					value={user.address}
+					isOpen={openRow === "address"}
+					onToggle={() => toggle("address")}
+				>
+					<SimpleEditor
+						current={user.address}
+						placeholder="Street, City, State"
+						onSave={(address) => {
+							updateUser({ address });
+							close();
+						}}
+					/>
+				</ProfileRow>
+
+				<ProfileRow
+					icon={<SettingsIcon size={20} strokeWidth={1.75} />}
+					label="Account Setting"
+					value="Manage your account preferences"
+					isOpen={false}
+					onToggle={() => router.push("/settings")}
+					actionMode="edit"
+				/>
 			</div>
 		</div>
 	);
