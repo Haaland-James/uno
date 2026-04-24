@@ -1,24 +1,37 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { PropertyCardData } from "@/types";
+import { useSession } from "next-auth/react";
+import { useAuthModalStore } from "@/stores/authModalStore";
 
 export function useFavourites() {
+	const { status } = useSession();
+	const openLogin = useAuthModalStore((s) => s.openLogin);
+
 	const [favourites, setFavourites] = useState<Set<string>>(
 		new Set(["prop_002", "prop_007"]) // Mock initial favourites
 	);
 
-	const toggleFavourite = useCallback((propertyId: string) => {
-		setFavourites((prev) => {
-			const next = new Set(prev);
-			if (next.has(propertyId)) {
-				next.delete(propertyId);
-			} else {
-				next.add(propertyId);
+	const toggleFavourite = useCallback(
+		(propertyId: string) => {
+			// Guests must sign in first; modal captures the intent so we can replay
+			// the favourite once Stage 3 wires up the persistent /api/favourites endpoint.
+			if (status !== "authenticated") {
+				openLogin({ type: "favourite", propertyId });
+				return;
 			}
-			return next;
-		});
-	}, []);
+			setFavourites((prev) => {
+				const next = new Set(prev);
+				if (next.has(propertyId)) {
+					next.delete(propertyId);
+				} else {
+					next.add(propertyId);
+				}
+				return next;
+			});
+		},
+		[status, openLogin]
+	);
 
 	const isFavourited = useCallback(
 		(propertyId: string) => favourites.has(propertyId),

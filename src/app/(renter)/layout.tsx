@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Header } from "@/components/layout/Header";
+import { BrowseHeader } from "@/components/layout/BrowseHeader";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 
@@ -15,7 +16,7 @@ export default function RenterLayout({
 
 	return (
 		<div className="flex min-h-screen flex-col">
-			<Header />
+			{isPropertyDetail ? <BrowseHeader /> : <Header />}
 			<div className="flex flex-1">
 				{!isPropertyDetail && <Sidebar />}
 				<main

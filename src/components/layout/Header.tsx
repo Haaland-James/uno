@@ -15,6 +15,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signOut } from "next-auth/react";
 import { useUserStore } from "@/stores/userStore";
 import { useHeaderStore } from "@/stores/headerStore";
 import { MobileDrawer } from "@/components/layout/MobileDrawer";
@@ -39,7 +40,7 @@ export function Header({ className }: { className?: string }) {
   const pathname = usePathname();
   const isPropertyDetail = pathname?.startsWith("/property/") ?? false;
   const user = useUserStore((s) => s.user);
-  const logout = useUserStore((s) => s.logout);
+  const logout = () => signOut({ callbackUrl: "/" });
   const showSearch = useHeaderStore((s) => s.showSearch);
 
   const handleBack = () => {

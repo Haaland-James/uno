@@ -20,6 +20,7 @@ import {
 	Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signOut } from "next-auth/react";
 import { useUserStore } from "@/stores/userStore";
 import { getMyListings } from "@/lib/mock-data";
 
@@ -126,7 +127,7 @@ function getInitials(name: string): string {
 export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
 	const pathname = usePathname();
 	const user = useUserStore((s) => s.user);
-	const logout = useUserStore((s) => s.logout);
+	const logout = () => signOut({ callbackUrl: "/" });
 	const hasListings = getMyListings().length > 0;
 
 	const initials = user?.name ? getInitials(user.name) : "U";

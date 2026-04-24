@@ -13,7 +13,9 @@ function VerifyForm() {
   const mode = (searchParams.get("mode") ?? "LOGIN") as "SIGNUP" | "LOGIN";
   const name = searchParams.get("name") ?? undefined;
   const phone = searchParams.get("phone") ?? undefined;
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  // Default landing after auth: /feed (the authed home).
+  // Honour an explicit ?callbackUrl=… (set by middleware on protected-route bounces).
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/feed";
   const devCode = searchParams.get("devCode");
 
   const [code, setCode] = useState("");

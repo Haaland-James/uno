@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Heart, MapPin, Bath, BedDouble, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn, formatNaira } from "@/lib/utils";
 import type { PropertyCardData } from "@/types/property";
@@ -56,12 +57,15 @@ export function PropertyCard({
   // Pick up to 3 amenities for the features row
   const features = data.amenities.slice(0, 3);
 
+  const detailHref = `/property/${data.id}`;
+
   return (
-    <div
+    <Link
+      href={detailHref}
       className={cn(
         "flex flex-col bg-white border border-[rgba(0,0,0,0.06)] rounded-[15px] pb-[10px]",
         "w-[234px] md:w-[325px]",
-        "transition-shadow duration-200 hover:shadow-lg",
+        "transition-shadow duration-200 hover:shadow-lg cursor-pointer",
         className
       )}
     >
@@ -124,7 +128,7 @@ export function PropertyCard({
           </>
         )}
 
-        {/* Heart button */}
+        {/* Heart button — auth gate lives inside useFavourites */}
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -192,24 +196,19 @@ export function PropertyCard({
           )}
         </div>
 
-        {/* CTA button */}
+        {/* CTA button — navigates to detail page (same target as the card body) */}
         <div
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") e.currentTarget.click();
-          }}
           className={cn(
             "flex items-center justify-center",
             "bg-[#af2525] rounded-[50px] h-[30px] md:h-[41px] w-full",
-            "text-white text-[14px] md:text-[15px] font-normal tracking-[-0.3px] cursor-pointer select-none",
+            "text-white text-[14px] md:text-[15px] font-normal tracking-[-0.3px] select-none",
             "transition-opacity duration-150 hover:opacity-90 active:opacity-80"
           )}
         >
           Contact for Details
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
