@@ -143,12 +143,12 @@ export default function ProfilePage() {
 				<ProfileRow
 					icon={<Phone size={20} strokeWidth={1.75} />}
 					label="Phone Number"
-					value={user.phone}
+					value={user.phone ?? "Add phone number"}
 					isOpen={openRow === "phone"}
 					onToggle={() => toggle("phone")}
 				>
 					<SimpleEditor
-						current={user.phone}
+						current={user.phone ?? ""}
 						placeholder="+234 801 234 5678"
 						type="tel"
 						onSave={(phone) => {

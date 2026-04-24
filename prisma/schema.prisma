@@ -9,11 +9,11 @@ datasource db {
 
 model User {
   id              String    @id @default(cuid())
-  phone           String    @unique
-  phoneVerified   Boolean   @default(false)
-  email           String?   @unique
+  email           String    @unique
   emailVerified   Boolean   @default(false)
-  name            String?
+  phone           String?
+  phoneVerified   Boolean   @default(false)
+  name            String
   photo           String?
   role            Role      @default(RENTER)
 
@@ -22,9 +22,34 @@ model User {
   favourites      Favourite[]
   savedSearches   SavedSearch[]
   contactsSent    ContactRequest[] @relation("TenantContacts")
+  otpCodes        OtpCode[]
 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@index([phone])
+}
+
+model OtpCode {
+  id          String    @id @default(cuid())
+  email       String
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  codeHash    String
+  purpose     OtpPurpose
+  attempts    Int       @default(0)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([email, purpose])
+  @@index([expiresAt])
+}
+
+enum OtpPurpose {
+  SIGNUP
+  LOGIN
+  EMAIL_CHANGE
 }
 
 enum Role {

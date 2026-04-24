@@ -1,29 +1,26 @@
 "use client";
 
-import { useUserStore } from "@/stores/userStore";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 export function useAuth() {
-	const { user, isAuthenticated, isLoading, setUser, logout } = useUserStore();
+  const { data: session, status } = useSession();
 
-	const login = async (phone: string) => {
-		// TODO: Implement actual auth with NextAuth
-		setUser({
-			id: "mock_user_1",
-			phone,
-			phoneVerified: true,
-			emailVerified: false,
-			name: "Test User",
-			role: "RENTER",
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		});
-	};
+  const user = session?.user
+    ? {
+        id: session.user.id,
+        email: session.user.email ?? "",
+        name: session.user.name ?? "",
+        role: session.user.role,
+        photo: session.user.image ?? null,
+      }
+    : null;
 
-	return {
-		user,
-		isAuthenticated,
-		isLoading,
-		login,
-		logout,
-	};
+  return {
+    user,
+    isAuthenticated: status === "authenticated",
+    isLoading: status === "loading",
+    signOut: () => signOut({ callbackUrl: "/" }),
+    /** Low-level helper — most pages should use the request-otp + verify flow instead. */
+    signIn,
+  };
 }

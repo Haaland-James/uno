@@ -63,8 +63,10 @@ async function main() {
   // ── Demo renter ────────────────────────────────────────────
   const renter = await prisma.user.create({
     data: {
+      email: "renter@demo.uno",
+      emailVerified: true,
       phone: "+2348099999999",
-      phoneVerified: true,
+      phoneVerified: false,
       name: "Demo Renter",
       role: Role.RENTER,
     },
@@ -73,7 +75,8 @@ async function main() {
 
   // ── Properties from mock-data ──────────────────────────────
   let count = 0;
-  for (const [i, mock] of mockProperties.entries()) {
+  for (let i = 0; i < mockProperties.length; i++) {
+    const mock = mockProperties[i];
     const landlordId = i % 2 === 0 ? landlordA.id : landlordB.id;
 
     // Map mock VerificationStatus → Prisma status fields
@@ -109,7 +112,7 @@ async function main() {
         goesLiveAt: status === PropertyStatus.ACTIVE ? mock.createdAt : null,
         createdAt: mock.createdAt,
         photos: {
-          create: mock.photos.map((p, order) => ({
+          create: mock.photos.map((p: { url: string; isMain: boolean }, order: number) => ({
             url: p.url,
             isMain: p.isMain,
             order,

@@ -12,7 +12,17 @@
       "Bash(npx prisma *)",
       "Bash(npm install *)",
       "Bash(git check-ignore *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git tag *)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch -f --index-filter \"git rm --cached --ignore-unmatch .claude/settings.local.json\" --prune-empty -- --all)",
+      "Bash(git stash *)",
+      "Bash(xargs -n1 git update-ref -d)",
+      "Bash(git reflog *)",
+      "Bash(git gc *)"
+    ],
+    "additionalDirectories": [
+      "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\auth"
     ]
   }
 }

@@ -12,11 +12,11 @@ export type Gender = "MALE" | "FEMALE" | "NON_BINARY" | "PREFER_NOT_TO_SAY";
 
 export interface User {
 	id: string;
-	phone: string;
-	phoneVerified: boolean;
-	email?: string | null;
+	email: string;
 	emailVerified: boolean;
-	name?: string | null;
+	phone?: string | null;
+	phoneVerified: boolean;
+	name: string;
 	photo?: string | null;
 	gender?: Gender | null;
 	address?: string | null;

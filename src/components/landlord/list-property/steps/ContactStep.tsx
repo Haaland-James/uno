@@ -20,7 +20,7 @@ export function ContactStep() {
 			patch.contactLastName = rest.join(" ");
 		}
 		if (!data.contactEmail && user.email) patch.contactEmail = user.email;
-		if (!data.contactPhone && user.phone) patch.contactPhone = user.phone;
+		if (!data.contactPhone && user.phone) patch.contactPhone = user.phone ?? "";
 		if (Object.keys(patch).length > 0) updateData(patch);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user]);

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
 import { siteConfig } from "@/../config/site";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 
 export const metadata: Metadata = {
 	title: {
@@ -49,7 +50,7 @@ export default function RootLayout({
 				/>
 			</head>
 			<body className="min-h-screen bg-surface-secondary font-sans antialiased">
-				{children}
+				<SessionProvider>{children}</SessionProvider>
 			</body>
 		</html>
 	);
