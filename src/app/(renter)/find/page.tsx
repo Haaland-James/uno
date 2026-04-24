@@ -9,9 +9,9 @@ import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useFavourites } from "@/hooks/useFavourites";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useUserStore } from "@/stores/userStore";
 import { useHeaderStore } from "@/stores/headerStore";
-import { mockProperties } from "@/lib/mock-data";
 
 type SearchField = "location" | "beds" | "type" | null;
 
@@ -66,8 +66,9 @@ export default function FindPage() {
 		};
 	}, [setShowSearch]);
 
-	// Recently Viewed — first 9 properties
-	const recentlyViewed: typeof mockProperties = mockProperties.slice(0, 9);
+	// Recently Viewed — actual properties this user has opened (localStorage MVP).
+	// Stage 4+ can replace with a per-user DB table for cross-device sync.
+	const { items: recentlyViewed } = useRecentlyViewed(9);
 
 	return (
 		<div className="w-full px-3 md:px-8 pt-14 pb-10 md:py-12">

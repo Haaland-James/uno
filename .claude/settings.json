@@ -19,10 +19,40 @@
       "Bash(git stash *)",
       "Bash(xargs -n1 git update-ref -d)",
       "Bash(git reflog *)",
-      "Bash(git gc *)"
+      "Bash(git gc *)",
+      "Bash(npm run *)",
+      "Bash(disown)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/api/properties?pageSize=2)",
+      "Bash(curl -s \"http://localhost:3000/api/properties?pageSize=2\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?type=FLAT&beds=2&pageSize=2\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('total:', d['data']['total']\\); print\\('first title:', d['data']['items'][0]['title'] if d['data']['items'] else 'none'\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties/featured?type=hot&limit=3\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('count:', len\\(d['data']['items']\\)\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?pageSize=1\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; print\\('similar count:', len\\(d['items']\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code}\\\\n\" \"http://localhost:3000/api/properties/nonsense\")",
+      "Bash(curl -s -o /tmp/r1 -w \"homepage: %{http_code} \\(%{time_total}s\\)\\\\n\" \"http://localhost:3000/\")",
+      "Bash(curl -s -o /tmp/r2 -w \"search:   %{http_code} \\(%{time_total}s\\)\\\\n\" \"http://localhost:3000/search\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?q=Nwaniba\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; print\\('total:', d['total']\\); [print\\(' -', p['title'], '|', p['area']\\) for p in d['items'][:3]]\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?pageSize=50\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; counts=[len\\(p['photos']\\) for p in d['items']]; print\\('min:', min\\(counts\\), 'max:', max\\(counts\\), 'avg:', sum\\(counts\\)/len\\(counts\\)\\); print\\('under 6:', sum\\(1 for c in counts if c < 6\\), '/', len\\(counts\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; counts=[len\\(p['photos']\\) for p in d['items']]; print\\('photos min:', min\\(counts\\), 'max:', max\\(counts\\)\\); print\\('properties under 6 photos:', sum\\(1 for c in counts if c < 6\\)\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?pageSize=3\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; print\\('returned:', len\\(d['items']\\), 'items'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(tasklist)",
+      "Bash(curl -s \"http://localhost:3000/api/properties?listingType=SALE\")",
+      "Bash(python -c \"import sys,json; print\\('SALE total:', json.load\\(sys.stdin\\)['data']['total']\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?listingType=LEASE\")",
+      "Bash(python -c \"import sys,json; print\\('LEASE total:', json.load\\(sys.stdin\\)['data']['total']\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?listingType=RENT\")",
+      "Bash(python -c \"import sys,json; print\\('RENT total:', json.load\\(sys.stdin\\)['data']['total']\\)\")"
     ],
     "additionalDirectories": [
-      "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\auth"
+      "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\auth",
+      "\\tmp"
     ]
   }
 }

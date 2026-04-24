@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Heart, ArrowUpDown, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+// TODO Stage 3 Phase C: replace mock with `GET /api/favourites` once endpoint exists
 import { mockProperties } from "@/lib/mock-data";
 import { useFavourites } from "@/hooks/useFavourites";
 import { PropertyCard } from "@/components/property/PropertyCard";

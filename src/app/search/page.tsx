@@ -18,7 +18,9 @@ import { PropertyCard } from "@/components/property/PropertyCard";
 import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
 import { PricingDropDown } from "@/components/property/PricingDropDown";
-import { mockProperties } from "@/lib/mock-data";
+import { propertiesClient } from "@/lib/clients/properties";
+import { useFavourites } from "@/hooks/useFavourites";
+import type { PropertyCardData } from "@/types/property";
 import { cn } from "@/lib/utils";
 
 type OpenFilter = "beds" | "type" | "price" | "sort" | "listingType" | null;
@@ -32,7 +34,7 @@ const SORT_OPTIONS = [
 const PAGE_SIZE = 8;
 
 export default function SearchPage() {
-  const [searchText, setSearchText] = useState("Nwaniba");
+  const [searchText, setSearchText] = useState("");
   const [openFilter, setOpenFilter] = useState<OpenFilter>(null);
   const [listingType, setListingType] = useState<"rent" | "sale">("rent");
   const [beds, setBeds] = useState(0);
@@ -42,8 +44,11 @@ export default function SearchPage() {
   const [maxPrice, setMaxPrice] = useState(100_000_000);
   const [sortBy, setSortBy] = useState("newest");
   const [page, setPage] = useState(1);
-  const [favourites, setFavourites] = useState<Set<string>>(new Set());
+  const { isFavourited, toggleFavourite } = useFavourites();
   const [mobileView, setMobileView] = useState<"map" | "list">("list");
+  const [serverItems, setServerItems] = useState<PropertyCardData[]>([]);
+  const [serverTotal, setServerTotal] = useState(0);
+  const [searchLoading, setSearchLoading] = useState(true);
   const [sheetPosition, setSheetPosition] = useState<"half" | "full">("half");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
@@ -102,37 +107,53 @@ export default function SearchPage() {
     }
   }, []);
 
-  const toggleFav = (id: string) =>
-    setFavourites((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+  const toggleFav = toggleFavourite;
 
-  /* ── Filter + sort ──────────────────────────────────── */
-  const filtered = mockProperties.filter((p) => {
-    if (beds > 0 && p.bedrooms < beds) return false;
-    if (baths > 0 && p.bathrooms < baths) return false;
-    if (propertyTypes.length > 0 && !propertyTypes.includes("Any")) {
-      const match = propertyTypes.some(
-        (t) =>
-          p.propertyType.toLowerCase().includes(t.toLowerCase().replace(/[\s-]/g, "")) ||
-          t.toLowerCase().includes(p.propertyType.toLowerCase().replace("_", ""))
-      );
-      if (!match) return false;
-    }
-    if (p.rent < minPrice || p.rent > maxPrice) return false;
-    return true;
-  });
+  // Map UI prop type tokens to schema enum values
+  const propTypeEnum = propertyTypes
+    .filter((t) => t !== "Any")
+    .map((t) => t.toUpperCase().replace(/[\s-]/g, "_"))
+    .filter((t) => ["FLAT", "HOUSE", "DUPLEX", "SELF_CONTAIN", "BUNGALOW", "COMMERCIAL", "LAND"].includes(t));
 
-  const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === "price_asc") return a.rent - b.rent;
-    if (sortBy === "price_desc") return b.rent - a.rent;
-    return b.createdAt.getTime() - a.createdAt.getTime();
-  });
+  // Fetch from API whenever filters change (debounced)
+  useEffect(() => {
+    let cancelled = false;
+    setSearchLoading(true);
+    const handle = setTimeout(() => {
+      propertiesClient
+        .list({
+          q: searchText.trim() || undefined,
+          beds: beds > 0 ? [beds] : undefined,
+          baths: baths > 0 ? [baths] : undefined,
+          type: propTypeEnum.length ? propTypeEnum : undefined,
+          listingType: listingType === "sale" ? ["SALE"] : ["RENT", "LEASE"],
+          minPrice: minPrice > 0 ? minPrice : undefined,
+          maxPrice: maxPrice < 100_000_000 ? maxPrice : undefined,
+          sort: sortBy as "newest" | "price_asc" | "price_desc",
+          page,
+          pageSize: PAGE_SIZE,
+        })
+        .then((res) => {
+          if (cancelled) return;
+          setServerItems(res.items);
+          setServerTotal(res.total);
+          setSearchLoading(false);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setServerItems([]);
+          setServerTotal(0);
+          setSearchLoading(false);
+        });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [searchText, beds, baths, propTypeEnum.join(","), listingType, minPrice, maxPrice, sortBy, page]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginated = serverItems;
+  const totalPages = Math.max(1, Math.ceil(serverTotal / PAGE_SIZE));
   const currentSortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Newest";
 
   useEffect(() => { setPage(1); }, [beds, baths, propertyTypes, minPrice, maxPrice]);
@@ -336,7 +357,7 @@ export default function SearchPage() {
           <div className="flex flex-shrink-0 items-end justify-between border-b border-[rgba(0,0,0,0.06)] px-[24px] py-[12px]">
             <div className="flex flex-col gap-[3px]">
               <p className="text-[15px] font-medium text-[#161515]">
-                {sorted.length} Properties listed for {listingType === "rent" ? "rent" : "sale"}
+                {serverTotal} Properties listed for {listingType === "rent" ? "rent" : "sale"}
               </p>
               <p className="text-[20px] font-semibold text-[#161515]">
                 {searchText || "Uyo"}, Uyo, Akwa Ibom
@@ -369,7 +390,7 @@ export default function SearchPage() {
             ) : (
               <div className="grid grid-cols-2 gap-[20px]">
                 {paginated.map((p) => (
-                  <PropertyCard key={p.id} data={p} isFavourited={favourites.has(p.id)} onToggleFavourite={toggleFav} className="w-full md:w-full" />
+                  <PropertyCard key={p.id} data={p} isFavourited={isFavourited(p.id)} onToggleFavourite={toggleFav} className="w-full md:w-full" />
                 ))}
               </div>
             )}
@@ -442,7 +463,7 @@ export default function SearchPage() {
               </p>
               <div className="mt-[6px] flex items-center justify-between">
                 <p className="text-[11px] font-medium text-[rgba(22,21,21,0.64)]">
-                  {sorted.length} properties for {listingType === "rent" ? "rent" : "sale"}
+                  {serverTotal} properties for {listingType === "rent" ? "rent" : "sale"}
                 </p>
                 <div className="flex items-center gap-px">
                   <span className="text-[12px] text-black">Sort:</span>
@@ -465,7 +486,7 @@ export default function SearchPage() {
                   <PropertyCard
                     key={p.id}
                     data={p}
-                    isFavourited={favourites.has(p.id)}
+                    isFavourited={isFavourited(p.id)}
                     onToggleFavourite={toggleFav}
                     className="w-full"
                   />

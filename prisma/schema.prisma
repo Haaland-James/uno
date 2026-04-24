@@ -124,6 +124,7 @@ model Property {
   fullAddressVisible  Boolean            @default(false)
   rent                Int
   rentPeriod          RentPeriod         @default(YEAR)
+  listingType         ListingType        @default(RENT)
   currency            String             @default("NGN")
   agencyFee           Int?
   cautionDeposit      Int?
@@ -171,6 +172,12 @@ enum Furnishing {
 enum RentPeriod {
   MONTH
   YEAR
+}
+
+enum ListingType {
+  RENT
+  LEASE
+  SALE
 }
 
 enum PropertyStatus {

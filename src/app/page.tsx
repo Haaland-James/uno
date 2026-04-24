@@ -21,7 +21,9 @@ import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
 import { PricingDropDown } from "@/components/property/PricingDropDown";
 import { SeeAllCard } from "@/components/property/SeeAllCard";
-import { mockProperties } from "@/lib/mock-data";
+import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
+import { useFavourites } from "@/hooks/useFavourites";
+import { useFeaturedProperties } from "@/hooks/useProperties";
 
 const NEIGHBORHOOD_TABS = [
   "Ewet Housing",
@@ -104,7 +106,7 @@ type SearchField = "location" | "beds" | "type" | "price" | null;
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("Ewet Housing");
-  const [favourites, setFavourites] = useState<Set<string>>(new Set());
+  const { isFavourited, toggleFavourite } = useFavourites();
   const [openField, setOpenField] = useState<SearchField>(null);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [beds, setBeds] = useState(0);
@@ -125,18 +127,9 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const toggleFavourite = (id: string) => {
-    setFavourites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const latest = mockProperties.slice(0, 7);
-  const topListings = mockProperties.slice(3, 10);
-  const hot = mockProperties.slice(7, 14);
+  const { items: latest, isLoading: latestLoading } = useFeaturedProperties("latest", 7);
+  const { items: topListings, isLoading: topLoading } = useFeaturedProperties("top", 7);
+  const { items: hot, isLoading: hotLoading } = useFeaturedProperties("hot", 7);
 
   const latestCarousel = useCarousel();
   const topCarousel = useCarousel();
@@ -433,16 +426,22 @@ export default function HomePage() {
               className="flex items-stretch gap-[11px] overflow-x-auto scroll-smooth pb-[8px] no-scrollbar md:gap-[20px]"
               style={{ scrollbarWidth: "none" }}
             >
-              {latest.map((p) => (
-                <PropertyCard
-                  key={p.id}
-                  data={p}
-                  isFavourited={favourites.has(p.id)}
-                  onToggleFavourite={toggleFavourite}
-                  className="shrink-0"
-                />
-              ))}
-              <SeeAllCard href="/feed" images={latest.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+              {latestLoading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <PropertyCardSkeleton key={i} className="shrink-0" />
+                  ))
+                : latest.map((p) => (
+                    <PropertyCard
+                      key={p.id}
+                      data={p}
+                      isFavourited={isFavourited(p.id)}
+                      onToggleFavourite={toggleFavourite}
+                      className="shrink-0"
+                    />
+                  ))}
+              {!latestLoading && latest.length > 0 && (
+                <SeeAllCard href="/feed" images={latest.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+              )}
             </div>
           </div>
         </section>
@@ -487,16 +486,22 @@ export default function HomePage() {
               className="flex items-stretch gap-[11px] overflow-x-auto scroll-smooth pb-[8px] no-scrollbar md:gap-[20px]"
               style={{ scrollbarWidth: "none" }}
             >
-              {topListings.map((p) => (
-                <PropertyCard
-                  key={p.id}
-                  data={p}
-                  isFavourited={favourites.has(p.id)}
-                  onToggleFavourite={toggleFavourite}
-                  className="shrink-0"
-                />
-              ))}
-              <SeeAllCard href="/feed" images={topListings.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+              {topLoading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <PropertyCardSkeleton key={i} className="shrink-0" />
+                  ))
+                : topListings.map((p) => (
+                    <PropertyCard
+                      key={p.id}
+                      data={p}
+                      isFavourited={isFavourited(p.id)}
+                      onToggleFavourite={toggleFavourite}
+                      className="shrink-0"
+                    />
+                  ))}
+              {!topLoading && topListings.length > 0 && (
+                <SeeAllCard href="/feed" images={topListings.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+              )}
             </div>
           </div>
         </section>
@@ -515,16 +520,22 @@ export default function HomePage() {
               className="flex items-stretch gap-[11px] overflow-x-auto scroll-smooth pb-[8px] no-scrollbar md:gap-[20px]"
               style={{ scrollbarWidth: "none" }}
             >
-              {hot.map((p) => (
-                <PropertyCard
-                  key={p.id}
-                  data={p}
-                  isFavourited={favourites.has(p.id)}
-                  onToggleFavourite={toggleFavourite}
-                  className="shrink-0"
-                />
-              ))}
-              <SeeAllCard href="/feed" images={hot.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+              {hotLoading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <PropertyCardSkeleton key={i} className="shrink-0" />
+                  ))
+                : hot.map((p) => (
+                    <PropertyCard
+                      key={p.id}
+                      data={p}
+                      isFavourited={isFavourited(p.id)}
+                      onToggleFavourite={toggleFavourite}
+                      className="shrink-0"
+                    />
+                  ))}
+              {!hotLoading && hot.length > 0 && (
+                <SeeAllCard href="/feed" images={hot.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+              )}
             </div>
           </div>
         </section>

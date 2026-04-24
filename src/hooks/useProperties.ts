@@ -1,100 +1,114 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockProperties } from "@/lib/mock-data";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFilterStore } from "@/stores/filterStore";
-import type { PropertyCardData } from "@/types";
+import {
+  propertiesClient,
+  type PropertyListParams,
+  type FeaturedType,
+} from "@/lib/clients/properties";
+import type { PropertyCardData } from "@/types/property";
 
+/**
+ * Reads filterStore and fetches matching properties from /api/properties.
+ * Re-fetches whenever any filter changes (debounced 250ms).
+ */
 export function useProperties() {
-	const [isLoading, setIsLoading] = useState(false);
-	const filters = useFilterStore();
+  const filters = useFilterStore();
+  const [properties, setProperties] = useState<PropertyCardData[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const reqId = useRef(0);
 
-	const properties = useMemo(() => {
-		let filtered = [...mockProperties];
+  const params: PropertyListParams = useMemo(
+    () => ({
+      city: filters.city || undefined,
+      area: filters.area || undefined,
+      type: filters.propertyType.length ? filters.propertyType : undefined,
+      beds: filters.bedrooms.length ? filters.bedrooms : undefined,
+      minPrice: filters.minPrice ?? undefined,
+      maxPrice: filters.maxPrice ?? undefined,
+      amenities: filters.amenities.length ? filters.amenities : undefined,
+      verifiedOnly: filters.verifiedOnly || undefined,
+      sort: filters.sortBy ?? undefined,
+      pageSize: 30,
+    }),
+    [
+      filters.city,
+      filters.area,
+      filters.propertyType,
+      filters.bedrooms,
+      filters.minPrice,
+      filters.maxPrice,
+      filters.amenities,
+      filters.verifiedOnly,
+      filters.sortBy,
+    ]
+  );
 
-		// Filter by city
-		if (filters.city) {
-			filtered = filtered.filter((p) => p.city === filters.city);
-		}
+  useEffect(() => {
+    const myId = ++reqId.current;
+    setIsLoading(true);
+    setError(null);
 
-		// Filter by area
-		if (filters.area) {
-			filtered = filtered.filter((p) => p.area === filters.area);
-		}
+    const handle = setTimeout(() => {
+      propertiesClient
+        .list(params)
+        .then((res) => {
+          if (myId !== reqId.current) return; // stale
+          setProperties(res.items);
+          setTotal(res.total);
+          setIsLoading(false);
+        })
+        .catch((e) => {
+          if (myId !== reqId.current) return;
+          setError(e.message ?? "Could not load properties");
+          setProperties([]);
+          setTotal(0);
+          setIsLoading(false);
+        });
+    }, 250);
 
-		// Filter by property type
-		if (filters.propertyType.length > 0) {
-			filtered = filtered.filter((p) =>
-				filters.propertyType.includes(p.propertyType)
-			);
-		}
+    return () => clearTimeout(handle);
+  }, [params]);
 
-		// Filter by price range
-		if (filters.minPrice) {
-			filtered = filtered.filter((p) => p.rent >= filters.minPrice!);
-		}
-		if (filters.maxPrice) {
-			filtered = filtered.filter((p) => p.rent <= filters.maxPrice!);
-		}
+  return {
+    properties,
+    isLoading,
+    error,
+    totalCount: total,
+    isEmpty: !isLoading && properties.length === 0,
+  };
+}
 
-		// Filter by bedrooms
-		if (filters.bedrooms.length > 0) {
-			filtered = filtered.filter((p) => filters.bedrooms.includes(p.bedrooms));
-		}
+/** Fetches a single featured carousel by type. */
+export function useFeaturedProperties(type: FeaturedType, limit = 8) {
+  const [items, setItems] = useState<PropertyCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-		// Filter by amenities
-		if (filters.amenities.length > 0) {
-			filtered = filtered.filter((p) =>
-				filters.amenities.every((a) => p.amenities.includes(a))
-			);
-		}
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    propertiesClient
+      .featured(type, limit)
+      .then((res) => {
+        if (cancelled) return;
+        setItems(res);
+        setIsLoading(false);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e.message ?? "Could not load");
+        setItems([]);
+        setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [type, limit]);
 
-		// Filter verified only
-		if (filters.verifiedOnly) {
-			filtered = filtered.filter(
-				(p) => p.verificationStatus === "VERIFIED"
-			);
-		}
-
-		// Sort
-		switch (filters.sortBy) {
-			case "price_asc":
-				filtered.sort((a, b) => a.rent - b.rent);
-				break;
-			case "price_desc":
-				filtered.sort((a, b) => b.rent - a.rent);
-				break;
-			case "newest":
-				filtered.sort(
-					(a, b) =>
-						new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-				);
-				break;
-			case "most_viewed":
-				filtered.sort(
-					(a, b) =>
-						new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-				);
-				break;
-		}
-
-		return filtered;
-	}, [
-		filters.city,
-		filters.area,
-		filters.propertyType,
-		filters.minPrice,
-		filters.maxPrice,
-		filters.bedrooms,
-		filters.amenities,
-		filters.verifiedOnly,
-		filters.sortBy,
-	]);
-
-	return {
-		properties,
-		isLoading,
-		totalCount: properties.length,
-		isEmpty: properties.length === 0,
-	};
+  return { items, isLoading, error };
 }

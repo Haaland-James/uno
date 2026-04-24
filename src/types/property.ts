@@ -11,6 +11,8 @@ export type Furnishing = "UNFURNISHED" | "SEMI_FURNISHED" | "FULLY_FURNISHED";
 
 export type RentPeriod = "MONTH" | "YEAR";
 
+export type ListingType = "RENT" | "LEASE" | "SALE";
+
 export type PropertyStatus = "AVAILABLE" | "PUBLISHED" | "UNPUBLISHED";
 
 export type AvailabilityStatus =
@@ -78,6 +80,8 @@ export interface PropertyCardData {
 	id: string;
 	title: string;
 	propertyType: PropertyType;
+	// API always returns listingType; older mock fixtures omit it (optional for back-compat)
+	listingType?: ListingType;
 	bedrooms: number;
 	bathrooms: number;
 	area: string;

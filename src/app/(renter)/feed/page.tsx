@@ -7,7 +7,8 @@ import { PropertyCard } from "@/components/property/PropertyCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useFavourites } from "@/hooks/useFavourites";
 import { useHeaderStore } from "@/stores/headerStore";
-import { mockProperties } from "@/lib/mock-data";
+import { propertiesClient } from "@/lib/clients/properties";
+import type { PropertyCardData } from "@/types/property";
 import { cn } from "@/lib/utils";
 
 type Category = "all" | "rent" | "sale" | "lease";
@@ -104,18 +105,45 @@ export default function FeedPage() {
 		return parts.join(", ");
 	}
 
-	// Apply filters to mockProperties
-	let filtered = [...mockProperties];
+	// All ACTIVE listings, newest first.
+	// Server-side filters: category tab → listingType, "virgin" → verifiedOnly.
+	const listingTypeFilter: ("RENT" | "LEASE" | "SALE")[] | undefined =
+		category === "rent"
+			? ["RENT"]
+			: category === "sale"
+			? ["SALE"]
+			: category === "lease"
+			? ["LEASE"]
+			: undefined;
 
-	// TODO: apply rent/sale/lease category filter once schema supports listingStatus field
-	// (mockProperties have no listingStatus on PropertyCardData; it lives only in PropertyDetailData)
+	const [feedItems, setFeedItems] = useState<PropertyCardData[]>([]);
+	const [feedLoading, setFeedLoading] = useState(true);
+	const isVirgin = activeToggles.has("virgin");
+	useEffect(() => {
+		let cancelled = false;
+		setFeedLoading(true);
+		propertiesClient
+			.list({
+				sort: "newest",
+				pageSize: 50,
+				listingType: listingTypeFilter,
+				verifiedOnly: isVirgin || undefined,
+			})
+			.then((res) => {
+				if (cancelled) return;
+				setFeedItems(res.items);
+				setFeedLoading(false);
+			})
+			.catch(() => {
+				if (cancelled) return;
+				setFeedItems([]);
+				setFeedLoading(false);
+			});
+		return () => { cancelled = true; };
+	}, [listingTypeFilter?.join(","), isVirgin]);
 
-	// TODO: apply "latest" filter once schema supports it (sort by createdAt desc)
-
-	// TODO: apply "virgin" filter once schema supports it (virgin flag on property)
-
-	// TODO: apply "price-drops" filter once schema supports it (priceDropped flag on property)
-
+	// "favs" filters client-side. "price-drops" still needs schema support.
+	let filtered = feedItems;
 	if (activeToggles.has("favs")) {
 		filtered = filtered.filter((p) => isFavourited(p.id));
 	}

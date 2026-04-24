@@ -20,7 +20,9 @@ import {
   X,
 } from "lucide-react";
 import { cn, formatNaira } from "@/lib/utils";
-import { mockPropertyDetails, mockProperties } from "@/lib/mock-data";
+import { propertiesClient } from "@/lib/clients/properties";
+import { trackPropertyView } from "@/hooks/useRecentlyViewed";
+import type { PropertyDetailData, PropertyCardData } from "@/types/property";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { useFavourites } from "@/hooks/useFavourites";
 
@@ -372,13 +374,47 @@ export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const propertyId = params.id as string;
-  const property = mockPropertyDetails[propertyId];
   const { toggleFavourite, isFavourited } = useFavourites();
   const saved = isFavourited(propertyId);
   const [showPhotoGrid, setShowPhotoGrid] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState("about");
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [property, setProperty] = useState<PropertyDetailData | null>(null);
+  const [similar, setSimilar] = useState<PropertyCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setNotFound(false);
+    trackPropertyView(propertyId);
+    propertiesClient
+      .detail(propertyId)
+      .then((d) => {
+        if (cancelled) return;
+        setProperty(d);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setNotFound(true);
+        setLoading(false);
+      });
+    propertiesClient
+      .similar(propertyId, 6)
+      .then((items) => {
+        if (cancelled) return;
+        setSimilar(items);
+      })
+      .catch(() => {
+        // similar is best-effort — keep empty array on failure
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [propertyId]);
 
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -407,11 +443,15 @@ export default function PropertyDetailPage() {
     return () => observer.disconnect();
   }, []);
 
-  const similar = mockProperties
-    .filter((p) => p.id !== propertyId)
-    .slice(0, 6);
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+        <div className="text-[14px] text-black/50">Loading property…</div>
+      </div>
+    );
+  }
 
-  if (!property) {
+  if (notFound || !property) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
