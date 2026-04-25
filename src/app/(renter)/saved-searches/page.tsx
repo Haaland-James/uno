@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BookmarkCheck } from "lucide-react";
 import { SavedCard } from "@/components/property/SavedCard";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +10,9 @@ import { DeleteSearchModal } from "@/components/saved/DeleteSearchModal";
 import { EditSearchModal } from "@/components/saved/EditSearchModal";
 import { SavedSearchPagination } from "@/components/saved/SavedSearchPagination";
 import { useSavedSearches } from "@/hooks/useSavedSearches";
+import { criteriaToSearchState } from "@/lib/saved-search-mapper";
+import { buildSearchUrl } from "@/lib/search-url";
+import type { SavedSearchCriteria } from "@/lib/validators/saved-search";
 import type { SavedSearch } from "@/types";
 
 const PAGE_SIZE = 4;
@@ -19,9 +23,17 @@ type ModalState =
   | { type: null };
 
 export default function SavedSearchesPage() {
+  const router = useRouter();
   const { savedSearches, deleteSearch, updateSearch } = useSavedSearches();
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<ModalState>({ type: null });
+
+  function applySearch(id: string) {
+    const search = savedSearches.find((s) => s.id === id);
+    if (!search) return;
+    const criteria = search.criteria as SavedSearchCriteria;
+    router.push(buildSearchUrl(criteriaToSearchState(criteria)));
+  }
 
   const totalPages = Math.max(1, Math.ceil(savedSearches.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -88,6 +100,7 @@ export default function SavedSearchesPage() {
             searchType={s.searchType}
             isActive={s.isActive}
             notificationsOn={s.notificationsEnabled}
+            onApply={applySearch}
             onEdit={(id) => setModal({ type: "edit", id })}
             onDelete={(id) => setModal({ type: "delete", id })}
           />

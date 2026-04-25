@@ -4,6 +4,7 @@ import { SessionProvider as NextAuthSessionProvider } from "next-auth/react";
 import type { Session } from "next-auth";
 import { SessionSync } from "./SessionSync";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { Toaster } from "@/components/shared/Toaster";
 
 export function SessionProvider({
   children,
@@ -17,6 +18,7 @@ export function SessionProvider({
       <SessionSync />
       {children}
       <AuthModal />
+      <Toaster />
     </NextAuthSessionProvider>
   );
 }

@@ -10,7 +10,6 @@ import {
   X,
   ChevronsUpDown,
   ChevronDown,
-  SlidersHorizontal,
   Menu,
   Map,
   List,
@@ -21,7 +20,10 @@ import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
 import { PricingDropDown } from "@/components/property/PricingDropDown";
 import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
+import { SaveSearchPopover } from "@/components/search/SaveSearchPopover";
+import { searchStateToCriteria, summarizeCriteria } from "@/lib/saved-search-mapper";
 import { GuestMobileDrawer } from "@/components/layout/GuestMobileDrawer";
+import { MobileDrawer } from "@/components/layout/MobileDrawer";
 import { SearchPageFooter } from "@/components/layout/SearchPageFooter";
 import { propertiesClient } from "@/lib/clients/properties";
 import { useFavourites } from "@/hooks/useFavourites";
@@ -82,9 +84,9 @@ export default function PropertiesSearchPage() {
   // ── Local UI state (filter dropdowns + map/list toggle) ─────────
   const [openFilter, setOpenFilter] = useState<OpenFilter>(null);
   const [mobileView, setMobileView] = useState<"map" | "list">("list");
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSearchInline, setShowSearchInline] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -315,7 +317,7 @@ export default function PropertiesSearchPage() {
       </header>
 
       {/* ═══════════════════════════════════════════════════
-           MOBILE HEADER
+           MOBILE HEADER — same chip-with-X pattern as desktop
          ═══════════════════════════════════════════════════ */}
       <header className="z-50 flex h-[64px] flex-shrink-0 items-center justify-between border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] px-[15px] md:hidden">
         <div className="flex flex-1 items-center gap-[10px]">
@@ -325,19 +327,37 @@ export default function PropertiesSearchPage() {
             </div>
           </Link>
           <div className="flex-1">
-            <LocationAutocomplete
-              value={currentLocation}
-              onPick={setLocation}
-              placeholder="Location"
-            />
+            {!showSearchInline && currentLocation ? (
+              <button
+                type="button"
+                onClick={() => setShowSearchInline(true)}
+                className="flex h-[40px] w-full items-center gap-[8px] rounded-[20px] border border-[rgba(186,186,186,0.65)] bg-white px-[12px] text-left transition-colors hover:bg-[#faf9f9]"
+              >
+                <Search size={14} className="flex-shrink-0 text-[#af2525]" />
+                <span className="flex-1 truncate text-[14px] text-[#0a0a0a]">
+                  {currentLocation.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); clearLocation(); }}
+                  className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-black/40 transition-colors hover:bg-black/10 hover:text-black/70"
+                  aria-label="Clear location"
+                >
+                  <X size={14} />
+                </button>
+              </button>
+            ) : (
+              <LocationAutocomplete
+                value={currentLocation}
+                onPick={(node) => {
+                  setLocation(node);
+                  setShowSearchInline(false);
+                }}
+                placeholder="Location"
+                autoFocus={showSearchInline}
+              />
+            )}
           </div>
-          <button
-            onClick={() => setMobileFilterOpen((v) => !v)}
-            className="flex-shrink-0"
-            aria-label="Filters"
-          >
-            <SlidersHorizontal size={18} className="text-[#0a0a0a]" />
-          </button>
         </div>
         <button
           aria-label="Menu"
@@ -447,12 +467,32 @@ export default function PropertiesSearchPage() {
                 />
               </div>
 
-              <button
-                onClick={() => isAuthed ? null : openLogin()}
-                className="flex h-[41px] flex-shrink-0 items-center justify-center rounded-[50px] bg-[#af2525] px-[24px] text-[15px] font-normal tracking-[-0.3px] text-white transition-opacity hover:opacity-90"
-              >
-                Save Search
-              </button>
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={() => {
+                    if (!isAuthed) {
+                      const criteria = searchStateToCriteria(state);
+                      openLogin({
+                        type: "save_search",
+                        name: summarizeCriteria(criteria),
+                        criteria,
+                      });
+                      return;
+                    }
+                    setSaveOpen((o) => !o);
+                  }}
+                  className="flex h-[41px] items-center justify-center rounded-[50px] bg-[#af2525] px-[24px] text-[15px] font-normal tracking-[-0.3px] text-white transition-opacity hover:opacity-90"
+                >
+                  Save Search
+                </button>
+                <SaveSearchPopover
+                  open={saveOpen}
+                  onClose={() => setSaveOpen(false)}
+                  defaultName={summarizeCriteria(searchStateToCriteria(state))}
+                  criteria={searchStateToCriteria(state)}
+                  className="right-0 top-[calc(100%+8px)]"
+                />
+              </div>
             </div>
 
             {openFilter === "beds" && (
@@ -607,26 +647,159 @@ export default function PropertiesSearchPage() {
       <div className="flex flex-1 flex-col overflow-hidden md:hidden">
         {mobileView === "list" ? (
           <>
-            {mobileFilterOpen && (
-              <div className="flex flex-shrink-0 gap-2 overflow-x-auto border-b border-black/5 bg-white px-3 py-2 no-scrollbar">
+            {/* Mobile filter row — always visible */}
+            <div className="relative flex flex-shrink-0 gap-2 overflow-x-auto border-b border-black/5 bg-white px-3 py-2 no-scrollbar">
+              <MobileFilterPill
+                label={listingLabel}
+                active
+                onClick={() => setOpenFilter(openFilter === "listingType" ? null : "listingType")}
+              />
+              <MobileFilterPill
+                label={state.beds.length ? `${state.beds.join(",")}+ beds` : "Beds"}
+                active={state.beds.length > 0}
+                onClick={() => setOpenFilter(openFilter === "beds" ? null : "beds")}
+              />
+              <MobileFilterPill
+                label={state.type.length ? `${state.type.length} type${state.type.length > 1 ? "s" : ""}` : "Type"}
+                active={state.type.length > 0}
+                onClick={() => setOpenFilter(openFilter === "type" ? null : "type")}
+              />
+              <MobileFilterPill
+                label={state.minPrice || state.maxPrice ? "Price ●" : "Price"}
+                active={!!(state.minPrice || state.maxPrice)}
+                onClick={() => setOpenFilter(openFilter === "price" ? null : "price")}
+              />
+              <MobileFilterPill
+                label={`Sort: ${currentSortLabel}`}
+                onClick={() => setOpenFilter(openFilter === "sort" ? null : "sort")}
+              />
+            </div>
+
+            {/* Mobile filter sheets — render below the row */}
+            {openFilter === "listingType" && (
+              <div className="border-b border-black/5 bg-white p-3">
                 {LISTING_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
-                    onClick={() => setCategory(opt.value)}
-                    className={cn(
-                      "flex-shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium",
-                      currentCategory === opt.value
-                        ? "bg-[#af2525] text-white"
-                        : "border border-black/10 text-black/70"
-                    )}
+                    type="button"
+                    onClick={() => { setCategory(opt.value); setOpenFilter(null); }}
+                    className="flex w-full items-center justify-between px-2 py-3 text-left text-[15px] text-[#161515]"
                   >
                     {opt.label}
+                    <span className={cn(
+                      "flex h-5 w-5 items-center justify-center rounded-full border-2",
+                      currentCategory === opt.value ? "border-[#1a4d2e]" : "border-black/25"
+                    )}>
+                      {currentCategory === opt.value && <span className="h-2.5 w-2.5 rounded-full bg-[#1a4d2e]" />}
+                    </span>
+                  </button>
+                ))}
+                <div className="my-2 h-px bg-black/8" />
+                <PropTypeToggle
+                  label="Show commercial properties only"
+                  active={state.type.includes("COMMERCIAL")}
+                  onToggle={(on) =>
+                    navigate({ type: on ? ["COMMERCIAL"] : state.type.filter((t) => t !== "COMMERCIAL") })
+                  }
+                />
+                <PropTypeToggle
+                  label="Show land only"
+                  active={state.type.includes("LAND")}
+                  onToggle={(on) =>
+                    navigate({ type: on ? ["LAND"] : state.type.filter((t) => t !== "LAND") })
+                  }
+                />
+              </div>
+            )}
+            {openFilter === "beds" && (
+              <div className="border-b border-black/5 bg-white p-3">
+                <BedsDropDown
+                  beds={state.beds[0] ?? 0}
+                  baths={state.baths[0] ?? 0}
+                  onApply={(b, ba) => {
+                    navigate({ beds: b > 0 ? [b] : [], baths: ba > 0 ? [ba] : [] });
+                    setOpenFilter(null);
+                  }}
+                />
+              </div>
+            )}
+            {openFilter === "type" && (
+              <div className="border-b border-black/5 bg-white p-3">
+                <PropertyTypesDropDown
+                  selected={state.type}
+                  onChange={(types) => navigate({ type: types })}
+                />
+              </div>
+            )}
+            {openFilter === "price" && (
+              <div className="border-b border-black/5 bg-white p-3">
+                <PricingDropDown
+                  minPrice={state.minPrice ?? 0}
+                  maxPrice={state.maxPrice ?? 100_000_000}
+                  onApply={(min, max) => {
+                    navigate({
+                      minPrice: min > 0 ? min : undefined,
+                      maxPrice: max < 100_000_000 ? max : undefined,
+                    });
+                    setOpenFilter(null);
+                  }}
+                />
+              </div>
+            )}
+            {openFilter === "sort" && (
+              <div className="border-b border-black/5 bg-white p-2">
+                {SORT_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => { setSort(o.value); setOpenFilter(null); }}
+                    className={cn(
+                      "flex w-full items-center px-3 py-2.5 text-left text-[14px]",
+                      state.sort === o.value ? "text-[#af2525] font-semibold" : "text-black/80"
+                    )}
+                  >
+                    {o.label}
                   </button>
                 ))}
               </div>
             )}
-            <div className="flex-shrink-0 border-b border-black/5 bg-white px-3 py-2 text-[13px] text-black/60">
-              {loading ? "Loading…" : `${total} ${total === 1 ? "property" : "properties"}`} • {listingLabel}
+            <div className="relative flex-shrink-0 border-b border-black/5 bg-white px-3 py-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] text-black/60">
+                    {loading ? "Loading…" : `${total} ${total === 1 ? "property" : "properties"} listed`}
+                    {placeText ? ` ${listingLabel.toLowerCase()} in ${placeText}` : ` ${listingLabel.toLowerCase()}`}
+                  </p>
+                  {placeText && (
+                    <p className="mt-0.5 truncate text-[16px] font-semibold text-[#161515]">{placeText}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isAuthed) {
+                      const criteria = searchStateToCriteria(state);
+                      openLogin({
+                        type: "save_search",
+                        name: summarizeCriteria(criteria),
+                        criteria,
+                      });
+                      return;
+                    }
+                    setSaveOpen((o) => !o);
+                  }}
+                  className="flex-shrink-0 rounded-full bg-[#af2525] px-3 py-1.5 text-[12px] font-medium text-white"
+                >
+                  Save Search
+                </button>
+              </div>
+              <SaveSearchPopover
+                open={saveOpen}
+                onClose={() => setSaveOpen(false)}
+                defaultName={summarizeCriteria(searchStateToCriteria(state))}
+                criteria={searchStateToCriteria(state)}
+                className="right-3 top-[calc(100%+4px)]"
+              />
             </div>
             <div className="flex-1 overflow-y-auto px-3 py-3">
               {loading ? (
@@ -656,24 +829,61 @@ export default function PropertiesSearchPage() {
             </div>
           </>
         ) : (
-          <div className="relative flex-1 overflow-hidden bg-white p-[5px]">{mapContent}</div>
+          <div className="relative flex-1 overflow-hidden bg-white p-[5px]">
+            {mapContent}
+            {/* Click-shield wrapping the iframe so the floating toggle stays clickable.
+                The iframe captures pointer events; this overlay sits above only at the
+                bottom edge where our toggle lives, leaving the rest of the map interactive. */}
+          </div>
         )}
-
-        {/* Mobile floating map/list toggle */}
-        <button
-          onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
-          className="fixed bottom-4 left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-black px-5 text-[14px] font-medium text-white shadow-lg"
-        >
-          {mobileView === "list" ? <><Map size={16} /> Map</> : <><List size={16} /> List</>}
-        </button>
       </div>
 
-      <GuestMobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      {/* Mobile floating map/list toggle — at page root, above iframe stacking context */}
+      <button
+        type="button"
+        onClick={() => setMobileView((v) => (v === "list" ? "map" : "list"))}
+        className="md:hidden fixed bottom-5 left-1/2 z-[100] flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-black px-5 text-[14px] font-medium text-white shadow-lg"
+      >
+        {mobileView === "list" ? <><Map size={16} /> Map</> : <><List size={16} /> List</>}
+      </button>
+
+      {/* Authed users get the renter drawer (Find/Feed/Favourites/...);
+          guests get the guest drawer (browse + sign in). Same trigger. */}
+      {isAuthed ? (
+        <MobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      ) : (
+        <GuestMobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      )}
     </div>
   );
 }
 
 // ─── Tiny presentational helpers ───────────────────────────────────
+
+function MobileFilterPill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex-shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
+        active
+          ? "border border-[#af2525] bg-[#fff5f5] text-[#af2525]"
+          : "border border-black/10 bg-white text-black/70"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
 
 function PropTypeToggle({
   label,

@@ -25,7 +25,15 @@ export default function FindPage() {
 	const setShowSearch = useHeaderStore((s) => s.setShowSearch);
 	const firstName = user?.name?.split(" ")[0] ?? "there";
 
-	function runSearch() {
+	/**
+	 * Build & navigate to a search URL.
+	 * Accepts an explicit `forLocation` so callers can submit immediately on pick
+	 * without waiting for setState (which is async — caused mobile to submit with
+	 * the stale null location).
+	 */
+	function runSearch(forLocation?: LocationNode | null) {
+		const loc = forLocation !== undefined ? forLocation : selectedLocation;
+
 		const typeFilter = propertyTypes
 			.map((t) => t.toUpperCase().replace(/[\s-]/g, "_"))
 			.filter((t) =>
@@ -36,14 +44,14 @@ export default function FindPage() {
 		let stateNode: LocationNode | undefined;
 		let cityNode: LocationNode | undefined;
 		let areaNode: LocationNode | undefined;
-		if (selectedLocation) {
-			if (selectedLocation.type === "state") stateNode = selectedLocation;
-			else if (selectedLocation.type === "city") {
-				cityNode = selectedLocation;
-				if (selectedLocation.parent) stateNode = findBySlug(selectedLocation.parent);
-			} else if (selectedLocation.type === "area") {
-				areaNode = selectedLocation;
-				if (selectedLocation.parent) cityNode = findBySlug(selectedLocation.parent);
+		if (loc) {
+			if (loc.type === "state") stateNode = loc;
+			else if (loc.type === "city") {
+				cityNode = loc;
+				if (loc.parent) stateNode = findBySlug(loc.parent);
+			} else if (loc.type === "area") {
+				areaNode = loc;
+				if (loc.parent) cityNode = findBySlug(loc.parent);
 				if (cityNode?.parent) stateNode = findBySlug(cityNode.parent);
 			}
 		}
@@ -210,7 +218,7 @@ export default function FindPage() {
 						{/* Search button */}
 						<button
 							type="button"
-							onClick={runSearch}
+							onClick={() => runSearch()}
 							className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-[#af2525] text-white transition-opacity hover:opacity-90"
 							aria-label="Search"
 						>
@@ -254,18 +262,17 @@ export default function FindPage() {
 					)}
 				</div>
 
-				{/* Mobile search — stacked, collapsed to single location input */}
+				{/* Mobile search — coverage-aware location autocomplete; pick → submit */}
 				<div className="mb-10 w-full md:hidden">
-					<div className="flex items-center gap-3 rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white px-5 h-[52px]">
-						<div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#af2525]">
-							<Search className="h-[14px] w-[14px] text-white" strokeWidth={2.5} />
-						</div>
-						<input
-							type="text"
-							placeholder="Location"
-							className="flex-1 bg-transparent text-[15px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
-						/>
-					</div>
+					<LocationAutocomplete
+						value={selectedLocation}
+						onPick={(node) => {
+							setSelectedLocation(node);
+							// Pass node directly — runSearch can't read fresh state synchronously
+							runSearch(node);
+						}}
+						placeholder="Location"
+					/>
 				</div>
 
 				{/* Sentinel — once this scrolls above the header, the header reveals its search */}

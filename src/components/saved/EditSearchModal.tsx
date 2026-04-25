@@ -5,11 +5,7 @@ import { ChevronDown, X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import type {
-  NotificationChannel,
-  NotificationFrequency,
-  SavedSearch,
-} from "@/types";
+import type { NotificationChannel, SavedSearch } from "@/types";
 
 interface EditSearchModalProps {
   open: boolean;
@@ -21,14 +17,7 @@ interface EditSearchModalProps {
 const channelOptions: { value: NotificationChannel; label: string }[] = [
   { value: "email", label: "Email" },
   { value: "push", label: "Push Notifications" },
-  { value: "whatsapp", label: "Whatsapp" },
-];
-
-const frequencyOptions: { value: NotificationFrequency; label: string }[] = [
-  { value: "never", label: "Never" },
-  { value: "instant", label: "Instant" },
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
+  // WhatsApp deferred — will return when WhatsApp Business is integrated
 ];
 
 export function EditSearchModal({
@@ -39,7 +28,6 @@ export function EditSearchModal({
 }: EditSearchModalProps) {
   const [name, setName] = useState("");
   const [channels, setChannels] = useState<NotificationChannel[]>([]);
-  const [frequency, setFrequency] = useState<NotificationFrequency>("never");
   const [isActive, setIsActive] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [channelOpen, setChannelOpen] = useState(false);
@@ -48,8 +36,8 @@ export function EditSearchModal({
   useEffect(() => {
     if (search) {
       setName(search.name);
-      setChannels(search.notificationChannels);
-      setFrequency(search.notificationFrequency);
+      // Filter out any legacy WhatsApp channels from older saves
+      setChannels(search.notificationChannels.filter((c) => c !== "whatsapp"));
       setIsActive(search.isActive);
       setNotificationsEnabled(search.notificationsEnabled);
     }
@@ -84,7 +72,8 @@ export function EditSearchModal({
     onUpdate({
       name,
       notificationChannels: channels,
-      notificationFrequency: frequency,
+      // Frequency dropped — UI binary on/off; matcher cron will use whatever cadence is built (Stage 5)
+      notificationFrequency: notificationsEnabled ? "instant" : "never",
       isActive,
       notificationsEnabled,
     });
@@ -196,23 +185,6 @@ export function EditSearchModal({
               </ul>
             )}
           </div>
-        </Field>
-
-        <Field label="Notifications frequency" htmlFor="search-frequency">
-          <select
-            id="search-frequency"
-            value={frequency}
-            onChange={(e) =>
-              setFrequency(e.target.value as NotificationFrequency)
-            }
-            className="w-full h-[44px] px-3 rounded-[10px] border border-[rgba(0,0,0,0.15)] bg-white text-[14px] text-[#161515] focus:outline-none focus:border-[#af2525]"
-          >
-            {frequencyOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
         </Field>
 
         <Field label="Status">

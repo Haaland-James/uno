@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { favouritesClient } from "@/lib/clients/favourites";
+import { savedSearchesClient } from "@/lib/clients/savedSearches";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { VerifyForm } from "./VerifyForm";
@@ -49,8 +50,18 @@ export function AuthModal() {
       } catch (e) {
         console.error("[auth-modal] favourite intent replay failed:", e);
       }
+    } else if (intent?.type === "save_search") {
+      try {
+        await savedSearchesClient.create({
+          name: intent.name,
+          criteria: intent.criteria,
+          notifyInstant: true,
+        });
+      } catch (e) {
+        console.error("[auth-modal] save-search intent replay failed:", e);
+      }
     }
-    // Future intents: save_search, contact, etc. (Stage 5+)
+    // Future intents: contact (Stage 5)
 
     // Fresh signups land on /feed (their new home) when there's nothing to do here.
     // Otherwise refresh in place so the new session reflects everywhere.

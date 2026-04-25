@@ -2,9 +2,11 @@ import { create } from "zustand";
 
 export type AuthModalMode = "login" | "signup" | "verify";
 
+import type { SavedSearchCriteria } from "@/lib/validators/saved-search";
+
 export type AuthIntent =
   | { type: "favourite"; propertyId: string }
-  | { type: "save_search"; payload: unknown }
+  | { type: "save_search"; name: string; criteria: SavedSearchCriteria }
   | { type: "contact"; propertyId: string };
 
 interface VerifyContext {

@@ -364,13 +364,12 @@ export default function HomePage() {
           {/* Mobile search form */}
           <div className="relative z-10 mx-auto mt-[-28px] max-w-[1440px] px-[16px] md:hidden">
             <div className="flex flex-col gap-[14px] rounded-[16px] border border-[rgba(0,0,0,0.08)] bg-white px-[16px] py-[18px] shadow-md">
-              {/* Search input */}
-              <div className="flex items-center gap-[10px] border-b border-[rgba(0,0,0,0.08)] pb-[12px]">
-                <Search size={18} className="shrink-0 text-[rgba(0,0,0,0.4)]" />
-                <input
-                  type="text"
-                  placeholder="City, Address, Neighbourhood..."
-                  className="w-full bg-transparent text-[14px] text-[#161515] placeholder:text-[rgba(0,0,0,0.4)] outline-none"
+              {/* Location autocomplete — coverage-aware, writes to selectedLocation state */}
+              <div className="pb-[4px]">
+                <LocationAutocomplete
+                  value={selectedLocation}
+                  onPick={(node) => setSelectedLocation(node)}
+                  placeholder="Location"
                 />
               </div>
 

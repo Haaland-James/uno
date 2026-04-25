@@ -514,6 +514,15 @@ export default function PropertyDetailPage() {
         />
       )}
 
+      {/* ── MOBILE BACK BUTTON (floating, over the gallery) ── */}
+      <button
+        onClick={handleBack}
+        aria-label="Go back"
+        className="md:hidden fixed top-3 left-3 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md backdrop-blur-sm hover:bg-white"
+      >
+        <ChevronLeft size={20} className="text-[#161515]" />
+      </button>
+
       {/* ── DESKTOP SUB-NAV BAR (sticky below header) ── */}
       <div className="hidden md:block sticky top-16 z-40 bg-white border-b border-black/10">
         <div className="flex items-center justify-between px-[42px] max-w-[1440px] mx-auto w-full">
