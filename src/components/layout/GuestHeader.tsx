@@ -6,11 +6,13 @@ import { useSession, signOut } from "next-auth/react";
 import { Home, Menu, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthModalStore } from "@/stores/authModalStore";
+import { GuestMobileDrawer } from "@/components/layout/GuestMobileDrawer";
 
 const NAV_LINKS = [
-  { label: "Buy", href: "/search?purpose=buy" },
-  { label: "Rent", href: "/feed" },
-  { label: "Commercial", href: "/search?purpose=commercial" },
+  { label: "Rent", href: "/properties/rent" },
+  { label: "Buy", href: "/properties/sale" },
+  { label: "Lease", href: "/properties/lease" },
+  { label: "Commercial", href: "/properties?type=COMMERCIAL" },
 ];
 
 function getInitials(name?: string | null) {
@@ -29,6 +31,7 @@ export function GuestHeader({ className }: { className?: string }) {
   const openLogin = useAuthModalStore((s) => s.openLogin);
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -153,12 +156,14 @@ export function GuestHeader({ className }: { className?: string }) {
           )}
           <button
             aria-label="Open menu"
+            onClick={() => setMobileMenuOpen(true)}
             className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#af2525]"
           >
             <Menu className="h-[16px] w-[16px] text-white" strokeWidth={2} />
           </button>
         </div>
       </div>
+      <GuestMobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
     </header>
   );
 }

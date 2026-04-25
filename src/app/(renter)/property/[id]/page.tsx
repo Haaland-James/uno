@@ -22,8 +22,11 @@ import {
 import { cn, formatNaira } from "@/lib/utils";
 import { propertiesClient } from "@/lib/clients/properties";
 import { trackPropertyView } from "@/hooks/useRecentlyViewed";
+import { shareOrCopy } from "@/lib/share";
+import { Footer } from "@/components/layout/Footer";
 import type { PropertyDetailData, PropertyCardData } from "@/types/property";
 import { PropertyCard } from "@/components/property/PropertyCard";
+import { useSession } from "next-auth/react";
 import { useFavourites } from "@/hooks/useFavourites";
 
 // ─── Photo Gallery (Desktop) ───────────────────────────────────────
@@ -375,6 +378,7 @@ export default function PropertyDetailPage() {
   const router = useRouter();
   const propertyId = params.id as string;
   const { toggleFavourite, isFavourited } = useFavourites();
+  const { status } = useSession();
   const saved = isFavourited(propertyId);
   const [showPhotoGrid, setShowPhotoGrid] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -384,6 +388,24 @@ export default function PropertyDetailPage() {
   const [similar, setSimilar] = useState<PropertyCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [shareToast, setShareToast] = useState<string | null>(null);
+
+  async function handleShare() {
+    if (!property) return;
+    const url = typeof window !== "undefined" ? window.location.href : `https://uno.ng/property/${propertyId}`;
+    const result = await shareOrCopy({
+      title: property.title,
+      text: `Check out ${property.title} on UNO`,
+      url,
+    });
+    if (result.kind === "copied") {
+      setShareToast("Link copied to clipboard");
+      setTimeout(() => setShareToast(null), 2500);
+    } else if (result.kind === "error") {
+      setShareToast(result.message);
+      setTimeout(() => setShareToast(null), 3000);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -417,11 +439,14 @@ export default function PropertyDetailPage() {
   }, [propertyId]);
 
   const handleBack = () => {
+    // When the user opened this in a new tab (no history), router.back() is a no-op,
+    // so route to a sensible hub instead. Guests must NOT land on /find — it's
+    // auth-protected and would bounce them to /login. /properties is public.
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
-    } else {
-      router.push("/find");
+      return;
     }
+    router.push(status === "authenticated" ? "/find" : "/properties");
   };
 
   useEffect(() => {
@@ -532,7 +557,11 @@ export default function PropertyDetailPage() {
               />
               <span>{saved ? "Saved" : "Save"}</span>
             </button>
-            <button className="flex items-center gap-[6px] text-[14px] text-[#161515] hover:text-[#af2525] transition-colors">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex items-center gap-[6px] text-[14px] text-[#161515] hover:text-[#af2525] transition-colors"
+            >
               <Share2 size={18} />
               <span>Share</span>
             </button>
@@ -565,7 +594,7 @@ export default function PropertyDetailPage() {
             className={cn("text-white", saved && "fill-white")}
           />
         </button>
-        <button className="flex items-center justify-center w-[32px] h-[32px] rounded-full bg-[#ffcfcf]">
+        <button onClick={handleShare} className="flex items-center justify-center w-[32px] h-[32px] rounded-full bg-[#ffcfcf]" aria-label="Share">
           <Share2 size={15} className="text-[#af2525]" />
         </button>
       </div>
@@ -806,6 +835,18 @@ export default function PropertyDetailPage() {
         <div className="h-[40px] md:h-[60px]" />
       </main>
 
+      {/* Footer — extra bottom padding on mobile to clear the sticky CTA bar */}
+      <div className="pb-[120px] md:pb-0">
+        <Footer />
+      </div>
+
+      {/* Toast for share copy / errors */}
+      {shareToast && (
+        <div className="fixed bottom-24 left-1/2 z-[200] -translate-x-1/2 rounded-full bg-black px-4 py-2 text-[13px] font-medium text-white shadow-lg">
+          {shareToast}
+        </div>
+      )}
+
       {/* ── MOBILE STICKY BOTTOM BAR ── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#fafafa] border-t border-black/26 rounded-t-[15px] shadow-[0px_0px_24px_0px_rgba(0,0,0,0.3)] px-[15px] pb-[15px] pt-[12px]">
         <div className="flex items-center justify-between">
@@ -824,7 +865,7 @@ export default function PropertyDetailPage() {
                   className={cn("text-white", saved && "fill-white")}
                 />
               </button>
-              <button className="flex items-center justify-center w-[27px] h-[27px] rounded-full bg-[#ffcfcf]">
+              <button onClick={handleShare} className="flex items-center justify-center w-[27px] h-[27px] rounded-full bg-[#ffcfcf]" aria-label="Share">
                 <Share2 size={14} className="text-[#af2525]" />
               </button>
             </div>

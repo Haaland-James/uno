@@ -19,6 +19,10 @@ export async function GET(req: NextRequest) {
     ...(f.ids?.length && { id: { in: f.ids } }),
     ...(f.listingType?.length && { listingType: { in: f.listingType } }),
     ...(f.city && { city: { equals: f.city, mode: "insensitive" } }),
+    // Case-insensitive city-list filter via OR of equals clauses
+    ...(!f.city && f.cities?.length && {
+      OR: f.cities.map((c) => ({ city: { equals: c, mode: "insensitive" as const } })),
+    }),
     ...(f.area && { area: { equals: f.area, mode: "insensitive" } }),
     ...(f.type?.length && { propertyType: { in: f.type } }),
     ...(f.beds?.length && { bedrooms: { in: f.beds } }),

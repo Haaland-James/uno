@@ -27,6 +27,13 @@ export const propertyListQuerySchema = z.object({
     .pipe(z.array(z.string().min(1)).max(50))
     .optional(),
   city: z.string().trim().optional(),
+  cities: z
+    .union([z.string(), z.array(z.string())])
+    .transform((v) =>
+      Array.isArray(v) ? v : v.split(",").map((s) => s.trim()).filter(Boolean)
+    )
+    .pipe(z.array(z.string().min(1)))
+    .optional(),
   area: z.string().trim().optional(),
   listingType: z
     .union([z.string(), z.array(z.string())])

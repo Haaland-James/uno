@@ -7,6 +7,7 @@ import { Home, Search, X, Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useAuthModalStore } from "@/stores/authModalStore";
+import { resolveTextToUrl } from "@/lib/search-url";
 
 /**
  * The browse-style header used on guest-accessible browse surfaces:
@@ -36,7 +37,7 @@ export function BrowseHeader({
     if (onSubmitSearch) {
       onSubmitSearch(q);
     } else {
-      router.push(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
+      router.push(resolveTextToUrl(q));
     }
   };
 

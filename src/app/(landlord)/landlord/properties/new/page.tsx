@@ -72,13 +72,13 @@ export default function NewPropertyPage() {
 	const handleDiscard = () => {
 		reset();
 		setDraftOpen(false);
-		router.push("/properties");
+		router.push("/landlord/properties");
 	};
 
 	const handleSaveDraft = () => {
 		// Already persisted via Zustand persist middleware on every change.
 		setDraftOpen(false);
-		router.push("/properties");
+		router.push("/landlord/properties");
 	};
 
 	const handleSubmit = async () => {
@@ -90,7 +90,7 @@ export default function NewPropertyPage() {
 				body: JSON.stringify(data),
 			}).catch(() => null);
 			reset();
-			router.push("/properties");
+			router.push("/landlord/properties");
 		} finally {
 			setSubmitting(false);
 		}
@@ -127,7 +127,7 @@ export default function NewPropertyPage() {
 		<div className="fixed inset-0 z-[80] flex flex-col bg-bg-page">
 			{/* Top bar */}
 			<header className="flex h-16 shrink-0 items-center justify-between border-b border-black/10 bg-white px-4 md:px-8">
-				<Link href="/properties" className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">
+				<Link href="/landlord/properties" className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">
 					<span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#af2525] text-[12px] leading-none text-white">
 						◆
 					</span>

@@ -48,11 +48,23 @@
       "Bash(curl -s \"http://localhost:3000/api/properties?listingType=LEASE\")",
       "Bash(python -c \"import sys,json; print\\('LEASE total:', json.load\\(sys.stdin\\)['data']['total']\\)\")",
       "Bash(curl -s \"http://localhost:3000/api/properties?listingType=RENT\")",
-      "Bash(python -c \"import sys,json; print\\('RENT total:', json.load\\(sys.stdin\\)['data']['total']\\)\")"
+      "Bash(python -c \"import sys,json; print\\('RENT total:', json.load\\(sys.stdin\\)['data']['total']\\)\")",
+      "PowerShell(Stop-Process -Force)",
+      "Bash(grep -rn \"href=\\\\\"/dashboard\\\\|href={\\\\`/dashboard\\\\|href=\\\\\"/properties\\\\|href=\\\\\"/contacts\\\\|href=\\\\\"/analytics\\\\|push\\(\\\\\"/dashboard\\\\|push\\(\\\\\"/properties\\\\|push\\(\\\\\"/contacts\\\\|push\\(\\\\\"/analytics\\\\|router.push\\(\\\\`/properties\" src --include=\"*.tsx\" --include=\"*.ts\")",
+      "Bash(sed -i 's|router\\\\.push\\(\"/properties\"\\)|router.push\\(\"/landlord/properties\"\\)|g; s|router\\\\.push\\(\"/properties/new\"\\)|router.push\\(\"/landlord/properties/new\"\\)|g; s|href=\"/properties\"|href=\"/landlord/properties\"|g; s|href=\"/properties/new\"|href=\"/landlord/properties/new\"|g' \"src/app/\\(landlord\\)/landlord/properties/new/page.tsx\" \"src/app/\\(landlord\\)/landlord/properties/page.tsx\")",
+      "Bash(sed -i 's|router\\\\.push\\(`/properties/${id}/edit`\\)|router.push\\(`/landlord/properties/${id}/edit`\\)|g' \"src/app/\\(landlord\\)/landlord/properties/page.tsx\")",
+      "Bash(grep -rn '\"/properties\\\\|`/properties/' \"src/app/\\(landlord\\)\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/properties)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; print\\(f'  total={d[\\\\\"total\\\\\"]}'\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?type=COMMERCIAL\")",
+      "Bash(curl -s \"http://localhost:3000/api/properties?type=LAND\")",
+      "Bash(curl -s -o /dev/null -w \"  status=%{http_code}\\\\n\" \"http://localhost:3000/properties/rent/akwa-ibom\")",
+      "Bash(grep -n \"mapContent\\\\|relative flex-1 overflow-hidden bg-\\\\[#e8eef0\\\\]\\\\|Right: map\\\\|Pagination\\\\|<\\\\\\\\/div>$\" \"src/app/properties/[[...slug]]/page.tsx\")"
     ],
     "additionalDirectories": [
       "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\auth",
-      "\\tmp"
+      "\\tmp",
+      "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\favourites"
     ]
   }
 }

@@ -78,19 +78,19 @@ const navItems: NavItem[] = [
 const landlordNavItems: NavItem[] = [
 	{
 		label: "My Listings",
-		href: "/properties",
+		href: "/landlord/properties",
 		icon: <Building2 size={18} strokeWidth={2} />,
 		iconBg: "#ffcfcf",
 	},
 	{
 		label: "Messages",
-		href: "/messages",
+		href: "/landlord/contacts",
 		icon: <MessageSquare size={18} strokeWidth={2} />,
 		iconBg: "#f5b324",
 	},
 	{
 		label: "Analytics",
-		href: "/analytics",
+		href: "/landlord/analytics",
 		icon: <BarChart3 size={18} strokeWidth={2} />,
 		iconBg: "#db8ff6",
 	},

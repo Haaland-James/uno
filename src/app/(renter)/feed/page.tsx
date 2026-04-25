@@ -2,12 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, ChevronDown, CheckCircle2 } from "lucide-react";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useFavourites } from "@/hooks/useFavourites";
 import { useHeaderStore } from "@/stores/headerStore";
 import { propertiesClient } from "@/lib/clients/properties";
+import { resolveTextToUrl } from "@/lib/search-url";
 import type { PropertyCardData } from "@/types/property";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +31,7 @@ const TOGGLE_LABELS: Record<TogglePill, string> = {
 };
 
 export default function FeedPage() {
+	const router = useRouter();
 	const { isFavourited, toggleFavourite } = useFavourites();
 	const setShowSearch = useHeaderStore((s) => s.setShowSearch);
 
@@ -164,17 +167,29 @@ export default function FeedPage() {
 						Feed
 					</h1>
 
-					{/* Search bar */}
-					<div className="flex items-center gap-3 rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white px-4 md:px-5 h-[48px] md:h-[52px] w-full lg:flex-1 lg:max-w-[480px]">
-						<div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#af2525]">
+					{/* Search bar — submits to /properties */}
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							const q = (new FormData(e.currentTarget).get("q") as string).trim();
+							router.push(resolveTextToUrl(q));
+						}}
+						className="flex items-center gap-3 rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white px-4 md:px-5 h-[48px] md:h-[52px] w-full lg:flex-1 lg:max-w-[480px]"
+					>
+						<button
+							type="submit"
+							className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#af2525]"
+							aria-label="Search"
+						>
 							<Search className="h-[14px] w-[14px] text-white" strokeWidth={2.5} />
-						</div>
+						</button>
 						<input
+							name="q"
 							type="text"
-							placeholder="City, Address, ZIP"
+							placeholder="City, Address, neighbourhood…"
 							className="flex-1 bg-transparent text-[15px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
 						/>
-					</div>
+					</form>
 				</div>
 
 				{/* Sentinel — once this scrolls above the header, the header reveals its search */}

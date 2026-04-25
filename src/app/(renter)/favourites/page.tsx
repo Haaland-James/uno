@@ -4,8 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Heart, ArrowUpDown, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-// TODO Stage 3 Phase C: replace mock with `GET /api/favourites` once endpoint exists
-import { mockProperties } from "@/lib/mock-data";
+import { favouritesClient } from "@/lib/clients/favourites";
 import { useFavourites } from "@/hooks/useFavourites";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { UnfavouriteConfirmDialog } from "@/components/property/UnfavouriteConfirmDialog";
@@ -92,7 +91,27 @@ function typeMatches(_p: PropertyCardData, filter: TypeFilter): boolean {
 }
 
 export default function FavouritesPage() {
-	const { isFavourited, toggleFavourite } = useFavourites();
+	const { toggleFavourite, favourites } = useFavourites();
+	const [favedProperties, setFavedProperties] = useState<PropertyCardData[]>([]);
+	const [favsLoading, setFavsLoading] = useState(true);
+
+	useEffect(() => {
+		let cancelled = false;
+		setFavsLoading(true);
+		favouritesClient
+			.list()
+			.then((res) => {
+				if (cancelled) return;
+				setFavedProperties(res.items);
+				setFavsLoading(false);
+			})
+			.catch(() => {
+				if (cancelled) return;
+				setFavedProperties([]);
+				setFavsLoading(false);
+			});
+		return () => { cancelled = true; };
+	}, [favourites.size]);
 
 	const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
 	const [bedsFilter, setBedsFilter] = useState<BedsFilter>("any");
@@ -117,11 +136,6 @@ export default function FavouritesPage() {
 		document.addEventListener("mousedown", onClick);
 		return () => document.removeEventListener("mousedown", onClick);
 	}, [openDropdown]);
-
-	const favedProperties = useMemo(
-		() => mockProperties.filter((p) => isFavourited(p.id)),
-		[isFavourited]
-	);
 
 	const filtered = useMemo(() => {
 		const list = favedProperties.filter(

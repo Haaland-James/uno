@@ -62,10 +62,10 @@ export default function MyListingsPage() {
 	const handleAction = (id: string, action: CardAction) => {
 		switch (action) {
 			case "complete":
-				router.push("/properties/new");
+				router.push("/landlord/properties/new");
 				return;
 			case "edit":
-				router.push(`/properties/${id}/edit`);
+				router.push(`/landlord/properties/${id}/edit`);
 				return;
 			case "view":
 				router.push(`/property/${id}`);
@@ -102,7 +102,7 @@ export default function MyListingsPage() {
 				</h1>
 				{!showZeroState && (
 					<Link
-						href="/properties/new"
+						href="/landlord/properties/new"
 						className="inline-flex h-[40px] items-center gap-2 rounded-[50px] bg-[#af2525] px-5 text-[14px] font-semibold text-white transition-opacity hover:opacity-90"
 					>
 						<Plus size={16} />
@@ -122,7 +122,7 @@ export default function MyListingsPage() {
 					description="Click the button below to add your properties"
 					action={
 						<Link
-							href="/properties/new"
+							href="/landlord/properties/new"
 							className="inline-flex h-[40px] items-center gap-2 rounded-[50px] bg-[#af2525] px-6 text-[14px] font-semibold text-white transition-opacity hover:opacity-90"
 						>
 							<Plus size={16} />
@@ -176,7 +176,7 @@ export default function MyListingsPage() {
 							action={
 								tab === "AVAILABLE" ? (
 									<Link
-										href="/properties/new"
+										href="/landlord/properties/new"
 										className="inline-flex h-[40px] items-center gap-2 rounded-[50px] bg-[#af2525] px-6 text-[14px] font-semibold text-white transition-opacity hover:opacity-90"
 									>
 										<Plus size={16} />

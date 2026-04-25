@@ -62,6 +62,8 @@ export function PropertyCard({
   return (
     <Link
       href={detailHref}
+      target="_blank"
+      rel="noopener noreferrer"
       className={cn(
         "flex flex-col bg-white border border-[rgba(0,0,0,0.06)] rounded-[15px] pb-[10px]",
         "w-[234px] md:w-[325px]",

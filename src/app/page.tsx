@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { buildSearchUrl } from "@/lib/search-url";
 import {
   ChevronLeft,
   ChevronRight,
@@ -16,7 +18,8 @@ import {
 import { GuestHeader } from "@/components/layout/GuestHeader";
 import { Footer } from "@/components/layout/Footer";
 import { PropertyCard } from "@/components/property/PropertyCard";
-import { LocationDropDown } from "@/components/property/LocationDropDown";
+import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
+import { findBySlug, type LocationNode } from "@/lib/coverage";
 import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
 import { PricingDropDown } from "@/components/property/PricingDropDown";
@@ -105,10 +108,55 @@ function useCarousel() {
 type SearchField = "location" | "beds" | "type" | "price" | null;
 
 export default function HomePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("Ewet Housing");
   const { isFavourited, toggleFavourite } = useFavourites();
   const [openField, setOpenField] = useState<SearchField>(null);
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+
+  function runHeroSearch() {
+    // Map UI prop type tokens to schema enum values
+    const typeFilter = propertyTypes
+      .map((t) => t.toUpperCase().replace(/[\s-]/g, "_"))
+      .filter((t) =>
+        ["FLAT", "HOUSE", "DUPLEX", "SELF_CONTAIN", "BUNGALOW", "COMMERCIAL", "LAND"].includes(t)
+      );
+
+    // Resolve picked LocationNode → state/city/area for path-based URL
+    let stateNode: LocationNode | undefined;
+    let cityNode: LocationNode | undefined;
+    let areaNode: LocationNode | undefined;
+    if (selectedLocation) {
+      if (selectedLocation.type === "state") {
+        stateNode = selectedLocation;
+      } else if (selectedLocation.type === "city") {
+        cityNode = selectedLocation;
+        if (selectedLocation.parent) stateNode = findBySlug(selectedLocation.parent);
+      } else if (selectedLocation.type === "area") {
+        areaNode = selectedLocation;
+        if (selectedLocation.parent) cityNode = findBySlug(selectedLocation.parent);
+        if (cityNode?.parent) stateNode = findBySlug(cityNode.parent);
+      }
+    }
+
+    const url = buildSearchUrl({
+      category: "rent",
+      state: stateNode,
+      city: cityNode,
+      area: areaNode,
+      beds: beds > 0 ? [beds] : [],
+      baths: baths > 0 ? [baths] : [],
+      type: typeFilter,
+      furnishing: [],
+      amenities: [],
+      verifiedOnly: false,
+      availableNow: false,
+      page: 1,
+      minPrice: minPrice > 0 ? minPrice : undefined,
+      maxPrice: maxPrice < 100_000_000 ? maxPrice : undefined,
+    });
+    router.push(url);
+  }
+  const [selectedLocation, setSelectedLocation] = useState<LocationNode | null>(null);
   const [beds, setBeds] = useState(0);
   const [baths, setBaths] = useState(0);
   const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
@@ -184,7 +232,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-[6px]">
                     <MapPin size={20} className="shrink-0 text-[#0a0a0a]" />
                     <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
-                      {selectedLocation ?? "select a location within uyo"}
+                      {selectedLocation?.name ?? "Location"}
                     </span>
                   </div>
                 </button>
@@ -253,6 +301,7 @@ export default function HomePage() {
               {/* Search button */}
               <button
                 type="button"
+                onClick={runHeroSearch}
                 className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-[25px] bg-[#af2525] text-white transition-opacity hover:opacity-90"
                 aria-label="Search"
               >
@@ -265,12 +314,14 @@ export default function HomePage() {
 
             {/* Dropdowns */}
             {openField === "location" && (
-              <div className="absolute left-0 top-[calc(100%+8px)] z-50">
-                <LocationDropDown
-                  onSelect={(loc) => {
-                    setSelectedLocation(loc.name);
+              <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[363px]">
+                <LocationAutocomplete
+                  onPick={(node) => {
+                    setSelectedLocation(node);
                     setOpenField(null);
                   }}
+                  autoFocus
+                  placeholder="Type a state, city, or area"
                 />
               </div>
             )}
@@ -404,6 +455,7 @@ export default function HomePage() {
               {/* Search button */}
               <button
                 type="button"
+                onClick={runHeroSearch}
                 className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-[#af2525] text-[15px] font-medium text-white transition-opacity hover:opacity-90"
               >
                 Search

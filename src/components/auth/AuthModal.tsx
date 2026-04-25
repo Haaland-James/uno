@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useAuthModalStore } from "@/stores/authModalStore";
+import { favouritesClient } from "@/lib/clients/favourites";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { VerifyForm } from "./VerifyForm";
@@ -36,25 +37,27 @@ export function AuthModal() {
 
   if (!open) return null;
 
-  function handleAuthSuccess() {
+  async function handleAuthSuccess() {
     const intent = consumeIntent();
     const wasSignup = verifyCtx?.mode === "SIGNUP";
     close();
 
-    // Fresh signups always land on /feed (their new home).
-    // Logins with no intent stay on the current page (they signed in to do something here).
-    // Logins/signups with an intent stay on the page so the intent can replay in-place.
+    // Replay the captured intent against the new session
+    if (intent?.type === "favourite") {
+      try {
+        await favouritesClient.add(intent.propertyId);
+      } catch (e) {
+        console.error("[auth-modal] favourite intent replay failed:", e);
+      }
+    }
+    // Future intents: save_search, contact, etc. (Stage 5+)
+
+    // Fresh signups land on /feed (their new home) when there's nothing to do here.
+    // Otherwise refresh in place so the new session reflects everywhere.
     if (wasSignup && !intent) {
       router.push("/feed");
     } else {
       router.refresh();
-    }
-
-    // Intent replay (favourites API not yet built — Stage 3 wires this up)
-    if (intent?.type === "favourite") {
-      // Stage 3 TODO: persist via /api/favourites
-      // For now the local Zustand favourites store will handle it
-      // when the user clicks the heart again, now that they're authenticated.
     }
   }
 

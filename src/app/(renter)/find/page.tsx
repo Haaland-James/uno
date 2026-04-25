@@ -2,9 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MapPin, BedDouble, Building2, Search, Clock } from "lucide-react";
+import { buildSearchUrl } from "@/lib/search-url";
 import { PropertyCard } from "@/components/property/PropertyCard";
-import { LocationDropDown } from "@/components/property/LocationDropDown";
+import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
+import { findBySlug, type LocationNode } from "@/lib/coverage";
 import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -16,14 +19,56 @@ import { useHeaderStore } from "@/stores/headerStore";
 type SearchField = "location" | "beds" | "type" | null;
 
 export default function FindPage() {
+	const router = useRouter();
 	const user = useUserStore((s) => s.user);
 	const { isFavourited, toggleFavourite } = useFavourites();
 	const setShowSearch = useHeaderStore((s) => s.setShowSearch);
 	const firstName = user?.name?.split(" ")[0] ?? "there";
 
+	function runSearch() {
+		const typeFilter = propertyTypes
+			.map((t) => t.toUpperCase().replace(/[\s-]/g, "_"))
+			.filter((t) =>
+				["FLAT", "HOUSE", "DUPLEX", "SELF_CONTAIN", "BUNGALOW", "COMMERCIAL", "LAND"].includes(t)
+			);
+
+		// Resolve picked LocationNode → state/city/area
+		let stateNode: LocationNode | undefined;
+		let cityNode: LocationNode | undefined;
+		let areaNode: LocationNode | undefined;
+		if (selectedLocation) {
+			if (selectedLocation.type === "state") stateNode = selectedLocation;
+			else if (selectedLocation.type === "city") {
+				cityNode = selectedLocation;
+				if (selectedLocation.parent) stateNode = findBySlug(selectedLocation.parent);
+			} else if (selectedLocation.type === "area") {
+				areaNode = selectedLocation;
+				if (selectedLocation.parent) cityNode = findBySlug(selectedLocation.parent);
+				if (cityNode?.parent) stateNode = findBySlug(cityNode.parent);
+			}
+		}
+
+		router.push(
+			buildSearchUrl({
+				category: "rent",
+				state: stateNode,
+				city: cityNode,
+				area: areaNode,
+				beds: beds > 0 ? [beds] : [],
+				baths: baths > 0 ? [baths] : [],
+				type: typeFilter,
+				furnishing: [],
+				amenities: [],
+				verifiedOnly: false,
+				availableNow: false,
+				page: 1,
+			})
+		);
+	}
+
 	// Search bar state
 	const [openField, setOpenField] = useState<SearchField>(null);
-	const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+	const [selectedLocation, setSelectedLocation] = useState<LocationNode | null>(null);
 	const [beds, setBeds] = useState(0);
 	const [baths, setBaths] = useState(0);
 	const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
@@ -102,7 +147,7 @@ export default function FindPage() {
 								<div className="flex items-center gap-[6px]">
 									<MapPin size={18} className="shrink-0 text-[#0a0a0a]" />
 									<span className="truncate text-[15px] font-normal text-[rgba(10,10,10,0.78)]">
-										{selectedLocation ?? "select a location within uyo"}
+										{selectedLocation?.name ?? "Location"}
 									</span>
 								</div>
 							</button>
@@ -165,6 +210,7 @@ export default function FindPage() {
 						{/* Search button */}
 						<button
 							type="button"
+							onClick={runSearch}
 							className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-[#af2525] text-white transition-opacity hover:opacity-90"
 							aria-label="Search"
 						>
@@ -174,12 +220,14 @@ export default function FindPage() {
 
 					{/* Dropdowns */}
 					{openField === "location" && (
-						<div className="absolute left-0 top-[calc(100%+8px)] z-50">
-							<LocationDropDown
-								onSelect={(loc) => {
-									setSelectedLocation(loc.name);
+						<div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[300px]">
+							<LocationAutocomplete
+								onPick={(node) => {
+									setSelectedLocation(node);
 									setOpenField(null);
 								}}
+								autoFocus
+								placeholder="Type a state, city, or area"
 							/>
 						</div>
 					)}
@@ -214,7 +262,7 @@ export default function FindPage() {
 						</div>
 						<input
 							type="text"
-							placeholder="select a location within uyo"
+							placeholder="Location"
 							className="flex-1 bg-transparent text-[15px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
 						/>
 					</div>

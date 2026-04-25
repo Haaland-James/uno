@@ -7,6 +7,7 @@ export interface PropertyListParams {
   ids?: string[];
   listingType?: ("RENT" | "LEASE" | "SALE")[];
   city?: string;
+  cities?: string[];
   area?: string;
   type?: string[];
   minPrice?: number;
