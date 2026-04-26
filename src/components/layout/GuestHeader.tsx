@@ -1,8 +1,9 @@
 "use client";
 
+import { signOutAndToast } from "@/lib/auth-actions";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Home, Menu, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthModalStore } from "@/stores/authModalStore";
@@ -116,7 +117,7 @@ export function GuestHeader({ className }: { className?: string }) {
                     type="button"
                     onClick={() => {
                       setMenuOpen(false);
-                      signOut({ callbackUrl: "/" });
+                      signOutAndToast();
                     }}
                     className="flex w-full items-center gap-2 px-4 py-3 text-left text-[14px] text-black/80 transition-colors hover:bg-[#faf9f9]"
                   >

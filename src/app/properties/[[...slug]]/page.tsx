@@ -1,9 +1,10 @@
 "use client";
 
+import { signOutAndToast } from "@/lib/auth-actions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import {
   Home,
   Search,
@@ -295,7 +296,7 @@ export default function PropertiesSearchPage() {
                 Go to Feed
               </Link>
               <button
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={() => signOutAndToast()}
                 className="flex h-[36px] items-center gap-2 rounded-full border border-black/10 bg-white px-3 text-[14px] text-black/70 transition-colors hover:bg-[#faf9f9]"
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#af2525] text-[12px] font-semibold text-white">

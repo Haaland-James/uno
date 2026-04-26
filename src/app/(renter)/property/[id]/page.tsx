@@ -24,6 +24,7 @@ import { propertiesClient } from "@/lib/clients/properties";
 import { trackPropertyView } from "@/hooks/useRecentlyViewed";
 import { shareOrCopy } from "@/lib/share";
 import { Footer } from "@/components/layout/Footer";
+import { toast } from "@/stores/toastStore";
 import type { PropertyDetailData, PropertyCardData } from "@/types/property";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { useSession } from "next-auth/react";
@@ -388,8 +389,6 @@ export default function PropertyDetailPage() {
   const [similar, setSimilar] = useState<PropertyCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [shareToast, setShareToast] = useState<string | null>(null);
-
   async function handleShare() {
     if (!property) return;
     const url = typeof window !== "undefined" ? window.location.href : `https://uno.ng/property/${propertyId}`;
@@ -398,13 +397,9 @@ export default function PropertyDetailPage() {
       text: `Check out ${property.title} on UNO`,
       url,
     });
-    if (result.kind === "copied") {
-      setShareToast("Link copied to clipboard");
-      setTimeout(() => setShareToast(null), 2500);
-    } else if (result.kind === "error") {
-      setShareToast(result.message);
-      setTimeout(() => setShareToast(null), 3000);
-    }
+    if (result.kind === "copied") toast.success("Link copied to clipboard");
+    else if (result.kind === "shared") toast.success("Shared");
+    else if (result.kind === "error") toast.error(result.message);
   }
 
   useEffect(() => {
@@ -848,13 +843,6 @@ export default function PropertyDetailPage() {
       <div className="pb-[120px] md:pb-0">
         <Footer />
       </div>
-
-      {/* Toast for share copy / errors */}
-      {shareToast && (
-        <div className="fixed bottom-24 left-1/2 z-[200] -translate-x-1/2 rounded-full bg-black px-4 py-2 text-[13px] font-medium text-white shadow-lg">
-          {shareToast}
-        </div>
-      )}
 
       {/* ── MOBILE STICKY BOTTOM BAR ── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#fafafa] border-t border-black/26 rounded-t-[15px] shadow-[0px_0px_24px_0px_rgba(0,0,0,0.3)] px-[15px] pb-[15px] pt-[12px]">

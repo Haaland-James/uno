@@ -1,6 +1,7 @@
 "use client";
 
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
+import { signOutAndToast } from "@/lib/auth-actions";
 
 export function useAuth() {
   const { data: session, status } = useSession();
@@ -19,7 +20,7 @@ export function useAuth() {
     user,
     isAuthenticated: status === "authenticated",
     isLoading: status === "loading",
-    signOut: () => signOut({ callbackUrl: "/" }),
+    signOut: () => signOutAndToast(),
     /** Low-level helper — most pages should use the request-otp + verify flow instead. */
     signIn,
   };

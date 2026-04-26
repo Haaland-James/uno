@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { favouritesClient } from "@/lib/clients/favourites";
+import { toast } from "@/stores/toastStore";
 
 /**
  * Manages the user's favourited property IDs. For authenticated users, hits
@@ -51,9 +52,16 @@ export function useFavourites() {
         } else {
           await favouritesClient.add(propertyId);
         }
-      } catch {
-        // Revert on failure
+      } catch (e) {
+        // Revert on failure + surface error
         setIds(ids);
+        toast.error(
+          e instanceof Error
+            ? e.message
+            : wasFav
+            ? "Could not remove favourite — try again"
+            : "Could not save to favourites — try again"
+        );
       }
     },
     [ids, status, openLogin]

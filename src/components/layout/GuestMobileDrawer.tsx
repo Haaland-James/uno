@@ -1,9 +1,10 @@
 "use client";
 
+import { signOutAndToast } from "@/lib/auth-actions";
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { X, Building2, ShoppingBag, FileText, Briefcase, Home, MapPin, LogIn, UserPlus, LogOut, User as UserIcon, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthModalStore } from "@/stores/authModalStore";
@@ -155,7 +156,7 @@ export function GuestMobileDrawer({ open, onClose }: Props) {
                   <Briefcase size={18} /> <span className="text-[15px] font-medium">List a Property</span>
                 </Link>
                 <button
-                  onClick={() => { onClose(); signOut({ callbackUrl: "/" }); }}
+                  onClick={() => { onClose(); signOutAndToast(); }}
                   className="flex items-center gap-3 rounded-[12px] px-3 py-3 text-left hover:bg-black/5"
                 >
                   <LogOut size={18} /> <span className="text-[15px] font-medium">Sign out</span>

@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { favouritesClient } from "@/lib/clients/favourites";
 import { savedSearchesClient } from "@/lib/clients/savedSearches";
+import { toast } from "@/stores/toastStore";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { VerifyForm } from "./VerifyForm";
@@ -47,8 +48,9 @@ export function AuthModal() {
     if (intent?.type === "favourite") {
       try {
         await favouritesClient.add(intent.propertyId);
+        toast.success("Saved to favourites");
       } catch (e) {
-        console.error("[auth-modal] favourite intent replay failed:", e);
+        toast.error(e instanceof Error ? e.message : "Could not save favourite — try again");
       }
     } else if (intent?.type === "save_search") {
       try {
@@ -57,9 +59,14 @@ export function AuthModal() {
           criteria: intent.criteria,
           notifyInstant: true,
         });
+        toast.success(`Search saved: ${intent.name}`);
       } catch (e) {
-        console.error("[auth-modal] save-search intent replay failed:", e);
+        toast.error(e instanceof Error ? e.message : "Could not save search — try again");
       }
+    } else if (wasSignup) {
+      toast.success("Welcome to UNO!");
+    } else {
+      toast.success("Signed in");
     }
     // Future intents: contact (Stage 5)
 
