@@ -71,11 +71,21 @@ export function SaveSearchPopover({ open, onClose, defaultName, criteria, classN
   }
 
   return (
+    <>
+      {/* Mobile only: dim backdrop so the centered sheet reads well over the page */}
+      <div
+        className="md:hidden fixed inset-0 z-[200] bg-black/40"
+        onClick={onClose}
+        aria-hidden
+      />
     <div
       ref={ref}
       className={cn(
-        "absolute z-50 w-[320px] rounded-[14px] border border-black/10 bg-white p-4 shadow-[0_8px_24px_rgba(0,0,0,0.12)]",
-        className
+        // Desktop: anchored absolute popover (positioned by the passed className)
+        "hidden md:block absolute z-50 w-[320px] rounded-[14px] border border-black/10 bg-white p-4 shadow-[0_8px_24px_rgba(0,0,0,0.12)]",
+        className,
+        // Mobile: full-width fixed centered sheet — escapes any overflow:hidden ancestor
+        "max-md:!fixed max-md:!left-3 max-md:!right-3 max-md:!top-1/2 max-md:!w-auto max-md:!-translate-y-1/2 max-md:!z-[201] max-md:!block max-md:!max-w-[400px] max-md:!mx-auto"
       )}
     >
       <div className="mb-3 flex items-center justify-between">
@@ -155,5 +165,6 @@ export function SaveSearchPopover({ open, onClose, defaultName, criteria, classN
         </>
       )}
     </div>
+    </>
   );
 }

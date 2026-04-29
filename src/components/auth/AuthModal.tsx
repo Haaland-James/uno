@@ -7,6 +7,7 @@ import { useAuthModalStore } from "@/stores/authModalStore";
 import { favouritesClient } from "@/lib/clients/favourites";
 import { savedSearchesClient } from "@/lib/clients/savedSearches";
 import { toast } from "@/stores/toastStore";
+import { broadcastAuthChange } from "@/lib/auth-sync";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { VerifyForm } from "./VerifyForm";
@@ -43,6 +44,9 @@ export function AuthModal() {
     const intent = consumeIntent();
     const wasSignup = verifyCtx?.mode === "SIGNUP";
     close();
+
+    // Tell other tabs about the new session so their useSession refetches.
+    broadcastAuthChange({ type: "signed-in" });
 
     // Replay the captured intent against the new session
     if (intent?.type === "favourite") {

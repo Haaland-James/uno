@@ -34,6 +34,7 @@ import {
   buildSearchUrl,
   searchStateToApiParams,
   describePlace,
+  describeSortContext,
   type SearchCategory,
   type SearchState,
 } from "@/lib/search-url";
@@ -89,6 +90,7 @@ export default function PropertiesSearchPage() {
   const [showSearchInline, setShowSearchInline] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const mobileFilterRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ── Fetched data ──────────────────────────────────────────────
@@ -99,7 +101,10 @@ export default function PropertiesSearchPage() {
 
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideDesktop = filterRef.current?.contains(target);
+      const insideMobile = mobileFilterRef.current?.contains(target);
+      if (!insideDesktop && !insideMobile) {
         setOpenFilter(null);
       }
     }
@@ -195,6 +200,7 @@ export default function PropertiesSearchPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const placeText = describePlace(state);
+  const sortContext = describeSortContext(state.sort);
 
   // Pre-filled search display value
   const currentLocation = state.area ?? state.city ?? state.state;
@@ -540,11 +546,14 @@ export default function PropertiesSearchPage() {
           <div className="flex flex-shrink-0 items-end justify-between border-b border-[rgba(0,0,0,0.06)] px-[24px] py-[12px]">
             <div className="flex flex-col gap-[3px]">
               <p className="text-[15px] font-medium text-[#161515]">
-                {loading ? "…" : total} {total === 1 ? "property" : "properties"} listed
+                {loading ? "…" : total} {sortContext ? `${sortContext.toLowerCase()} ` : ""}
+                {total === 1 ? "property" : "properties"} listed
                 {placeText ? ` ${listingLabel.toLowerCase()} in ${placeText}` : ` ${listingLabel.toLowerCase()}`}
               </p>
               {placeText && (
-                <p className="text-[20px] font-semibold text-[#161515]">{placeText}</p>
+                <p className="text-[20px] font-semibold text-[#161515]">
+                  {sortContext ? `${sortContext} in ` : ""}{placeText}
+                </p>
               )}
             </div>
             <div className="relative flex items-center gap-1">
@@ -645,7 +654,7 @@ export default function PropertiesSearchPage() {
       {/* ═══════════════════════════════════════════════════
            MOBILE: list OR map (toggle)
          ═══════════════════════════════════════════════════ */}
-      <div className="flex flex-1 flex-col overflow-hidden md:hidden">
+      <div ref={mobileFilterRef} className="flex flex-1 flex-col overflow-hidden md:hidden">
         {mobileView === "list" ? (
           <>
             {/* Mobile filter row — always visible */}
@@ -768,11 +777,15 @@ export default function PropertiesSearchPage() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] text-black/60">
-                    {loading ? "Loading…" : `${total} ${total === 1 ? "property" : "properties"} listed`}
+                    {loading
+                      ? "Loading…"
+                      : `${total} ${sortContext ? `${sortContext.toLowerCase()} ` : ""}${total === 1 ? "property" : "properties"} listed`}
                     {placeText ? ` ${listingLabel.toLowerCase()} in ${placeText}` : ` ${listingLabel.toLowerCase()}`}
                   </p>
                   {placeText && (
-                    <p className="mt-0.5 truncate text-[16px] font-semibold text-[#161515]">{placeText}</p>
+                    <p className="mt-0.5 truncate text-[16px] font-semibold text-[#161515]">
+                      {sortContext ? `${sortContext} in ` : ""}{placeText}
+                    </p>
                   )}
                 </div>
                 <button

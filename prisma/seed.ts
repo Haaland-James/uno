@@ -85,6 +85,40 @@ const EXTRA_PROPERTIES: SeedProp[] = [
   { title: "Shop Space for Lease at Watt Market", propertyType: PropertyType.COMMERCIAL, listingType: ListingType.LEASE, bedrooms: 0, bathrooms: 1, area: "Watt Market", city: "Calabar", rent: 600000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Security/Gate"], verified: true, daysAgo: 11 },
   { title: "5-Year Lease: Mall Anchor Space at Ikeja", propertyType: PropertyType.COMMERCIAL, listingType: ListingType.LEASE, bedrooms: 0, bathrooms: 4, area: "Ikeja GRA", city: "Lagos", rent: 12000000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Generator", "Air Conditioning", "Parking Space", "CCTV", "Security/Gate"], verified: true, daysAgo: 14 },
   { title: "Long-Lease 4BR House at Maitama", propertyType: PropertyType.HOUSE, listingType: ListingType.LEASE, bedrooms: 4, bathrooms: 4, area: "Maitama", city: "Abuja", rent: 9000000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Generator", "Swimming Pool", "Gym", "CCTV", "Security/Gate"], verified: true, daysAgo: 12 },
+
+  // ─────────────────────────────────────────────────────────────────
+  // Homepage neighborhood-tabs coverage — ensure every tab on the landing
+  // page returns at least 4 listings so the carousel never looks empty.
+  // ─────────────────────────────────────────────────────────────────
+
+  // Ewet Housing (extra rentals)
+  { title: "Tastefully Finished 2BR at Ewet Housing", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 2, bathrooms: 2, area: "Ewet Housing", city: "Uyo", rent: 550000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Generator", "Tiled Floor", "Parking Space", "Security/Gate"], verified: true, daysAgo: 3 },
+  { title: "Mini Flat at Ewet Housing", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 1, bathrooms: 1, area: "Ewet Housing", city: "Uyo", rent: 280000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Tiled Floor", "Wardrobe"], verified: true, daysAgo: 5 },
+
+  // Osongama Housing Estate — was missing entirely
+  { title: "3BR Flat in Osongama Housing Estate", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 3, bathrooms: 2, area: "Osongama Housing Estate", city: "Uyo", rent: 600000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Borehole", "Generator", "Security/Gate", "Fence/Wall"], verified: true, daysAgo: 4 },
+  { title: "4BR Duplex Osongama Estate", propertyType: PropertyType.DUPLEX, listingType: ListingType.RENT, bedrooms: 4, bathrooms: 3, area: "Osongama Housing Estate", city: "Uyo", rent: 1500000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Borehole", "Generator", "Swimming Pool", "Security/Gate", "CCTV"], verified: true, daysAgo: 6 },
+  { title: "Newly Built 2BR at Osongama", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 2, bathrooms: 2, area: "Osongama Housing Estate", city: "Uyo", rent: 480000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Tiled Floor", "Prepaid Meter", "Parking Space"], verified: true, daysAgo: 9 },
+  { title: "Family Bungalow at Osongama", propertyType: PropertyType.BUNGALOW, listingType: ListingType.RENT, bedrooms: 3, bathrooms: 2, area: "Osongama Housing Estate", city: "Uyo", rent: 800000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Borehole", "Generator", "Fence/Wall", "Security/Gate"], verified: true, daysAgo: 11 },
+
+  // Nwaniba (matched via "contains" against "Nwaniba Road" too — adding pure "Nwaniba" too)
+  { title: "Lakeside 2BR Flat at Nwaniba", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 2, bathrooms: 2, area: "Nwaniba", city: "Uyo", rent: 420000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Generator", "Tiled Floor", "Parking Space"], verified: true, daysAgo: 2 },
+  { title: "3BR Bungalow at Nwaniba", propertyType: PropertyType.BUNGALOW, listingType: ListingType.RENT, bedrooms: 3, bathrooms: 2, area: "Nwaniba", city: "Uyo", rent: 700000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Borehole", "Generator", "Security/Gate", "Fence/Wall"], verified: true, daysAgo: 7 },
+  { title: "Self Contain at Nwaniba Road", propertyType: PropertyType.SELF_CONTAIN, listingType: ListingType.RENT, bedrooms: 1, bathrooms: 1, area: "Nwaniba Road", city: "Uyo", rent: 200000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Tiled Floor", "Prepaid Meter"], verified: true, daysAgo: 8 },
+
+  // Calabar Itu — was missing entirely
+  { title: "3BR Flat at Calabar Itu Highway", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 3, bathrooms: 2, area: "Calabar Itu", city: "Uyo", rent: 650000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Generator", "Tiled Floor", "Parking Space", "Security/Gate"], verified: true, daysAgo: 5 },
+  { title: "4BR Duplex on Calabar-Itu Road", propertyType: PropertyType.DUPLEX, listingType: ListingType.RENT, bedrooms: 4, bathrooms: 4, area: "Calabar Itu", city: "Uyo", rent: 1800000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Borehole", "Generator", "Swimming Pool", "Security/Gate", "CCTV"], verified: true, daysAgo: 8 },
+  { title: "2BR Apartment Calabar Itu", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 2, bathrooms: 1, area: "Calabar Itu", city: "Uyo", rent: 380000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Tiled Floor", "Prepaid Meter"], verified: true, daysAgo: 12 },
+  { title: "Family House at Calabar Itu", propertyType: PropertyType.HOUSE, listingType: ListingType.RENT, bedrooms: 4, bathrooms: 3, area: "Calabar Itu", city: "Uyo", rent: 1200000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Borehole", "Generator", "Fence/Wall", "Security/Gate", "Parking Space"], verified: true, daysAgo: 15 },
+
+  // Oron Road (extra)
+  { title: "2BR Flat at Oron Road", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 2, bathrooms: 2, area: "Oron Road", city: "Uyo", rent: 350000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Tiled Floor", "Parking Space"], verified: true, daysAgo: 4 },
+  { title: "Bungalow on Oron Road", propertyType: PropertyType.BUNGALOW, listingType: ListingType.RENT, bedrooms: 3, bathrooms: 2, area: "Oron Road", city: "Uyo", rent: 750000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Borehole", "Generator", "Security/Gate", "Fence/Wall"], verified: true, daysAgo: 10 },
+
+  // Shelter Afrique (extra)
+  { title: "2BR Flat in Shelter Afrique", propertyType: PropertyType.FLAT, listingType: ListingType.RENT, bedrooms: 2, bathrooms: 2, area: "Shelter Afrique", city: "Uyo", rent: 500000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Generator", "Tiled Floor", "Parking Space", "Security/Gate"], verified: true, daysAgo: 3 },
+  { title: "Self Contain at Shelter Afrique", propertyType: PropertyType.SELF_CONTAIN, listingType: ListingType.RENT, bedrooms: 1, bathrooms: 1, area: "Shelter Afrique", city: "Uyo", rent: 240000, rentPeriod: RentPeriod.YEAR, amenities: ["Water Supply", "Tiled Floor", "Prepaid Meter"], verified: true, daysAgo: 6 },
 ];
 
 /** Returns at least MIN_PHOTOS photos, padding from STOCK_PHOTOS if needed. */

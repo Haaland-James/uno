@@ -9,6 +9,7 @@ import { useFavourites } from "@/hooks/useFavourites";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { UnfavouriteConfirmDialog } from "@/components/property/UnfavouriteConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
 import type { PropertyCardData, PropertyType } from "@/types/property";
 
 type TypeFilter = "all" | "rent" | "sale" | "lease";
@@ -320,8 +321,14 @@ export default function FavouritesPage() {
 					</div>
 				)}
 
-				{/* Content */}
-				{!hasAnyFavourites ? (
+				{/* Content — show skeletons while loading so we don't flash the empty state */}
+				{favsLoading ? (
+					<div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
+						{Array.from({ length: 6 }).map((_, i) => (
+							<PropertyCardSkeleton key={i} className="w-full md:w-full" />
+						))}
+					</div>
+				) : !hasAnyFavourites ? (
 					<div className="w-full rounded-[20px] border border-dashed border-black/10 bg-white/60">
 						<EmptyState
 							title="Save Homes Here"

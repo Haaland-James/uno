@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Search, ChevronDown, CheckCircle2 } from "lucide-react";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
 import { useFavourites } from "@/hooks/useFavourites";
 import { useHeaderStore } from "@/stores/headerStore";
 import { propertiesClient } from "@/lib/clients/properties";
@@ -287,8 +288,14 @@ export default function FeedPage() {
 					)}
 				</div>
 
-				{/* Property grid or empty state */}
-				{filtered.length === 0 ? (
+				{/* Property grid: skeletons while loading, empty state only AFTER load completes */}
+				{feedLoading ? (
+					<div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
+						{Array.from({ length: 6 }).map((_, i) => (
+							<PropertyCardSkeleton key={i} className="w-full md:w-full" />
+						))}
+					</div>
+				) : filtered.length === 0 ? (
 					<div className="w-full rounded-[20px] border border-dashed border-black/10 bg-white/60">
 						<EmptyState
 							icon={

@@ -14,7 +14,14 @@ export function SessionProvider({
   session?: Session | null;
 }) {
   return (
-    <NextAuthSessionProvider session={session}>
+    <NextAuthSessionProvider
+      session={session}
+      // Belt-and-suspenders cross-tab sync alongside the BroadcastChannel.
+      // refetchOnWindowFocus is the default; making it explicit. Interval poll
+      // every 5 min catches stale sessions on tabs that are open + visible.
+      refetchOnWindowFocus
+      refetchInterval={5 * 60}
+    >
       <SessionSync />
       {children}
       <AuthModal />

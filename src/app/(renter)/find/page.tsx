@@ -11,6 +11,7 @@ import { findBySlug, type LocationNode } from "@/lib/coverage";
 import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
 import { useFavourites } from "@/hooks/useFavourites";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useUserStore } from "@/stores/userStore";
@@ -121,7 +122,7 @@ export default function FindPage() {
 
 	// Recently Viewed — actual properties this user has opened (localStorage MVP).
 	// Stage 4+ can replace with a per-user DB table for cross-device sync.
-	const { items: recentlyViewed } = useRecentlyViewed(9);
+	const { items: recentlyViewed, isLoading: recentlyViewedLoading } = useRecentlyViewed(9);
 
 	return (
 		<div className="w-full px-3 md:px-8 pt-14 pb-10 md:py-12">
@@ -284,7 +285,13 @@ export default function FindPage() {
 						Recently Viewed
 					</h2>
 
-					{recentlyViewed.length === 0 ? (
+					{recentlyViewedLoading ? (
+						<div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
+							{Array.from({ length: 6 }).map((_, i) => (
+								<PropertyCardSkeleton key={i} className="w-full md:w-full" />
+							))}
+						</div>
+					) : recentlyViewed.length === 0 ? (
 						<div className="w-full rounded-[20px] border border-dashed border-black/10 bg-white/60">
 							<EmptyState
 								icon={

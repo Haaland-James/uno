@@ -65,8 +65,8 @@ export const propertiesClient = {
       `/api/properties/${encodeURIComponent(id)}/similar?limit=${limit}`
     ).then((d) => d.items),
 
-  featured: (type: FeaturedType, limit = 8) =>
+  featured: (type: FeaturedType, limit = 8, area?: string) =>
     getJson<{ type: FeaturedType; items: PropertyCardData[] }>(
-      `/api/properties/featured?type=${type}&limit=${limit}`
+      `/api/properties/featured?type=${type}&limit=${limit}${area ? `&area=${encodeURIComponent(area)}` : ""}`
     ).then((d) => d.items),
 };

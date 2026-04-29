@@ -3,17 +3,35 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useUserStore } from "@/stores/userStore";
+import { onAuthChange } from "@/lib/auth-sync";
 import type { Role } from "@/types";
 
 /**
- * Bridges NextAuth's session into the existing Zustand userStore.
- * Lets all existing `useUserStore((s) => s.user)` callers keep working
- * without touching every component.
+ * Bridges NextAuth's session into the existing Zustand userStore + listens
+ * for cross-tab auth events so a sign-out in one tab is reflected in
+ * every other tab immediately.
  */
 export function SessionSync() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const setUser = useUserStore((s) => s.setUser);
   const setLoading = useUserStore((s) => s.setLoading);
+
+  // Cross-tab sync: when any other tab signs in or out, force this tab's
+  // session to refetch. signed-out auth changes hard-reload to /properties so
+  // the user lands on a public page (won't get bounced to /login from a
+  // protected route they happened to be viewing).
+  useEffect(() => {
+    return onAuthChange((event) => {
+      if (event.type === "signed-out") {
+        if (typeof window !== "undefined") {
+          window.location.assign("/");
+        }
+        return;
+      }
+      // signed-in elsewhere — refresh THIS tab's session cache
+      update();
+    });
+  }, [update]);
 
   useEffect(() => {
     if (status === "loading") {

@@ -11,9 +11,13 @@ export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
   const parsed = featuredQuerySchema.safeParse(params);
   if (!parsed.success) return zodErr(parsed.error);
-  const { type, limit } = parsed.data;
+  const { type, limit, area } = parsed.data;
 
-  const where: Prisma.PropertyWhereInput = { status: "ACTIVE" };
+  const where: Prisma.PropertyWhereInput = {
+    status: "ACTIVE",
+    // Use `contains` so a tab like "Nwaniba" matches stored area "Nwaniba Road"
+    ...(area && { area: { contains: area, mode: "insensitive" } }),
+  };
   let orderBy: Prisma.PropertyOrderByWithRelationInput;
 
   switch (type) {

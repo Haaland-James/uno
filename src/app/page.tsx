@@ -27,6 +27,7 @@ import { SeeAllCard } from "@/components/property/SeeAllCard";
 import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
 import { useFavourites } from "@/hooks/useFavourites";
 import { useFeaturedProperties } from "@/hooks/useProperties";
+import { findByName } from "@/lib/coverage";
 
 const NEIGHBORHOOD_TABS = [
   "Ewet Housing",
@@ -176,8 +177,24 @@ export default function HomePage() {
   }, []);
 
   const { items: latest, isLoading: latestLoading } = useFeaturedProperties("latest", 7);
-  const { items: topListings, isLoading: topLoading } = useFeaturedProperties("top", 7);
+  const { items: topListings, isLoading: topLoading } = useFeaturedProperties("top", 7, { area: activeTab });
   const { items: hot, isLoading: hotLoading } = useFeaturedProperties("hot", 7);
+
+  // "See All" URLs.
+  // Latest + Hot are platform-wide → no state pinned (works across whatever
+  // states we cover today and tomorrow).
+  // Top Listings IS area-specific — derive the area's parent state from
+  // coverage so "See All Lekki" goes to /properties/rent/lagos?area=lekki-...
+  // when we expand beyond Akwa Ibom.
+  const activeAreaNode = findByName(activeTab);
+  const activeAreaCity = activeAreaNode?.parent ? findByName(activeAreaNode.parent.replace(/-/g, " ")) : undefined;
+  const activeAreaState = activeAreaCity?.parent ? activeAreaCity.parent : "akwa-ibom";
+
+  const seeAllLatest = "/properties/rent?sort=newest";
+  const seeAllHot = "/properties/rent?sort=most_viewed";
+  const seeAllTop = activeAreaNode
+    ? `/properties/rent/${activeAreaState}?area=${activeAreaNode.slug}&sort=most_viewed`
+    : "/properties/rent?sort=most_viewed";
 
   const latestCarousel = useCarousel();
   const topCarousel = useCarousel();
@@ -491,7 +508,7 @@ export default function HomePage() {
                     />
                   ))}
               {!latestLoading && latest.length > 0 && (
-                <SeeAllCard href="/feed" images={latest.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+                <SeeAllCard href={seeAllLatest} images={latest.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
               )}
             </div>
           </div>
@@ -504,7 +521,7 @@ export default function HomePage() {
             <div className="mb-[16px] flex items-start justify-between gap-[12px]">
               <div className="flex items-center gap-[10px]">
                 <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
-                  Top Listings Ewet Housing
+                  Top Listings {activeTab}
                 </h2>
                 <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#f5d0d0]">
                   <MapPin size={14} className="text-[#af2525]" />
@@ -551,7 +568,7 @@ export default function HomePage() {
                     />
                   ))}
               {!topLoading && topListings.length > 0 && (
-                <SeeAllCard href="/feed" images={topListings.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+                <SeeAllCard href={seeAllTop} images={topListings.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
               )}
             </div>
           </div>
@@ -585,7 +602,7 @@ export default function HomePage() {
                     />
                   ))}
               {!hotLoading && hot.length > 0 && (
-                <SeeAllCard href="/feed" images={hot.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
+                <SeeAllCard href={seeAllHot} images={hot.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
               )}
             </div>
           </div>

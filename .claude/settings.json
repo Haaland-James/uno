@@ -61,7 +61,11 @@
       "Bash(curl -s -o /dev/null -w \"  status=%{http_code}\\\\n\" \"http://localhost:3000/properties/rent/akwa-ibom\")",
       "Bash(grep -n \"mapContent\\\\|relative flex-1 overflow-hidden bg-\\\\[#e8eef0\\\\]\\\\|Right: map\\\\|Pagination\\\\|<\\\\\\\\/div>$\" \"src/app/properties/[[...slug]]/page.tsx\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/api/properties?pageSize=1)",
-      "Bash(grep -n \"loading ? \\\\\"Loading…\\\\\" : \\\\`\\\\${total}\" \"src/app/properties/[[...slug]]/page.tsx\")"
+      "Bash(grep -n \"loading ? \\\\\"Loading…\\\\\" : \\\\`\\\\${total}\" \"src/app/properties/[[...slug]]/page.tsx\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/properties/rent?sort=newest\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/properties/rent?sort=most_viewed\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/properties/rent/akwa-ibom?area=ewet-housing&sort=most_viewed\")",
+      "Bash(git diff *)"
     ],
     "additionalDirectories": [
       "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\auth",

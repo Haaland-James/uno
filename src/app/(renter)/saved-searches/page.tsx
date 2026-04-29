@@ -24,7 +24,7 @@ type ModalState =
 
 export default function SavedSearchesPage() {
   const router = useRouter();
-  const { savedSearches, deleteSearch, updateSearch } = useSavedSearches();
+  const { savedSearches, deleteSearch, updateSearch, isLoading: savedSearchesLoading } = useSavedSearches();
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<ModalState>({ type: null });
 
@@ -66,6 +66,23 @@ export default function SavedSearchesPage() {
       closeModal();
     }
   };
+
+  // Show skeletons while loading so we don't flash the empty state
+  if (savedSearchesLoading) {
+    return (
+      <div className="page-container py-4 md:py-6">
+        <Header />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-full min-h-[180px] md:min-h-[228px] bg-[#fafafa] border border-[rgba(0,0,0,0.1)] rounded-[18px] p-[20px] animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (savedSearches.length === 0) {
     return (

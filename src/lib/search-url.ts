@@ -268,8 +268,32 @@ export function resolveTextToUrl(
 
 /** Just the location label, for showing in a sub-heading without the category. */
 export function describePlace(s: SearchState): string | null {
+  // Area in URL but no city — derive parent city/state from coverage so we
+  // can render "Ewet Housing, Uyo, Akwa Ibom" instead of just "Akwa Ibom"
+  if (s.area && !s.city) {
+    const parentCity = s.area.parent ? findBySlug(s.area.parent) : undefined;
+    const parentState =
+      parentCity?.parent ? findBySlug(parentCity.parent) : s.state;
+    const parts = [s.area.name, parentCity?.name, parentState?.name].filter(Boolean);
+    return parts.join(", ");
+  }
   if (s.area && s.city) return `${s.area.name}, ${s.city.name}, ${s.state?.name ?? ""}`.replace(/, $/, "");
   if (s.city) return `${s.city.name}, ${s.state?.name ?? ""}`.replace(/, $/, "");
   if (s.state) return s.state.name;
   return null;
+}
+
+/**
+ * When the user arrives via a "Latest" or "Hot" carousel See All, the URL
+ * carries `?sort=newest|most_viewed` — surface that intent in the heading
+ * instead of just saying "X properties for rent in [Place]".
+ */
+export function describeSortContext(sort: SearchState["sort"]): string | null {
+  switch (sort) {
+    case "newest": return "Latest";
+    case "most_viewed": return "Hot";
+    case "price_asc": return "Lowest priced";
+    case "price_desc": return "Highest priced";
+    default: return null;
+  }
 }
