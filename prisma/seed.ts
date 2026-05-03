@@ -1,5 +1,6 @@
 import { PrismaClient, PropertyStatus, VerificationStatus, AvailabilityStatus, PropertyType, RentPeriod, ListingType, Role, LandlordType } from "@prisma/client";
 import { mockProperties } from "../src/lib/mock-data";
+import { coordsFor } from "../src/lib/area-coords";
 
 const prisma = new PrismaClient();
 
@@ -226,6 +227,7 @@ async function main() {
     const listingType: ListingType =
       mock.propertyType === "LAND" ? ListingType.SALE : ListingType.RENT;
 
+    const mockCoords = coordsFor(mock.city, mock.area, i + 1);
     await prisma.property.create({
       data: {
         landlordId,
@@ -238,6 +240,9 @@ async function main() {
         customAmenities: [],
         city: mock.city,
         area: mock.area,
+        latitude: mockCoords.lat,
+        longitude: mockCoords.lng,
+        geocodeAccuracy: "seed_approx",
         rent: mock.rent,
         rentPeriod: mock.rentPeriod as RentPeriod,
         currency: mock.currency,
@@ -273,6 +278,7 @@ async function main() {
     const status = e.verified ? PropertyStatus.ACTIVE : PropertyStatus.PENDING;
     const createdAt = new Date(Date.now() - (e.daysAgo ?? 7) * 24 * 60 * 60 * 1000);
 
+    const extraCoords = coordsFor(e.city, e.area, mockProperties.length + i + 1);
     await prisma.property.create({
       data: {
         landlordId,
@@ -285,6 +291,9 @@ async function main() {
         customAmenities: [],
         city: e.city,
         area: e.area,
+        latitude: extraCoords.lat,
+        longitude: extraCoords.lng,
+        geocodeAccuracy: "seed_approx",
         rent: e.rent,
         rentPeriod: e.rentPeriod,
         currency: "NGN",

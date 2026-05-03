@@ -19,6 +19,10 @@ export interface PropertyListParams {
   verifiedOnly?: boolean;
   availableNow?: boolean;
   sort?: "price_asc" | "price_desc" | "newest" | "most_viewed";
+  minLng?: number;
+  minLat?: number;
+  maxLng?: number;
+  maxLat?: number;
   page?: number;
   pageSize?: number;
 }

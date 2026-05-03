@@ -1,13 +1,10 @@
 import { z } from "zod";
 
 const PropertyTypeEnum = z.enum([
-  "FLAT",
-  "HOUSE",
-  "DUPLEX",
-  "SELF_CONTAIN",
-  "BUNGALOW",
-  "COMMERCIAL",
-  "LAND",
+  "FLAT", "HOUSE", "DUPLEX", "SELF_CONTAIN", "BUNGALOW", "COMMERCIAL", "LAND",
+  "TERRACE", "DETACHED", "SEMI_DETACHED", "PENTHOUSE", "STUDIO", "MINI_FLAT", "SHARED_ROOM",
+  "OFFICE", "SHOP", "WAREHOUSE", "COWORKING", "EVENT_CENTRE", "HOTEL_SHORTLET", "PLAZA_UNIT",
+  "RESIDENTIAL_PLOT", "COMMERCIAL_PLOT", "AGRICULTURAL_LAND", "MIXED_USE_LAND",
 ]);
 
 const FurnishingEnum = z.enum(["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"]);
@@ -88,6 +85,12 @@ export const propertyListQuerySchema = z.object({
     .transform((v) => v === "true")
     .optional(),
   sort: z.enum(["price_asc", "price_desc", "newest", "most_viewed"]).optional(),
+  // Map-viewport filter — when present, only properties whose lat/lng fall
+  // inside the bbox are returned. Used by the search page's "Search this area".
+  minLng: z.coerce.number().optional(),
+  minLat: z.coerce.number().optional(),
+  maxLng: z.coerce.number().optional(),
+  maxLat: z.coerce.number().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(20),
 });

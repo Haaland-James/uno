@@ -1,11 +1,35 @@
 export type PropertyType =
+	// Legacy
 	| "FLAT"
 	| "HOUSE"
 	| "DUPLEX"
 	| "SELF_CONTAIN"
 	| "BUNGALOW"
 	| "COMMERCIAL"
-	| "LAND";
+	| "LAND"
+	// Residential
+	| "TERRACE"
+	| "DETACHED"
+	| "SEMI_DETACHED"
+	| "PENTHOUSE"
+	| "STUDIO"
+	| "MINI_FLAT"
+	| "SHARED_ROOM"
+	// Commercial
+	| "OFFICE"
+	| "SHOP"
+	| "WAREHOUSE"
+	| "COWORKING"
+	| "EVENT_CENTRE"
+	| "HOTEL_SHORTLET"
+	| "PLAZA_UNIT"
+	// Land
+	| "RESIDENTIAL_PLOT"
+	| "COMMERCIAL_PLOT"
+	| "AGRICULTURAL_LAND"
+	| "MIXED_USE_LAND";
+
+export type PropertyKind = "RESIDENTIAL" | "COMMERCIAL" | "LAND";
 
 export type Furnishing = "UNFURNISHED" | "SEMI_FURNISHED" | "FULLY_FURNISHED";
 
@@ -77,6 +101,9 @@ export interface Property {
 
 // Lightweight card display type
 export interface PropertyCardData {
+	// Discriminator — "property" for real listings, "draft" for in-progress wizard rows.
+	// Drives My Listings action routing (drafts use /api/me/drafts/[id]).
+	kind?: "property" | "draft";
 	id: string;
 	title: string;
 	propertyType: PropertyType;
@@ -96,6 +123,8 @@ export interface PropertyCardData {
 	availabilityStatus: AvailabilityStatus;
 	isFavourited?: boolean;
 	createdAt: Date;
+	latitude?: number | null;
+	longitude?: number | null;
 	// Landlord-side fields (optional; populated for "My Listings" view)
 	status?: PropertyStatus;
 	views?: number;

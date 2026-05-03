@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
+import { SearchMap, type MapBBox } from "@/components/property/SearchMap";
 import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
 import { PricingDropDown } from "@/components/property/PricingDropDown";
@@ -93,6 +94,22 @@ export default function PropertiesSearchPage() {
   const mobileFilterRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Card↔marker hover sync
+  const [hoverId, setHoverId] = useState<string | null>(null);
+
+  // Map-viewport bbox filter — set by clicking "Search this area" after the
+  // user pans/zooms. Cleared whenever any URL filter changes (a new search
+  // shouldn't be constrained by the previous map view).
+  const [bbox, setBbox] = useState<MapBBox | null>(null);
+  // Latest bounds the user has panned to (not yet applied as a filter).
+  const [pendingBbox, setPendingBbox] = useState<MapBBox | null>(null);
+
+  // Reset bbox + pending bbox whenever URL state changes (new filter set)
+  useEffect(() => {
+    setBbox(null);
+    setPendingBbox(null);
+  }, [state]);
+
   // ── Fetched data ──────────────────────────────────────────────
   const [items, setItems] = useState<PropertyCardData[]>([]);
   const [total, setTotal] = useState(0);
@@ -112,12 +129,18 @@ export default function PropertiesSearchPage() {
     return () => document.removeEventListener("mousedown", handle);
   }, []);
 
-  // Fetch on URL change
+  // Fetch on URL change OR when the user applies a new map-area filter
   useEffect(() => {
     const myId = ++reqId.current;
     setLoading(true);
     const apiParams = searchStateToApiParams({ ...state, page: state.page });
     apiParams.pageSize = PAGE_SIZE;
+    if (bbox) {
+      apiParams.minLng = bbox.minLng;
+      apiParams.minLat = bbox.minLat;
+      apiParams.maxLng = bbox.maxLng;
+      apiParams.maxLat = bbox.maxLat;
+    }
     const handle = setTimeout(() => {
       propertiesClient
         .list(apiParams)
@@ -135,7 +158,7 @@ export default function PropertiesSearchPage() {
         });
     }, 200);
     return () => clearTimeout(handle);
-  }, [state]);
+  }, [state, bbox]);
 
   // ── URL navigation helpers ─────────────────────────────────────
   const navigate = useCallback(
@@ -206,35 +229,30 @@ export default function PropertiesSearchPage() {
   const currentLocation = state.area ?? state.city ?? state.state;
   const initials = (session?.user?.name ?? "U").slice(0, 1).toUpperCase();
 
-  // ── Map placeholder content (Stage 5 will replace with Mapbox) ─
+  // Real Mapbox map driven by current results.
   const mapContent = (
-    <>
-      <iframe
-        title="Map"
-        src="https://www.openstreetmap.org/export/embed.html?bbox=7.8%2C4.9%2C8.1%2C5.1&layer=mapnik"
-        className="h-full w-full rounded-[10px] border-0"
-        loading="lazy"
-      />
-      {[
-        { top: "22%", left: "30%", price: "₦3M" },
-        { top: "35%", left: "55%", price: "₦8M" },
-        { top: "28%", left: "72%", price: "₦1.8M" },
-        { top: "48%", left: "40%", price: "₦15M" },
-        { top: "55%", left: "65%", price: "₦8.5M" },
-        { top: "40%", left: "20%", price: "₦5M" },
-        { top: "62%", left: "50%", price: "₦3.5M" },
-        { top: "30%", left: "85%", price: "₦2M" },
-      ].map(({ top, left, price }) => (
-        <button
-          key={price + top}
-          style={{ top, left }}
-          className="absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1a4d2e] px-[8px] py-[3px] text-[11px] font-semibold text-white shadow-md transition-colors hover:bg-[#af2525]"
-        >
-          {price}
-        </button>
-      ))}
-    </>
+    <SearchMap
+      items={items}
+      activeId={hoverId}
+      onMarkerHover={setHoverId}
+      onUserMove={setPendingBbox}
+    />
   );
+
+  // Show "Search this area" only when the user has moved the map AND
+  // we're not already filtered to that exact bbox.
+  const showSearchAreaBtn =
+    pendingBbox !== null &&
+    (bbox === null ||
+      pendingBbox.minLng !== bbox.minLng ||
+      pendingBbox.minLat !== bbox.minLat ||
+      pendingBbox.maxLng !== bbox.maxLng ||
+      pendingBbox.maxLat !== bbox.maxLat);
+
+  function applyMapArea() {
+    if (!pendingBbox) return;
+    setBbox(pendingBbox);
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
@@ -605,13 +623,18 @@ export default function PropertiesSearchPage() {
             ) : (
               <div className="grid grid-cols-2 gap-[20px]">
                 {items.map((p) => (
-                  <PropertyCard
+                  <div
                     key={p.id}
-                    data={p}
-                    isFavourited={isFavourited(p.id)}
-                    onToggleFavourite={toggleFavourite}
-                    className="w-full md:w-full"
-                  />
+                    onMouseEnter={() => setHoverId(p.id)}
+                    onMouseLeave={() => setHoverId(null)}
+                  >
+                    <PropertyCard
+                      data={p}
+                      isFavourited={isFavourited(p.id)}
+                      onToggleFavourite={toggleFavourite}
+                      className="w-full md:w-full"
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -648,6 +671,24 @@ export default function PropertiesSearchPage() {
         {/* ── Right: map ─────────────────────────────────── */}
         <div className="relative flex-1 overflow-hidden bg-white p-[5px]">
           {mapContent}
+          {showSearchAreaBtn && (
+            <button
+              type="button"
+              onClick={applyMapArea}
+              className="absolute left-1/2 top-4 z-[5] -translate-x-1/2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-[#161515] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-colors hover:bg-[#faf9f9]"
+            >
+              Search this area
+            </button>
+          )}
+          {bbox && (
+            <button
+              type="button"
+              onClick={() => setBbox(null)}
+              className="absolute right-4 top-4 z-[5] rounded-full bg-white px-3 py-1.5 text-[12px] font-medium text-black/70 shadow-md hover:bg-[#faf9f9]"
+            >
+              Clear map filter
+            </button>
+          )}
         </div>
       </div>
 
@@ -827,13 +868,18 @@ export default function PropertiesSearchPage() {
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   {items.map((p) => (
-                    <PropertyCard
+                    <div
                       key={p.id}
-                      data={p}
-                      isFavourited={isFavourited(p.id)}
-                      onToggleFavourite={toggleFavourite}
-                      className="w-full md:w-full"
-                    />
+                      onMouseEnter={() => setHoverId(p.id)}
+                      onMouseLeave={() => setHoverId(null)}
+                    >
+                      <PropertyCard
+                        data={p}
+                        isFavourited={isFavourited(p.id)}
+                        onToggleFavourite={toggleFavourite}
+                        className="w-full md:w-full"
+                      />
+                    </div>
                   ))}
                 </div>
               )}
@@ -845,9 +891,24 @@ export default function PropertiesSearchPage() {
         ) : (
           <div className="relative flex-1 overflow-hidden bg-white p-[5px]">
             {mapContent}
-            {/* Click-shield wrapping the iframe so the floating toggle stays clickable.
-                The iframe captures pointer events; this overlay sits above only at the
-                bottom edge where our toggle lives, leaving the rest of the map interactive. */}
+            {showSearchAreaBtn && (
+              <button
+                type="button"
+                onClick={applyMapArea}
+                className="absolute left-1/2 top-3 z-[5] -translate-x-1/2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-[#161515] shadow-[0_4px_14px_rgba(0,0,0,0.18)]"
+              >
+                Search this area
+              </button>
+            )}
+            {bbox && (
+              <button
+                type="button"
+                onClick={() => setBbox(null)}
+                className="absolute right-3 top-3 z-[5] rounded-full bg-white px-3 py-1.5 text-[12px] font-medium text-black/70 shadow-md"
+              >
+                Clear map filter
+              </button>
+            )}
           </div>
         )}
       </div>

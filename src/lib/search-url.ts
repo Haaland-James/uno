@@ -170,7 +170,7 @@ export function buildSearchUrl(s: Partial<SearchState>): string {
 }
 
 /** Convert SearchState → propertiesClient.list params (the API filter shape). */
-export function searchStateToApiParams(s: SearchState) {
+export function searchStateToApiParams(s: SearchState): import("./clients/properties").PropertyListParams {
   // Listing type from category (rent/sale/lease)
   let listingType: ("RENT" | "LEASE" | "SALE")[] | undefined;
   switch (s.category) {
@@ -208,7 +208,6 @@ export function searchStateToApiParams(s: SearchState) {
 /** Returns names of all city nodes whose parent slug matches the given state. */
 function citiesUnderState(stateSlug: string): string[] | undefined {
   // Lazy import to avoid circular dep at module-init time
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { COVERAGE } = require("./coverage") as typeof import("./coverage");
   const cities = COVERAGE
     .filter((n) => n.type === "city" && n.parent === stateSlug)
@@ -238,6 +237,27 @@ export function describeScope(s: SearchState): string {
  * Used by the simple search inputs (BrowseHeader, /feed) so typing "Uyo"
  * yields /properties/rent/akwa-ibom/uyo instead of an opaque ?q=Uyo.
  */
+/** Build a search URL from a picked autocomplete LocationNode. */
+export function nodeToSearchUrl(
+  node: LocationNode,
+  category: SearchCategory = "rent"
+): string {
+  let stateNode: LocationNode | undefined;
+  let cityNode: LocationNode | undefined;
+  let areaNode: LocationNode | undefined;
+  if (node.type === "state") {
+    stateNode = node;
+  } else if (node.type === "city") {
+    cityNode = node;
+    if (node.parent) stateNode = findBySlug(node.parent);
+  } else if (node.type === "area") {
+    areaNode = node;
+    if (node.parent) cityNode = findBySlug(node.parent);
+    if (cityNode?.parent) stateNode = findBySlug(cityNode.parent);
+  }
+  return buildSearchUrl({ category, state: stateNode, city: cityNode, area: areaNode });
+}
+
 export function resolveTextToUrl(
   text: string,
   fallbackCategory: SearchCategory = "rent"

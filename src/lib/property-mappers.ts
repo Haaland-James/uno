@@ -1,5 +1,6 @@
 import type { Property, PropertyPhoto, User, LandlordProfile } from "@prisma/client";
 import type { PropertyCardData, PropertyDetailData } from "@/types/property";
+import { fallbackCoordsFor } from "@/lib/area-coords";
 
 type PropertyWithPhotos = Property & {
   photos: PropertyPhoto[];
@@ -14,6 +15,8 @@ export function toCardDto(p: PropertyWithPhotos, isFavourited = false): Property
   const photos = p.photos
     .sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0) || a.order - b.order)
     .map((ph) => ({ url: ph.url, isMain: ph.isMain }));
+
+  const resolved = resolveCoords(p);
 
   return {
     id: p.id,
@@ -34,7 +37,29 @@ export function toCardDto(p: PropertyWithPhotos, isFavourited = false): Property
     availabilityStatus: p.availabilityStatus,
     isFavourited,
     createdAt: p.createdAt,
+    latitude: resolved.lat,
+    longitude: resolved.lng,
   };
+}
+
+/** Resolve coords for a Prisma Property, falling back to city/area approximations. */
+function resolveCoords(p: PropertyWithPhotos): { lat: number | null; lng: number | null } {
+  if (typeof p.latitude === "number" && typeof p.longitude === "number") {
+    return { lat: p.latitude, lng: p.longitude };
+  }
+  // Use a stable salt per property so the fallback pin doesn't move between requests.
+  const salt = hashString(p.id);
+  const fb = fallbackCoordsFor(p.city, p.area, salt);
+  return fb ? { lat: fb.lat, lng: fb.lng } : { lat: null, lng: null };
+}
+
+function hashString(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 }
 
 /** Maps to the full detail DTO. Hides streetAddress unless fullAddressVisible. */
