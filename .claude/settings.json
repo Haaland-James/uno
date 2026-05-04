@@ -65,12 +65,31 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/properties/rent?sort=newest\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/properties/rent?sort=most_viewed\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/properties/rent/akwa-ibom?area=ewet-housing&sort=most_viewed\")",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Bash(git mv *)",
+      "PowerShell(Rename-Item -Path \"src/app/\\(landlord\\)\" -NewName \"\\(listing\\)\" -ErrorAction Stop)",
+      "PowerShell(Rename-Item -Path \"src/app/\\(listing\\)/landlord\" -NewName \"listing\" -ErrorAction Stop)",
+      "Bash(npx --no-install tsc --noEmit)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/listing/properties/new)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3001/listing/properties/new)",
+      "Bash(grep -v \"\\\\.map$\")",
+      "Bash(grep -v \"\\\\.map$\\\\|\\\\.production\\\\.\")",
+      "Bash(xargs -I{} echo {})",
+      "Bash(curl -s -L -b /tmp/cookies.txt -c /tmp/cookies.txt http://localhost:3001/listing/properties/new -o /tmp/page.html -w \"%{http_code} %{url_effective}\\\\n\")",
+      "Bash(xargs grep *)",
+      "Read(//c/Users/USER/.claude/plans/**)",
+      "Bash(curl -s -o /tmp/page.html -w \"%{http_code}\\\\n\" http://localhost:3001/listing/properties/new)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3002/listing/properties/new)",
+      "Bash(pkill -f \"next-server\")",
+      "Bash(git reset *)",
+      "Bash(git commit *)"
     ],
     "additionalDirectories": [
       "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\auth",
       "\\tmp",
-      "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\favourites"
+      "D:\\DOCUMENT\\Project Store\\Uno\\uno\\src\\app\\api\\favourites",
+      "c:\\Users\\USER\\.claude\\plans"
     ]
   }
 }
