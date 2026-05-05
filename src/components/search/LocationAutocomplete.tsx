@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MapPin, Search, Building2, Home } from "lucide-react";
 import { searchCoverage, type LocationNode } from "@/lib/coverage";
 import { cn } from "@/lib/utils";
@@ -12,10 +12,18 @@ interface LocationAutocompleteProps {
   onPick: (node: LocationNode) => void;
   /** Called when the user expressed interest in an uncovered area (waitlist signal) */
   onWaitlistRequest?: (locationName: string) => void;
+  /** Called on Enter when there is no autocomplete match. Lets the consumer fall back to free-text navigation. */
+  onEnterFallback?: (query: string) => void;
   placeholder?: string;
   className?: string;
   /** Auto-focus on mount */
   autoFocus?: boolean;
+  /** Override the default input-shell className (the rounded pill around icon + input). */
+  shellClassName?: string;
+  /** Override the default input className. */
+  inputClassName?: string;
+  /** Replace the default leading search icon with custom content (e.g. a red circle). */
+  leadingSlot?: ReactNode;
 }
 
 const TYPE_ICON = {
@@ -28,9 +36,13 @@ export function LocationAutocomplete({
   value,
   onPick,
   onWaitlistRequest,
+  onEnterFallback,
   placeholder = "City, state, or area",
   className,
   autoFocus,
+  shellClassName,
+  inputClassName,
+  leadingSlot,
 }: LocationAutocompleteProps) {
   const [query, setQuery] = useState(value?.name ?? "");
   const [open, setOpen] = useState(false);
@@ -64,13 +76,23 @@ export function LocationAutocomplete({
   function handleEnter() {
     if (result.kind === "matches" && result.nodes[0]) {
       pick(result.nodes[0]);
+      return;
+    }
+    if (onEnterFallback) {
+      setOpen(false);
+      onEnterFallback(query);
     }
   }
 
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
-      <div className="flex h-[50px] items-center gap-3 rounded-[25px] border border-[rgba(186,186,186,0.65)] bg-white px-4 focus-within:border-[#af2525] focus-within:ring-1 focus-within:ring-[#af2525]">
-        <Search className="h-4 w-4 flex-shrink-0 text-black/40" />
+      <div
+        className={
+          shellClassName ??
+          "flex h-[50px] items-center gap-3 rounded-[25px] border border-[rgba(186,186,186,0.65)] bg-white px-4 focus-within:border-[#af2525] focus-within:ring-1 focus-within:ring-[#af2525]"
+        }
+      >
+        {leadingSlot ?? <Search className="h-4 w-4 flex-shrink-0 text-black/40" />}
         <input
           ref={inputRef}
           autoFocus={autoFocus}
@@ -90,7 +112,10 @@ export function LocationAutocomplete({
             }
           }}
           placeholder={placeholder}
-          className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-black/40"
+          className={
+            inputClassName ??
+            "flex-1 bg-transparent text-[15px] outline-none placeholder:text-black/40"
+          }
         />
       </div>
 

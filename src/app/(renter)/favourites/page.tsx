@@ -14,7 +14,15 @@ import type { PropertyCardData, PropertyType } from "@/types/property";
 
 type TypeFilter = "all" | "rent" | "sale" | "lease";
 type BedsFilter = "any" | "1" | "2" | "3" | "4";
-type PropFilter = "any" | PropertyType;
+type PropFilter =
+	| "any"
+	| "FLAT"
+	| "HOUSE"
+	| "DUPLEX"
+	| "SELF_CONTAIN"
+	| "BUNGALOW"
+	| "COMMERCIAL"
+	| "LAND";
 type PriceFilter = "any" | "lt500" | "500-1m" | "1m-5m" | "gt5m";
 type SortBy = "newest" | "price_asc" | "price_desc";
 

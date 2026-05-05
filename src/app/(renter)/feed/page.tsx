@@ -10,7 +10,8 @@ import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton
 import { useFavourites } from "@/hooks/useFavourites";
 import { useHeaderStore } from "@/stores/headerStore";
 import { propertiesClient } from "@/lib/clients/properties";
-import { resolveTextToUrl } from "@/lib/search-url";
+import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
+import { nodeToSearchUrl, resolveTextToUrl } from "@/lib/search-url";
 import type { PropertyCardData } from "@/types/property";
 import { cn } from "@/lib/utils";
 
@@ -168,29 +169,21 @@ export default function FeedPage() {
 						Feed
 					</h1>
 
-					{/* Search bar — submits to /properties */}
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							const q = (new FormData(e.currentTarget).get("q") as string).trim();
-							router.push(resolveTextToUrl(q));
-						}}
-						className="flex items-center gap-3 rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white px-4 md:px-5 h-[48px] md:h-[52px] w-full lg:flex-1 lg:max-w-[480px]"
-					>
-						<button
-							type="submit"
-							className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#af2525]"
-							aria-label="Search"
-						>
-							<Search className="h-[14px] w-[14px] text-white" strokeWidth={2.5} />
-						</button>
-						<input
-							name="q"
-							type="text"
+					{/* Search bar — autocomplete; pick or Enter navigates to /properties */}
+					<div className="w-full lg:flex-1 lg:max-w-[480px]">
+						<LocationAutocomplete
+							onPick={(node) => router.push(nodeToSearchUrl(node))}
+							onEnterFallback={(q) => router.push(resolveTextToUrl(q))}
 							placeholder="City, Address, neighbourhood…"
-							className="flex-1 bg-transparent text-[15px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
+							shellClassName="flex items-center gap-3 rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white px-4 md:px-5 h-[48px] md:h-[52px]"
+							inputClassName="flex-1 bg-transparent text-[15px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
+							leadingSlot={
+								<div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#af2525]">
+									<Search className="h-[14px] w-[14px] text-white" strokeWidth={2.5} />
+								</div>
+							}
 						/>
-					</form>
+					</div>
 				</div>
 
 				{/* Sentinel — once this scrolls above the header, the header reveals its search */}
