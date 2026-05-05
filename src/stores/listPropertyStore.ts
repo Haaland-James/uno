@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { FeeValue } from "@/components/ui/FeeInput";
 
 export type ListingObjective = "SELL" | "RENT" | "LEASE";
 export type ListerRole = "OWNER" | "REPRESENTATIVE";
@@ -9,6 +10,9 @@ export interface ListPropertyData {
 	objective: ListingObjective | null;
 	role: ListerRole | null;
 
+	// Kind / Type (Phase 2 wires KindStep; field exists now so persist is forward-compat)
+	propertyKind: "RESIDENTIAL" | "COMMERCIAL" | "LAND" | "";
+
 	// Location
 	state: string;
 	zipCode: string;
@@ -16,6 +20,11 @@ export interface ListPropertyData {
 	unit: string;
 	city: string;
 	area: string;
+	lga: string;
+	latitude: number | null;
+	longitude: number | null;
+	geocodeAccuracy: string;
+	fullAddressVisible: boolean;
 
 	// Property Info
 	title: string;
@@ -36,15 +45,40 @@ export interface ListPropertyData {
 	amenities: string[];
 	customAmenities: string[];
 
-	// Photos (object URLs only — stub; not persisted)
+	// Structured facts (alongside boolean amenities)
+	parkingSpaces: number | null;
+	powerBackup: string;
+	waterSource: string;
+	internetReady: boolean;
+
+	// Commercial-specific
+	floorAreaSqm: number | null;
+	floorLevel: string;
+	units: number | null;
+	fitOutState: string;
+
+	// Land-specific
+	plotSizeSqm: number | null;
+	titleDocType: string;
+	surveyAvailable: boolean;
+	topography: string;
+	accessRoad: string;
+	fencing: boolean;
+
+	// Photos
+	// `photoNames` is just filenames for label display (transient, stripped on persist).
+	// `photoUrls` is the array of Cloudinary `secure_url` strings — persisted so the user
+	// can resume the wizard later without re-uploading.
 	photoNames: string[];
+	photoUrls: string[];
 	mainPhotoIndex: number;
 
 	// Pricing — Rent/Lease
 	rent: number | null;
 	rentPeriod: "MONTH" | "YEAR";
 	minimumLease: string;
-	agencyFee: number | null;
+	agencyFee: FeeValue;
+	legalFee: FeeValue;
 	cautionDeposit: number | null;
 	serviceCharge: number | null;
 	serviceChargeIncludes: string;
@@ -69,12 +103,18 @@ export interface ListPropertyData {
 const initialData: ListPropertyData = {
 	objective: null,
 	role: null,
+	propertyKind: "",
 	state: "",
 	zipCode: "",
 	streetAddress: "",
 	unit: "",
 	city: "",
 	area: "",
+	lga: "",
+	latitude: null,
+	longitude: null,
+	geocodeAccuracy: "",
+	fullAddressVisible: false,
 	title: "",
 	propertyType: "",
 	bedrooms: null,
@@ -88,12 +128,28 @@ const initialData: ListPropertyData = {
 	ownershipType: "",
 	amenities: [],
 	customAmenities: [],
+	parkingSpaces: null,
+	powerBackup: "",
+	waterSource: "",
+	internetReady: false,
+	floorAreaSqm: null,
+	floorLevel: "",
+	units: null,
+	fitOutState: "",
+	plotSizeSqm: null,
+	titleDocType: "",
+	surveyAvailable: false,
+	topography: "",
+	accessRoad: "",
+	fencing: false,
 	photoNames: [],
+	photoUrls: [],
 	mainPhotoIndex: 0,
 	rent: null,
 	rentPeriod: "YEAR",
 	minimumLease: "",
-	agencyFee: null,
+	agencyFee: { mode: "FIXED", value: null },
+	legalFee: { mode: "FIXED", value: null },
 	cautionDeposit: null,
 	serviceCharge: null,
 	serviceChargeIncludes: "",
@@ -118,6 +174,22 @@ interface ListPropertyState {
 	setStep: (step: number) => void;
 	markCompleted: (step: number) => void;
 	reset: () => void;
+	replaceAll: (snap: { data: ListPropertyData; currentStep: number; completedSteps: number[] }) => void;
+}
+
+/** Coerce any persisted value into a valid FeeValue (handles legacy `number | null`). */
+function coerceFee(input: unknown): FeeValue {
+	if (input && typeof input === "object" && "mode" in input && "value" in input) {
+		const f = input as { mode?: unknown; value?: unknown };
+		const mode = f.mode === "PERCENT" ? "PERCENT" : "FIXED";
+		const value =
+			typeof f.value === "number" && Number.isFinite(f.value) ? f.value : null;
+		return { mode, value };
+	}
+	if (typeof input === "number" && Number.isFinite(input)) {
+		return { mode: "FIXED", value: input };
+	}
+	return { mode: "FIXED", value: null };
 }
 
 export const useListPropertyStore = create<ListPropertyState>()(
@@ -141,14 +213,60 @@ export const useListPropertyStore = create<ListPropertyState>()(
 
 			reset: () =>
 				set({ data: initialData, currentStep: 1, completedSteps: [] }),
+
+			replaceAll: (snap) =>
+				set({
+					// Merge against initialData so any new fields added since the draft was
+					// saved have sane defaults instead of undefined.
+					data: { ...initialData, ...snap.data },
+					currentStep: snap.currentStep,
+					completedSteps: snap.completedSteps,
+				}),
 		}),
 		{
 			name: "uno-list-property-draft",
+			version: 3,
 			partialize: (state) => ({
-				data: { ...state.data, photoNames: [] },
+				data: { ...state.data, photoNames: [] as string[] },
 				currentStep: state.currentStep,
 				completedSteps: state.completedSteps,
 			}),
+			// Default merge is shallow, so adding fields to `initialData` (e.g. `lga`,
+			// `latitude`) leaves them `undefined` on already-persisted drafts and
+			// validation crashes on `.trim()`. Backfill missing fields from initialData.
+			merge: (persisted, current) => {
+				const p = (persisted ?? {}) as Partial<ListPropertyState>;
+				return {
+					...current,
+					...p,
+					data: { ...initialData, ...(p.data ?? {}) },
+				};
+			},
+			migrate: (persistedState: unknown, version) => {
+				const empty = {
+					data: initialData,
+					currentStep: 1,
+					completedSteps: [] as number[],
+				};
+				if (!persistedState || typeof persistedState !== "object") return empty;
+				const s = persistedState as {
+					data?: Partial<ListPropertyData>;
+					currentStep?: number;
+					completedSteps?: number[];
+				};
+				const data: ListPropertyData = { ...initialData, ...(s.data ?? {}) };
+				if (version < 2) {
+					data.propertyKind =
+						((s.data as { propertyKind?: string } | undefined)?.propertyKind as ListPropertyData["propertyKind"]) ?? "";
+					data.agencyFee = coerceFee((s.data as { agencyFee?: unknown } | undefined)?.agencyFee);
+					data.legalFee = coerceFee((s.data as { legalFee?: unknown } | undefined)?.legalFee);
+				}
+				return {
+					data,
+					currentStep: s.currentStep ?? 1,
+					completedSteps: s.completedSteps ?? [],
+				};
+			},
 		}
 	)
 );

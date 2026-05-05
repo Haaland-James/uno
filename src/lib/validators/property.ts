@@ -1,18 +1,20 @@
 import { z } from "zod";
 
+const feeValueSchema = z.object({
+	mode: z.enum(["FIXED", "PERCENT"]).default("FIXED"),
+	value: z.number().min(0).nullable(),
+});
+
 export const propertyCreateSchema = z.object({
 	title: z
 		.string()
 		.min(10, "Title must be at least 10 characters")
 		.max(100, "Title must be less than 100 characters"),
 	propertyType: z.enum([
-		"FLAT",
-		"HOUSE",
-		"DUPLEX",
-		"SELF_CONTAIN",
-		"BUNGALOW",
-		"COMMERCIAL",
-		"LAND",
+		"FLAT", "HOUSE", "DUPLEX", "SELF_CONTAIN", "BUNGALOW", "COMMERCIAL", "LAND",
+		"TERRACE", "DETACHED", "SEMI_DETACHED", "PENTHOUSE", "STUDIO", "MINI_FLAT", "SHARED_ROOM",
+		"OFFICE", "SHOP", "WAREHOUSE", "COWORKING", "EVENT_CENTRE", "HOTEL_SHORTLET", "PLAZA_UNIT",
+		"RESIDENTIAL_PLOT", "COMMERCIAL_PLOT", "AGRICULTURAL_LAND", "MIXED_USE_LAND",
 	]),
 	bedrooms: z.number().min(0).max(20),
 	bathrooms: z.number().min(0).max(20),
@@ -78,5 +80,110 @@ export const propertyFilterSchema = z.object({
 		.optional(),
 });
 
+/**
+ * Wizard submit shape — what the listing wizard's `handleSubmit` POSTs to /api/properties.
+ * Mirrors `ListPropertyData` from src/stores/listPropertyStore.ts. Wider/looser than
+ * propertyCreateSchema because it includes objective, contact fields, sale-flow fields,
+ * and lets the server handle the mapping to Prisma's stricter Property shape.
+ */
+export const propertyWizardSubmitSchema = z.object({
+	objective: z.enum(["SELL", "RENT", "LEASE"]),
+	role: z.enum(["OWNER", "REPRESENTATIVE"]).nullable().optional(),
+	propertyKind: z.enum(["RESIDENTIAL", "COMMERCIAL", "LAND"]).optional(),
+
+	// Location
+	state: z.string().min(1, "State is required"),
+	zipCode: z.string().optional().default(""),
+	streetAddress: z.string().optional().default(""),
+	unit: z.string().optional().default(""),
+	city: z.string().min(1, "City is required"),
+	area: z.string().min(1, "Area is required"),
+	lga: z.string().optional().default(""),
+	latitude: z.number().min(-90).max(90).nullable().optional(),
+	longitude: z.number().min(-180).max(180).nullable().optional(),
+	geocodeAccuracy: z.string().optional().default(""),
+	fullAddressVisible: z.boolean().optional().default(false),
+
+	// Property info
+	title: z.string().min(5, "Title must be at least 5 characters").max(120),
+	propertyType: z.string().min(1, "Property type is required"),
+	bedrooms: z.number().min(0).max(20).nullable(),
+	bathrooms: z.number().min(0).max(20).nullable(),
+	briefDescription: z.string().max(2000).optional().default(""),
+
+	// Description
+	size: z.number().positive().nullable().optional(),
+	yearBuilt: z.number().min(1900).max(new Date().getFullYear()).nullable().optional(),
+	furnishing: z.string().optional().default(""),
+	floorNumber: z.string().optional().default(""),
+	condition: z.string().optional().default(""),
+	ownershipType: z.string().optional().default(""),
+
+	// Amenities
+	amenities: z.array(z.string()).default([]),
+	customAmenities: z.array(z.string().max(50)).max(10).default([]),
+
+	// Structured facts
+	parkingSpaces: z.number().int().min(0).nullable().optional(),
+	powerBackup: z.string().optional().default(""),
+	waterSource: z.string().optional().default(""),
+	internetReady: z.boolean().optional().default(false),
+
+	// Commercial-specific
+	floorAreaSqm: z.number().int().positive().nullable().optional(),
+	floorLevel: z.string().optional().default(""),
+	units: z.number().int().positive().nullable().optional(),
+	fitOutState: z.string().optional().default(""),
+
+	// Land-specific
+	plotSizeSqm: z.number().int().positive().nullable().optional(),
+	titleDocType: z.string().optional().default(""),
+	surveyAvailable: z.boolean().optional().default(false),
+	topography: z.string().optional().default(""),
+	accessRoad: z.string().optional().default(""),
+	fencing: z.boolean().optional().default(false),
+
+	// Photos — Cloudinary URLs already uploaded from the browser
+	photos: z
+		.array(
+			z.object({
+				url: z.string().url(),
+				isMain: z.boolean().optional(),
+			})
+		)
+		.min(1, "Add at least one photo"),
+
+	// Pricing — rent/lease
+	rent: z.number().positive().nullable().optional(),
+	rentPeriod: z.enum(["MONTH", "YEAR"]).default("YEAR"),
+	minimumLease: z.string().optional().default(""),
+	agencyFee: feeValueSchema.optional(),
+	legalFee: feeValueSchema.optional(),
+	cautionDeposit: z.number().min(0).nullable().optional(),
+	serviceCharge: z.number().min(0).nullable().optional(),
+	serviceChargeIncludes: z.string().optional().default(""),
+	availability: z.enum(["AVAILABLE_NOW", "AVAILABLE_FROM"]).default("AVAILABLE_NOW"),
+	availableFrom: z.string().optional().default(""),
+
+	// Pricing — sell
+	salePrice: z.number().positive().nullable().optional(),
+	negotiable: z.boolean().default(false),
+	titleDocuments: z.string().optional().default(""),
+
+	// Lease terms
+	leaseTerms: z.string().optional().default(""),
+
+	// Contact
+	contactFirstName: z.string().optional().default(""),
+	contactLastName: z.string().optional().default(""),
+	contactEmail: z.string().email().optional().or(z.literal("")).default(""),
+	contactPhone: z.string().optional().default(""),
+});
+
+/** Partial update — owner can edit anything in propertyCreateSchema except identity. */
+export const propertyUpdateSchema = propertyCreateSchema.partial();
+
 export type PropertyCreateInput = z.infer<typeof propertyCreateSchema>;
 export type PropertyFilterInput = z.infer<typeof propertyFilterSchema>;
+export type PropertyWizardSubmitInput = z.infer<typeof propertyWizardSubmitSchema>;
+export type PropertyUpdateInput = z.infer<typeof propertyUpdateSchema>;
