@@ -152,7 +152,7 @@ export function GuestMobileDrawer({ open, onClose }: Props) {
                 <Link href="/favourites" onClick={onClose} className="flex items-center gap-3 rounded-[12px] px-3 py-3 hover:bg-black/5">
                   <Heart size={18} /> <span className="text-[15px] font-medium">Favourites</span>
                 </Link>
-                <Link href="/landlord/properties/new" onClick={onClose} className="flex items-center gap-3 rounded-[12px] px-3 py-3 hover:bg-black/5">
+                <Link href="/listing/properties/new" onClick={onClose} className="flex items-center gap-3 rounded-[12px] px-3 py-3 hover:bg-black/5">
                   <Briefcase size={18} /> <span className="text-[15px] font-medium">List a Property</span>
                 </Link>
                 <button

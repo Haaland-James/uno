@@ -19,6 +19,8 @@ import { signOutAndToast } from "@/lib/auth-actions";
 import { useUserStore } from "@/stores/userStore";
 import { useHeaderStore } from "@/stores/headerStore";
 import { MobileDrawer } from "@/components/layout/MobileDrawer";
+import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
+import { nodeToSearchUrl, resolveTextToUrl } from "@/lib/search-url";
 
 function getInitials(name: string): string {
   return name
@@ -30,7 +32,7 @@ function getInitials(name: string): string {
 }
 
 const dropdownItems = [
-  { label: "List Properties", href: "/landlord", icon: Building2 },
+  { label: "List Properties", href: "/listing/properties/new", icon: Building2 },
   { label: "Referrals", href: "/referrals", icon: Users },
   { label: "Help & Support", href: "/help", icon: HelpCircle },
 ];
@@ -113,19 +115,23 @@ export function Header({ className }: { className?: string }) {
           {/* Search — appears only when showSearch is true (desktop) */}
           <div
             className={cn(
-              "hidden md:flex h-12 items-center rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white px-6 transition-all duration-300",
+              "hidden md:block transition-all duration-300",
               showSearch
                 ? "w-[434px] opacity-100"
-                : "pointer-events-none w-0 border-transparent px-0 opacity-0"
+                : "pointer-events-none w-0 opacity-0"
             )}
           >
-            <div className="flex h-[25px] w-[25px] shrink-0 items-center justify-center rounded-full bg-[#af2525]">
-              <Search className="h-[14px] w-[14px] text-white" strokeWidth={2.5} />
-            </div>
-            <input
-              type="text"
+            <LocationAutocomplete
+              onPick={(node) => router.push(nodeToSearchUrl(node))}
+              onEnterFallback={(q) => router.push(resolveTextToUrl(q))}
               placeholder="City, Address, ZIP"
-              className="ml-2 flex-1 bg-transparent text-[16px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
+              shellClassName="flex h-12 items-center rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white px-6"
+              inputClassName="ml-2 flex-1 bg-transparent text-[16px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
+              leadingSlot={
+                <div className="flex h-[25px] w-[25px] shrink-0 items-center justify-center rounded-full bg-[#af2525]">
+                  <Search className="h-[14px] w-[14px] text-white" strokeWidth={2.5} />
+                </div>
+              }
             />
           </div>
 
@@ -201,19 +207,23 @@ export function Header({ className }: { className?: string }) {
           <div className="ml-auto flex flex-1 items-center justify-end gap-3 md:hidden">
             <div
               className={cn(
-                "flex h-10 items-center rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white transition-all duration-300",
+                "transition-all duration-300",
                 showSearch
-                  ? "flex-1 max-w-[260px] px-3 opacity-100"
-                  : "pointer-events-none w-0 border-transparent px-0 opacity-0"
+                  ? "flex-1 max-w-[260px] opacity-100"
+                  : "pointer-events-none w-0 opacity-0"
               )}
             >
-              <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-[#af2525]">
-                <Search className="h-[12px] w-[12px] text-white" strokeWidth={2.5} />
-              </div>
-              <input
-                type="text"
+              <LocationAutocomplete
+                onPick={(node) => router.push(nodeToSearchUrl(node))}
+                onEnterFallback={(q) => router.push(resolveTextToUrl(q))}
                 placeholder="Search location"
-                className="ml-2 w-full min-w-0 bg-transparent text-[14px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
+                shellClassName="flex h-10 items-center rounded-[40px] border border-[rgba(186,186,186,0.65)] bg-white px-3"
+                inputClassName="ml-2 w-full min-w-0 bg-transparent text-[14px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
+                leadingSlot={
+                  <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-[#af2525]">
+                    <Search className="h-[12px] w-[12px] text-white" strokeWidth={2.5} />
+                  </div>
+                }
               />
             </div>
             <button

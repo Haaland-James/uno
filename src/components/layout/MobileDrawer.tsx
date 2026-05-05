@@ -22,7 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { signOutAndToast } from "@/lib/auth-actions";
 import { useUserStore } from "@/stores/userStore";
-import { getMyListings } from "@/lib/mock-data";
+import { useHasListings } from "@/hooks/useHasListings";
 
 interface MobileDrawerProps {
 	open: boolean;
@@ -75,22 +75,22 @@ const navItems: NavItem[] = [
 	},
 ];
 
-const landlordNavItems: NavItem[] = [
+const listingNavItems: NavItem[] = [
 	{
 		label: "My Listings",
-		href: "/landlord/properties",
+		href: "/listing/properties",
 		icon: <Building2 size={18} strokeWidth={2} />,
 		iconBg: "#ffcfcf",
 	},
 	{
 		label: "Messages",
-		href: "/landlord/contacts",
+		href: "/listing/contacts",
 		icon: <MessageSquare size={18} strokeWidth={2} />,
 		iconBg: "#f5b324",
 	},
 	{
 		label: "Analytics",
-		href: "/landlord/analytics",
+		href: "/listing/analytics",
 		icon: <BarChart3 size={18} strokeWidth={2} />,
 		iconBg: "#db8ff6",
 	},
@@ -103,7 +103,7 @@ const landlordNavItems: NavItem[] = [
 ];
 
 const accountItems = [
-	{ label: "List Properties", href: "/landlord", icon: Building2 },
+	{ label: "List Properties", href: "/listing/properties/new", icon: Building2 },
 	{ label: "Referrals", href: "/referrals", icon: Users },
 	{ label: "Help & Support", href: "/help", icon: HelpCircle },
 ];
@@ -128,7 +128,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
 	const pathname = usePathname();
 	const user = useUserStore((s) => s.user);
 	const logout = () => signOutAndToast();
-	const hasListings = getMyListings().length > 0;
+	const { hasListings } = useHasListings();
 
 	const initials = user?.name ? getInitials(user.name) : "U";
 
@@ -238,6 +238,41 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
 							);
 						})}
 					</nav>
+
+					{hasListings && (
+						<>
+							<div className="my-4 h-px bg-black/10" />
+							<p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-black/40">
+								Listings
+							</p>
+							<nav className="flex flex-col gap-1">
+								{listingNavItems.map((item) => {
+									const isActive = pathname === item.href;
+									return (
+										<Link
+											key={`${item.label}-${item.href}`}
+											href={item.href}
+											onClick={onClose}
+											className={cn(
+												"flex items-center gap-3 rounded-[50px] px-3 py-[10px] transition-colors",
+												isActive ? "bg-[#fff1f1]" : "hover:bg-black/5"
+											)}
+										>
+											<span
+												className="inline-flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full text-white"
+												style={{ backgroundColor: item.iconBg }}
+											>
+												{item.icon}
+											</span>
+											<span className="text-[17px] font-medium text-black">
+												{item.label}
+											</span>
+										</Link>
+									);
+								})}
+							</nav>
+						</>
+					)}
 
 					<div className="my-4 h-px bg-black/10" />
 

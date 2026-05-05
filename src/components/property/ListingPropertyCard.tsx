@@ -30,7 +30,7 @@ export type CardAction =
 	| "mark_available"
 	| "delete";
 
-interface LandlordPropertyCardProps {
+interface ListingPropertyCardProps {
 	id: string;
 	title: string;
 	address: string;
@@ -89,7 +89,7 @@ function formatCount(n: number) {
 	return String(n);
 }
 
-export function LandlordPropertyCard({
+export function ListingPropertyCard({
 	id,
 	title,
 	address,
@@ -101,7 +101,7 @@ export function LandlordPropertyCard({
 	stats,
 	onAction,
 	className,
-}: LandlordPropertyCardProps) {
+}: ListingPropertyCardProps) {
 	const config = VERIFICATION_CONFIG[verificationStatus];
 	const isInProgress = verificationStatus === "IN_PROGRESS";
 	const isVerified = verificationStatus === "VERIFIED";
@@ -356,4 +356,4 @@ function StatPill({
 	);
 }
 
-export default LandlordPropertyCard;
+export default ListingPropertyCard;

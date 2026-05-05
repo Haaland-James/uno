@@ -15,7 +15,7 @@ import {
 	Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getMyListings } from "@/lib/mock-data";
+import { useHasListings } from "@/hooks/useHasListings";
 
 interface NavItem {
 	label: string;
@@ -63,22 +63,22 @@ const navItems: NavItem[] = [
 	},
 ];
 
-const landlordNavItems: NavItem[] = [
+const listingNavItems: NavItem[] = [
 	{
 		label: "My Listings",
-		href: "/landlord/properties",
+		href: "/listing/properties",
 		icon: <Building2 size={18} strokeWidth={2} />,
 		iconBg: "#ffcfcf",
 	},
 	{
 		label: "Messages",
-		href: "/landlord/contacts",
+		href: "/listing/contacts",
 		icon: <MessageSquare size={18} strokeWidth={2} />,
 		iconBg: "#f5b324",
 	},
 	{
 		label: "Analytics",
-		href: "/landlord/analytics",
+		href: "/listing/analytics",
 		icon: <BarChart3 size={18} strokeWidth={2} />,
 		iconBg: "#db8ff6",
 	},
@@ -123,7 +123,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string | null })
 
 export function Sidebar() {
 	const pathname = usePathname();
-	const hasListings = getMyListings().length > 0;
+	const { hasListings } = useHasListings();
 
 	return (
 		<>
@@ -141,7 +141,7 @@ export function Sidebar() {
 							Listings
 						</p>
 						<nav className="flex flex-col items-start gap-1">
-							{landlordNavItems.map((item) => (
+							{listingNavItems.map((item) => (
 								<NavLink key={item.href} item={item} pathname={pathname} />
 							))}
 						</nav>

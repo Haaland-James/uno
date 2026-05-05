@@ -84,7 +84,7 @@ export function Footer() {
                     . We do not sell or share your personal information. UNO and all UNO variants and logos are trademarks of UNO Nigeria, registered or pending with the Corporate Affairs Commission (CAC).
                   </p>
                   <p className="text-[15px] font-normal text-black leading-normal">
-                    All property listings are subject to verification. UNO acts as a platform connecting property seekers with verified landlords and agents. Users should conduct due diligence before entering rental agreements.
+                    All property listings are subject to verification. UNO acts as a platform connecting property seekers with verified property listings. Users should conduct due diligence before entering rental agreements.
                   </p>
                   <p className="text-[15px] font-normal text-black leading-normal">
                     For support:{" "}
@@ -144,7 +144,7 @@ export function Footer() {
             . We do not sell or share your personal information.
           </p>
           <p className="text-[14px] font-normal text-black leading-relaxed">
-            All property listings are subject to verification. UNO acts as a platform connecting property seekers with verified landlords and agents.
+            All property listings are subject to verification. UNO acts as a platform connecting property seekers with verified property listings.
           </p>
           <p className="text-[14px] font-normal text-black leading-relaxed">
             For support:{" "}
