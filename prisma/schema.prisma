@@ -19,6 +19,7 @@ model User {
 
   landlordProfile LandlordProfile?
   properties      Property[]
+  propertyDrafts  PropertyDraft[]
   favourites      Favourite[]
   savedSearches   SavedSearch[]
   contactsSent    ContactRequest[] @relation("TenantContacts")
@@ -103,6 +104,7 @@ model Property {
   landlordId          String
   landlord            User               @relation(fields: [landlordId], references: [id])
   title               String
+  propertyKind        PropertyKind       @default(RESIDENTIAL)
   propertyType        PropertyType
   bedrooms            Int
   bathrooms           Int
@@ -114,19 +116,41 @@ model Property {
   floorNumber         String?
   amenities           String[]
   customAmenities     String[]
+  // Structured facts (Phase 2 will populate from amenities step)
+  parkingSpaces       Int?
+  powerBackup         String?
+  waterSource         String?
+  internetReady       Boolean?
+  // Commercial-specific
+  floorAreaSqm        Int?
+  floorLevel          String?
+  units               Int?
+  fitOutState         String?
+  // Land-specific
+  plotSizeSqm         Int?
+  titleDocType        String?
+  surveyAvailable     Boolean?
+  topography          String?
+  accessRoad          String?
+  fencing             Boolean?
   photos              PropertyPhoto[]
   city                String
   area                String
+  lga                 String?
   streetAddress       String?
   landmark            String?
   latitude            Float?
   longitude           Float?
+  geocodeAccuracy     String?
   fullAddressVisible  Boolean            @default(false)
   rent                Int
   rentPeriod          RentPeriod         @default(YEAR)
   listingType         ListingType        @default(RENT)
   currency            String             @default("NGN")
   agencyFee           Int?
+  agencyFeeMode       FeeMode            @default(FIXED)
+  legalFee            Int?
+  legalFeeMode        FeeMode            @default(FIXED)
   cautionDeposit      Int?
   serviceCharge       Int?
   negotiable          Boolean            @default(false)
@@ -153,7 +177,19 @@ model Property {
   contactRequests     ContactRequest[]
 }
 
+enum PropertyKind {
+  RESIDENTIAL
+  COMMERCIAL
+  LAND
+}
+
+enum FeeMode {
+  FIXED
+  PERCENT
+}
+
 enum PropertyType {
+  // Legacy (kept for back-compat with existing rows)
   FLAT
   HOUSE
   DUPLEX
@@ -161,6 +197,27 @@ enum PropertyType {
   BUNGALOW
   COMMERCIAL
   LAND
+  // Residential
+  TERRACE
+  DETACHED
+  SEMI_DETACHED
+  PENTHOUSE
+  STUDIO
+  MINI_FLAT
+  SHARED_ROOM
+  // Commercial
+  OFFICE
+  SHOP
+  WAREHOUSE
+  COWORKING
+  EVENT_CENTRE
+  HOTEL_SHORTLET
+  PLAZA_UNIT
+  // Land
+  RESIDENTIAL_PLOT
+  COMMERCIAL_PLOT
+  AGRICULTURAL_LAND
+  MIXED_USE_LAND
 }
 
 enum Furnishing {
@@ -199,6 +256,30 @@ enum VerificationStatus {
   PENDING
   VERIFIED
   REJECTED
+}
+
+/// Server-side wizard draft. Holds the wizard payload as JSON plus a few denormalized
+/// fields so we can render a card on My Listings without parsing the JSON. Lives until
+/// the user submits (then we create a Property and delete the draft) or deletes it.
+model PropertyDraft {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Denormalized hints for rendering the IN_PROGRESS card without decoding JSON.
+  titleHint      String?
+  addressHint    String?  // e.g. "Use-Ofot, Nwaniba Road"
+  mainPhotoUrl   String?
+
+  // Full wizard state (mirrors ListPropertyData from the Zustand store).
+  data           Json
+  currentStep    Int      @default(1)
+  completedSteps Int[]    @default([])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, updatedAt])
 }
 
 model PropertyPhoto {
