@@ -11,6 +11,7 @@ import {
 import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { computeGateSignals } from "@/lib/gate";
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -163,6 +164,23 @@ export async function POST(req: NextRequest) {
     const legalFeeAmount = w.legalFee?.value ?? null;
     const legalFeeMode: FeeMode = (w.legalFee?.mode ?? "FIXED") as FeeMode;
 
+    // Approval flow is on hold — submitted listings go live immediately.
+    // Gate-1 signals are still computed and stored so we have evidence ready
+    // for when the admin/verification flow is designed. Re-enable by gating
+    // `initialStatus` on `gate.autoPublish` (see git history of this file).
+    const gate = await computeGateSignals({
+      listerUserId: session.user.id,
+      title: w.title,
+      description: description || null,
+      photoCount: w.photos.length,
+      latitude: w.latitude ?? null,
+      longitude: w.longitude ?? null,
+      bedrooms: w.bedrooms ?? 0,
+      rent: Math.round(rent),
+    });
+    const now = new Date();
+    const initialStatus = "ACTIVE";
+
     const created = await db.property.create({
       data: {
         landlordId: session.user.id,
@@ -215,9 +233,12 @@ export async function POST(req: NextRequest) {
         availabilityStatus: w.availability,
         availableFrom: availableFromDate,
         minimumLease: w.minimumLease || null,
-        status: "PENDING",
+        status: initialStatus,
         verificationStatus: "PENDING",
-        submittedAt: new Date(),
+        verificationSignals: gate.signals as unknown as Prisma.InputJsonValue,
+        submittedAt: now,
+        approvedAt: now,
+        goesLiveAt: now,
         photos: {
           create: w.photos.map((ph, i) => ({
             url: ph.url,

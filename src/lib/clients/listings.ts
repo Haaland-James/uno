@@ -48,6 +48,11 @@ export const listingsClient = {
 		getJson<{ ok: true }>(`/api/properties/${encodeURIComponent(id)}`, {
 			method: "DELETE",
 		}),
+	requestVerification: (id: string) =>
+		getJson<{ id: string; verificationRequestedAt: string }>(
+			`/api/properties/${encodeURIComponent(id)}/request-verification`,
+			{ method: "POST" }
+		),
 	signUpload: () =>
 		getJson<{
 			signature: string;

@@ -13,17 +13,35 @@ import { toast } from "@/stores/toastStore";
 import type { PropertyStatus } from "@/types/property";
 import { cn } from "@/lib/utils";
 
-type TabKey = "AVAILABLE" | "PUBLISHED" | "UNPUBLISHED";
+type TabKey = "ALL" | "PUBLISHED" | "DRAFTS" | "VERIFIED";
 
 const TABS: { key: TabKey; label: string }[] = [
-	{ key: "AVAILABLE", label: "Available" },
+	{ key: "ALL", label: "All" },
 	{ key: "PUBLISHED", label: "Published" },
-	{ key: "UNPUBLISHED", label: "Unpublished" },
+	{ key: "DRAFTS", label: "Drafts" },
+	{ key: "VERIFIED", label: "Verified" },
 ];
+
+/**
+ * Tab predicate. Tabs are filters, not buckets — overlap is fine
+ * (a verified listing is also published).
+ */
+function matchesTab(tab: TabKey, l: { kind?: "property" | "draft"; status: string; verificationStatus: string }): boolean {
+	switch (tab) {
+		case "ALL":
+			return true;
+		case "PUBLISHED":
+			return l.kind !== "draft" && l.status === "PUBLISHED";
+		case "DRAFTS":
+			return l.kind === "draft";
+		case "VERIFIED":
+			return l.kind !== "draft" && l.verificationStatus === "VERIFIED";
+	}
+}
 
 function emptyCopyFor(tab: TabKey) {
 	switch (tab) {
-		case "AVAILABLE":
+		case "ALL":
 			return {
 				title: "You have no listings",
 				description: "Click the button below to add your properties",
@@ -31,31 +49,37 @@ function emptyCopyFor(tab: TabKey) {
 		case "PUBLISHED":
 			return {
 				title: "Nothing published yet",
-				description: "Once a listing is verified and live, it will appear here.",
+				description: "Listings you publish will appear here.",
 			};
-		case "UNPUBLISHED":
+		case "DRAFTS":
 			return {
-				title: "No unpublished listings",
+				title: "No drafts",
+				description: "Listings you start but don't finish are saved as drafts.",
+			};
+		case "VERIFIED":
+			return {
+				title: "No verified listings yet",
 				description:
-					"Listings you take off the market or mark as rented show up here.",
+					"Once you request verification and we confirm your listing, it will appear here.",
 			};
 	}
 }
 
 export default function MyListingsPage() {
 	const router = useRouter();
-	const [tab, setTab] = useState<TabKey>("AVAILABLE");
+	const [tab, setTab] = useState<TabKey>("ALL");
 	const { listings, setListings, isLoading } = useMyListings();
 
 	const counts = useMemo(() => {
 		return {
-			AVAILABLE: listings.filter((l) => l.status === "AVAILABLE").length,
-			PUBLISHED: listings.filter((l) => l.status === "PUBLISHED").length,
-			UNPUBLISHED: listings.filter((l) => l.status === "UNPUBLISHED").length,
+			ALL: listings.length,
+			PUBLISHED: listings.filter((l) => matchesTab("PUBLISHED", l)).length,
+			DRAFTS: listings.filter((l) => matchesTab("DRAFTS", l)).length,
+			VERIFIED: listings.filter((l) => matchesTab("VERIFIED", l)).length,
 		} as Record<TabKey, number>;
 	}, [listings]);
 
-	const filtered = listings.filter((l) => l.status === tab);
+	const filtered = listings.filter((l) => matchesTab(tab, l));
 	const totalCount = listings.length;
 
 	const updateStatus = (id: string, status: PropertyStatus) => {
@@ -99,6 +123,15 @@ export default function MyListingsPage() {
 			case "mark_available":
 				updateStatus(id, "AVAILABLE");
 				return;
+			case "request_verification": {
+				try {
+					await listingsClient.requestVerification(id);
+					toast.success("Verification requested. We'll be in touch.");
+				} catch (e) {
+					toast.error(e instanceof Error ? e.message : "Could not request");
+				}
+				return;
+			}
 			case "delete": {
 				const prev = listings;
 				setListings((p) => p.filter((l) => l.id !== id));

@@ -168,6 +168,10 @@ model Property {
   verifiedBy          String?
   verifiedAt          DateTime?
   rejectionReason     String?
+  // Auto-publish gate signals (set on submit). JSON shape mirrors GateSignals
+  // in src/lib/gate.ts. Used by admin queue to show why a listing was held.
+  verificationSignals Json?
+  verificationRequestedAt DateTime?
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   submittedAt         DateTime?

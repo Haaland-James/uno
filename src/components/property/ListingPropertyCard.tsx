@@ -28,6 +28,7 @@ export type CardAction =
 	| "list"
 	| "mark_rented"
 	| "mark_available"
+	| "request_verification"
 	| "delete";
 
 interface ListingPropertyCardProps {
@@ -197,6 +198,7 @@ export function ListingPropertyCard({
 								>
 									Preview
 								</DropdownMenu.Item>
+								{/* Request verification — hidden while admin/verification flow is on hold */}
 								<DropdownMenu.Item
 									icon={<XCircle size={16} />}
 									onClick={() => emitAction("take_off_market")}

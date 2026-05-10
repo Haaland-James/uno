@@ -335,6 +335,34 @@ export function getAreasForLga(state: string, lga: string): ReadonlyArray<string
 	return AREAS_BY_LGA[`${state}|${lga}`] ?? [];
 }
 
+/**
+ * True if `area` is in the canonical AREAS_BY_LGA list for the given state+LGA.
+ * Comparison is case-insensitive and trims whitespace. Used to identify listings
+ * whose lister typed a new area through AreaCombobox — these are the candidates
+ * for an "approve area" admin queue. Derived on the fly (no DB column needed).
+ */
+export function isCanonicalArea(
+	state: string | null | undefined,
+	lga: string | null | undefined,
+	area: string | null | undefined
+): boolean {
+	if (!state || !lga || !area) return false;
+	const canonical = AREAS_BY_LGA[`${state}|${lga}`];
+	if (!canonical) return false;
+	const needle = area.trim().toLowerCase();
+	return canonical.some((a) => a.toLowerCase() === needle);
+}
+
+/** Flat list of every canonical (state, lga, area) triple — for admin filtering. */
+export function getAllCanonicalAreas(): { state: string; lga: string; area: string }[] {
+	const out: { state: string; lga: string; area: string }[] = [];
+	for (const [key, areas] of Object.entries(AREAS_BY_LGA)) {
+		const [state, lga] = key.split("|");
+		for (const area of areas) out.push({ state, lga, area });
+	}
+	return out;
+}
+
 // Verification Levels
 export const VERIFICATION_LEVELS = {
 	BASIC: { label: "Basic", color: "text-paused" },
