@@ -25,9 +25,11 @@
 .DS_Store
 *.pem
 
-# claude local settings (may contain secrets)
-.claude/settings.local.json
-.claude/worktrees/
+# claude
+.claude/
+
+# kilo
+.kilo/
 
 # debug
 npm-debug.log*
