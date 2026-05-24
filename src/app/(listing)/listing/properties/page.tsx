@@ -26,7 +26,7 @@ const TABS: { key: TabKey; label: string }[] = [
  * Tab predicate. Tabs are filters, not buckets — overlap is fine
  * (a verified listing is also published).
  */
-function matchesTab(tab: TabKey, l: { kind?: "property" | "draft"; status: string; verificationStatus: string }): boolean {
+function matchesTab(tab: TabKey, l: { kind?: "property" | "draft"; status?: string; verificationStatus: string }): boolean {
 	switch (tab) {
 		case "ALL":
 			return true;
@@ -111,18 +111,54 @@ export default function MyListingsPage() {
 			case "preview":
 				router.push(`/property/${id}`);
 				return;
-			case "take_off_market":
+			case "take_off_market": {
+				const prev = listings;
 				updateStatus(id, "UNPUBLISHED");
+				try {
+					await listingsClient.updateStatus(id, "pause");
+					toast.success("Listing taken off market");
+				} catch (e) {
+					setListings(prev);
+					toast.error(e instanceof Error ? e.message : "Could not pause listing");
+				}
 				return;
-			case "list":
+			}
+			case "list": {
+				const prev = listings;
 				updateStatus(id, "PUBLISHED");
+				try {
+					await listingsClient.updateStatus(id, "activate");
+					toast.success("Listing is now live");
+				} catch (e) {
+					setListings(prev);
+					toast.error(e instanceof Error ? e.message : "Could not re-list");
+				}
 				return;
-			case "mark_rented":
+			}
+			case "mark_rented": {
+				const prev = listings;
 				updateStatus(id, "UNPUBLISHED");
+				try {
+					await listingsClient.updateStatus(id, "mark_rented");
+					toast.success("Listing marked as rented");
+				} catch (e) {
+					setListings(prev);
+					toast.error(e instanceof Error ? e.message : "Could not mark as rented");
+				}
 				return;
-			case "mark_available":
-				updateStatus(id, "AVAILABLE");
+			}
+			case "mark_available": {
+				const prev = listings;
+				updateStatus(id, "PUBLISHED");
+				try {
+					await listingsClient.updateStatus(id, "mark_available");
+					toast.success("Listing marked as available");
+				} catch (e) {
+					setListings(prev);
+					toast.error(e instanceof Error ? e.message : "Could not mark as available");
+				}
 				return;
+			}
 			case "request_verification": {
 				try {
 					await listingsClient.requestVerification(id);
@@ -245,7 +281,7 @@ export default function MyListingsPage() {
 							title={emptyCopyFor(tab).title}
 							description={emptyCopyFor(tab).description}
 							action={
-								tab === "AVAILABLE" ? (
+								tab === "ALL" ? (
 									<Link
 										href="/listing/properties/new"
 										className="inline-flex h-[40px] items-center gap-2 rounded-[50px] bg-[#af2525] px-6 text-[14px] font-semibold text-white transition-opacity hover:opacity-90"

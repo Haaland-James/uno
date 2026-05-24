@@ -53,6 +53,11 @@ export const listingsClient = {
 			`/api/properties/${encodeURIComponent(id)}/request-verification`,
 			{ method: "POST" }
 		),
+	updateStatus: (id: string, action: "pause" | "activate" | "mark_rented" | "mark_available") =>
+		getJson<{ id: string; status: string; isRented?: boolean }>(
+			`/api/properties/${encodeURIComponent(id)}/status`,
+			{ method: "PATCH", body: JSON.stringify({ action }) }
+		),
 	signUpload: () =>
 		getJson<{
 			signature: string;

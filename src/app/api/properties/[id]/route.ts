@@ -88,9 +88,8 @@ export async function PATCH(
   if (!parsed.success) return zodErr(parsed.error);
   const data = parsed.data;
 
-  const updated = await db.property.update({
-    where: { id },
-    data: {
+  const updated = await db.$transaction(async (tx) => {
+    const propertyData = {
       ...(data.title !== undefined && { title: data.title }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.propertyType !== undefined && { propertyType: data.propertyType }),
@@ -103,26 +102,72 @@ export async function PATCH(
       ...(data.floorNumber !== undefined && { floorNumber: data.floorNumber }),
       ...(data.amenities !== undefined && { amenities: data.amenities }),
       ...(data.customAmenities !== undefined && { customAmenities: data.customAmenities }),
+
+      ...(data.parkingSpaces !== undefined && { parkingSpaces: data.parkingSpaces }),
+      ...(data.powerBackup !== undefined && { powerBackup: data.powerBackup }),
+      ...(data.waterSource !== undefined && { waterSource: data.waterSource }),
+      ...(data.internetReady !== undefined && { internetReady: data.internetReady }),
+
+      ...(data.floorAreaSqm !== undefined && { floorAreaSqm: data.floorAreaSqm }),
+      ...(data.floorLevel !== undefined && { floorLevel: data.floorLevel }),
+      ...(data.units !== undefined && { units: data.units }),
+      ...(data.fitOutState !== undefined && { fitOutState: data.fitOutState }),
+
+      ...(data.plotSizeSqm !== undefined && { plotSizeSqm: data.plotSizeSqm }),
+      ...(data.titleDocType !== undefined && { titleDocType: data.titleDocType }),
+      ...(data.surveyAvailable !== undefined && { surveyAvailable: data.surveyAvailable }),
+      ...(data.topography !== undefined && { topography: data.topography }),
+      ...(data.accessRoad !== undefined && { accessRoad: data.accessRoad }),
+      ...(data.fencing !== undefined && { fencing: data.fencing }),
+
       ...(data.city !== undefined && { city: data.city }),
       ...(data.area !== undefined && { area: data.area }),
+      ...(data.lga !== undefined && { lga: data.lga }),
       ...(data.streetAddress !== undefined && { streetAddress: data.streetAddress }),
       ...(data.landmark !== undefined && { landmark: data.landmark }),
       ...(data.latitude !== undefined && { latitude: data.latitude }),
       ...(data.longitude !== undefined && { longitude: data.longitude }),
+      ...(data.geocodeAccuracy !== undefined && { geocodeAccuracy: data.geocodeAccuracy }),
       ...(data.fullAddressVisible !== undefined && { fullAddressVisible: data.fullAddressVisible }),
+
       ...(data.rent !== undefined && { rent: data.rent }),
       ...(data.rentPeriod !== undefined && { rentPeriod: data.rentPeriod }),
       ...(data.agencyFee !== undefined && { agencyFee: data.agencyFee }),
+      ...(data.agencyFeeMode !== undefined && { agencyFeeMode: data.agencyFeeMode }),
+      ...(data.legalFee !== undefined && { legalFee: data.legalFee }),
+      ...(data.legalFeeMode !== undefined && { legalFeeMode: data.legalFeeMode }),
       ...(data.cautionDeposit !== undefined && { cautionDeposit: data.cautionDeposit }),
       ...(data.serviceCharge !== undefined && { serviceCharge: data.serviceCharge }),
       ...(data.negotiable !== undefined && { negotiable: data.negotiable }),
+
       ...(data.availabilityStatus !== undefined && { availabilityStatus: data.availabilityStatus }),
       ...(data.availableFrom !== undefined && {
         availableFrom: data.availableFrom ? new Date(data.availableFrom) : null,
       }),
       ...(data.minimumLease !== undefined && { minimumLease: data.minimumLease }),
-    },
-    select: { id: true, status: true },
+    };
+
+    const result = await tx.property.update({
+      where: { id },
+      data: propertyData,
+      select: { id: true, status: true },
+    });
+
+    // Photos: full replacement. Only touch when the client explicitly sent them.
+    if (data.photos !== undefined) {
+      await tx.propertyPhoto.deleteMany({ where: { propertyId: id } });
+      const hasExplicitMain = data.photos.some((p) => p.isMain);
+      await tx.propertyPhoto.createMany({
+        data: data.photos.map((p, i) => ({
+          propertyId: id,
+          url: p.url,
+          isMain: hasExplicitMain ? !!p.isMain : i === 0,
+          order: i,
+        })),
+      });
+    }
+
+    return result;
   });
 
   return ok(updated);

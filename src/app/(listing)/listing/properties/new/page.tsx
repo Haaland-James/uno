@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useListPropertyStore, type ListPropertyData } from "@/stores/listPropertyStore";
@@ -59,8 +59,9 @@ function NewPropertyPage() {
 	// so the user can deep-link to a specific draft from My Listings.
 	const draftIdRef = useRef<string | null>(draftIdParam);
 	const [hydrating, setHydrating] = useState<boolean>(!!draftIdParam);
-	// Guards against double-create when autosave + Save Draft race.
-	const creatingDraftRef = useRef<boolean>(false);
+	// Single in-flight save promise. Every write — autosave or Save Draft —
+	// chains onto this so writes never race or get dropped.
+	const inFlightSaveRef = useRef<Promise<void> | null>(null);
 	// Snapshot of the latest data/step/completed for autosave to read without
 	// re-firing the effect on every keystroke.
 	const latestSnapRef = useRef<{
@@ -70,6 +71,9 @@ function NewPropertyPage() {
 	} | null>(null);
 
 	// Hydrate from server draft on mount when ?draft=ID is present.
+	// If the draft is gone (404) we don't bail — Zustand's persisted local copy
+	// may still have the user's work, so we drop the ?draft id and start a fresh
+	// server draft on the next autosave instead of stranding the user.
 	useEffect(() => {
 		if (!draftIdParam) return;
 		let cancelled = false;
@@ -87,8 +91,17 @@ function NewPropertyPage() {
 			})
 			.catch((e) => {
 				if (cancelled) return;
-				toast.error(e instanceof Error ? e.message : "Could not load draft");
-				router.push("/listing/properties");
+				const msg = e instanceof Error ? e.message : "";
+				const missing = /not found/i.test(msg);
+				if (missing) {
+					// Drop the stale id and continue with whatever local state we have.
+					toast.info("That draft is no longer available — starting fresh.");
+					draftIdRef.current = null;
+					setHydrating(false);
+				} else {
+					toast.error(msg || "Could not load draft");
+					router.push("/listing/properties");
+				}
 			});
 		return () => {
 			cancelled = true;
@@ -125,42 +138,50 @@ function NewPropertyPage() {
 		latestSnapRef.current = { data, currentStep, completedSteps };
 	}, [data, currentStep, completedSteps]);
 
-	// Autosave: when the user completes a step, persist (or create) a server draft so
-	// their work survives logout/login. Fires only on changes to completedSteps.length —
-	// not on every keystroke. First completion POSTs (idempotent via creatingDraftRef);
-	// subsequent completions PATCH the existing draft.
+	// Serialized save. Autosave and the Save Draft button both call this — every
+	// write chains onto the previous one via inFlightSaveRef, so writes never race
+	// or get dropped. On 404 (draft was deleted server-side) we forget the id and
+	// retry as a CREATE on the next save instead of giving up.
+	const saveDraftNow = useCallback(async (): Promise<void> => {
+		const prev = inFlightSaveRef.current ?? Promise.resolve();
+		const next = prev
+			.catch(() => undefined)
+			.then(async () => {
+				const snap = latestSnapRef.current;
+				if (!snap) return;
+				if (draftIdRef.current) {
+					try {
+						await draftsClient.update(draftIdRef.current, snap);
+					} catch (e) {
+						const msg = e instanceof Error ? e.message : "";
+						if (/not found/i.test(msg)) {
+							draftIdRef.current = null;
+							const created = await draftsClient.create(snap);
+							draftIdRef.current = created.id;
+							invalidateHasListings();
+							return;
+						}
+						throw e;
+					}
+				} else {
+					const created = await draftsClient.create(snap);
+					draftIdRef.current = created.id;
+					invalidateHasListings();
+				}
+			});
+		inFlightSaveRef.current = next.finally(() => {
+			if (inFlightSaveRef.current === next) inFlightSaveRef.current = null;
+		});
+		await next;
+	}, []);
+
+	// Autosave on every step completion. Best-effort: errors here are swallowed
+	// (local Zustand persist still has the user's data; Save Draft surfaces errors).
 	useEffect(() => {
 		if (hydrating) return;
 		if (completedSteps.length === 0) return;
-
-		let cancelled = false;
-		(async () => {
-			const snap = latestSnapRef.current ?? { data, currentStep, completedSteps };
-			try {
-				if (draftIdRef.current) {
-					await draftsClient.update(draftIdRef.current, snap);
-				} else {
-					if (creatingDraftRef.current) return;
-					creatingDraftRef.current = true;
-					try {
-						const created = await draftsClient.create(snap);
-						if (cancelled) return;
-						draftIdRef.current = created.id;
-						invalidateHasListings();
-					} finally {
-						creatingDraftRef.current = false;
-					}
-				}
-			} catch {
-				// Best-effort autosave — never block the wizard. Local Zustand persist
-				// still has the user's data; explicit Save Draft will retry the write.
-			}
-		})();
-		return () => {
-			cancelled = true;
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [completedSteps.length, hydrating]);
+		saveDraftNow().catch(() => undefined);
+	}, [completedSteps.length, hydrating, saveDraftNow]);
 
 	const goNext = () => {
 		if (!canNext) return;
@@ -188,18 +209,7 @@ function NewPropertyPage() {
 	const handleSaveDraft = async () => {
 		setDraftOpen(false);
 		try {
-			const payload = { data, currentStep, completedSteps };
-			if (draftIdRef.current) {
-				await draftsClient.update(draftIdRef.current, payload);
-			} else if (!creatingDraftRef.current) {
-				creatingDraftRef.current = true;
-				try {
-					const created = await draftsClient.create(payload);
-					draftIdRef.current = created.id;
-				} finally {
-					creatingDraftRef.current = false;
-				}
-			}
+			await saveDraftNow();
 			invalidateHasListings();
 			reset();
 			toast.success("Draft saved");
@@ -220,6 +230,11 @@ function NewPropertyPage() {
 		}
 		setSubmitting(true);
 		try {
+			// Drain any in-flight autosave first so we don't leak a draft created
+			// just after we delete it below.
+			if (inFlightSaveRef.current) {
+				await inFlightSaveRef.current.catch(() => undefined);
+			}
 			const photos = data.photoUrls.map((url, i) => ({
 				url,
 				isMain: i === data.mainPhotoIndex,

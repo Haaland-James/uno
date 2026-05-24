@@ -180,8 +180,53 @@ export const propertyWizardSubmitSchema = z.object({
 	contactPhone: z.string().optional().default(""),
 });
 
-/** Partial update — owner can edit anything in propertyCreateSchema except identity. */
-export const propertyUpdateSchema = propertyCreateSchema.partial();
+/**
+ * Partial update — owner can edit anything in propertyCreateSchema, plus the
+ * wider set of fields the edit-by-section UI exposes (photos, legal fee,
+ * structured facts, kind-specific fields). All optional; only fields actually
+ * sent get persisted.
+ */
+export const propertyUpdateSchema = propertyCreateSchema.partial().extend({
+	lga: z.string().max(120).optional(),
+	ownershipType: z.string().max(60).optional(),
+	geocodeAccuracy: z.string().max(40).optional(),
+
+	parkingSpaces: z.number().int().min(0).nullable().optional(),
+	powerBackup: z.string().max(60).optional(),
+	waterSource: z.string().max(60).optional(),
+	internetReady: z.boolean().optional(),
+
+	floorAreaSqm: z.number().int().positive().nullable().optional(),
+	floorLevel: z.string().max(40).optional(),
+	units: z.number().int().positive().nullable().optional(),
+	fitOutState: z.string().max(60).optional(),
+
+	plotSizeSqm: z.number().int().positive().nullable().optional(),
+	titleDocType: z.string().max(60).optional(),
+	surveyAvailable: z.boolean().optional(),
+	topography: z.string().max(60).optional(),
+	accessRoad: z.string().max(60).optional(),
+	fencing: z.boolean().optional(),
+
+	agencyFee: z.number().min(0).nullable().optional(),
+	agencyFeeMode: z.enum(["FIXED", "PERCENT"]).optional(),
+	legalFee: z.number().min(0).nullable().optional(),
+	legalFeeMode: z.enum(["FIXED", "PERCENT"]).optional(),
+	cautionDeposit: z.number().min(0).nullable().optional(),
+	serviceCharge: z.number().min(0).nullable().optional(),
+
+	availableFrom: z.string().nullable().optional(),
+
+	photos: z
+		.array(
+			z.object({
+				url: z.string().url(),
+				isMain: z.boolean().optional(),
+			})
+		)
+		.min(1, "Add at least one photo")
+		.optional(),
+});
 
 export type PropertyCreateInput = z.infer<typeof propertyCreateSchema>;
 export type PropertyFilterInput = z.infer<typeof propertyFilterSchema>;
