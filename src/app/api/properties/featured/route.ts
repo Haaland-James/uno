@@ -6,6 +6,7 @@ import { featuredQuerySchema } from "@/lib/validators/property-query";
 import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { notDeleted } from "@/lib/property-status";
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
   const { type, limit, area } = parsed.data;
 
   const where: Prisma.PropertyWhereInput = {
+    ...notDeleted,
     status: "ACTIVE",
     // Use `contains` so a tab like "Nwaniba" matches stored area "Nwaniba Road"
     ...(area && { area: { contains: area, mode: "insensitive" } }),

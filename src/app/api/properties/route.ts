@@ -12,6 +12,7 @@ import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { computeGateSignals } from "@/lib/gate";
+import { deriveStatusFields, notDeleted } from "@/lib/property-status";
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -20,7 +21,8 @@ export async function GET(req: NextRequest) {
   const f = parsed.data;
 
   const where: Prisma.PropertyWhereInput = {
-    // Public list never shows non-ACTIVE listings
+    // Public list never shows non-ACTIVE or soft-deleted listings
+    ...notDeleted,
     status: "ACTIVE",
     ...(f.ids?.length && { id: { in: f.ids } }),
     ...(f.listingType?.length && { listingType: { in: f.listingType } }),
@@ -180,6 +182,7 @@ export async function POST(req: NextRequest) {
     });
     const now = new Date();
     const initialStatus = "ACTIVE";
+    const derived = deriveStatusFields(initialStatus, availableFromDate);
 
     const created = await db.property.create({
       data: {
@@ -230,10 +233,10 @@ export async function POST(req: NextRequest) {
         cautionDeposit: w.cautionDeposit ?? null,
         serviceCharge: w.serviceCharge ?? null,
         negotiable: w.negotiable ?? false,
-        availabilityStatus: w.availability,
         availableFrom: availableFromDate,
         minimumLease: w.minimumLease || null,
         status: initialStatus,
+        ...(derived ?? {}),
         verificationStatus: "PENDING",
         verificationSignals: gate.signals as unknown as Prisma.InputJsonValue,
         submittedAt: now,

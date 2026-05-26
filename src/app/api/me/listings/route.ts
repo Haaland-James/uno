@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
 	if (countOnly) {
 		const [propertyCount, draftCount] = await Promise.all([
-			db.property.count({ where: { landlordId: session.user.id } }),
+			db.property.count({ where: { landlordId: session.user.id, deletedAt: null } }),
 			db.propertyDraft.count({ where: { userId: session.user.id } }),
 		]);
 		return ok({ count: propertyCount + draftCount });
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
 	const [properties, drafts] = await Promise.all([
 		db.property.findMany({
-			where: { landlordId: session.user.id },
+			where: { landlordId: session.user.id, deletedAt: null },
 			orderBy: { createdAt: "desc" },
 			include: { photos: { orderBy: { order: "asc" } } },
 		}),
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 
 	const propertyCards = properties.map((p) => ({
 		kind: "property" as const,
-		...toCardDto(p, false),
+		...toCardDto(p, false, { revealAddress: true }),
 		// Owner-only fields
 		status: dbStatusToUi(p.status),
 		views: p.views,

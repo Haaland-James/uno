@@ -20,9 +20,9 @@ export async function POST(_req: NextRequest, ctx: { params: { id: string } }) {
 
 	const property = await db.property.findUnique({
 		where: { id: ctx.params.id },
-		select: { id: true, landlordId: true, status: true, verificationStatus: true },
+		select: { id: true, landlordId: true, status: true, verificationStatus: true, deletedAt: true },
 	});
-	if (!property) return err("not_found", "Property not found", 404);
+	if (!property || property.deletedAt) return err("not_found", "Property not found", 404);
 	if (property.landlordId !== session.user.id) {
 		return err("forbidden", "Not your listing", 403);
 	}

@@ -1,3 +1,5 @@
+import type { Role } from "@prisma/client";
+
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
 	const res = await fetch(url, {
 		...init,
@@ -20,6 +22,10 @@ async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
 	}
 	return ((json as { data?: T } | null)?.data) as T;
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Listings (moderation queue)
+// ─────────────────────────────────────────────────────────────────
 
 export type AdminListingRow = {
 	id: string;
@@ -48,6 +54,54 @@ type ModerateAction =
 	| { action: "pause" }
 	| { action: "reactivate" };
 
+// ─────────────────────────────────────────────────────────────────
+// Users
+// ─────────────────────────────────────────────────────────────────
+
+export type AdminUserRow = {
+	id: string;
+	name: string;
+	email: string;
+	phone: string | null;
+	role: Role;
+	emailVerified: boolean;
+	phoneVerified: boolean;
+	createdAt: string;
+	_count: { properties: number; contactsSent: number };
+};
+
+type UserAction = { action: "promote" } | { action: "demote" };
+
+// ─────────────────────────────────────────────────────────────────
+// Stats (dashboard)
+// ─────────────────────────────────────────────────────────────────
+
+export type AdminStats = {
+	listings: {
+		total: number;
+		draft: number;
+		pending: number;
+		active: number;
+		paused: number;
+		rented: number;
+		rejected: number;
+		verifyRequested: number;
+		pendingArea: number;
+	};
+	users: {
+		total: number;
+		renters: number;
+		landlords: number;
+		agents: number;
+		admins: number;
+	};
+	activity: {
+		signups7d: number;
+		newListings7d: number;
+		contacts7d: number;
+	};
+};
+
 export const adminClient = {
 	list: (params: {
 		status?: string;
@@ -71,4 +125,29 @@ export const adminClient = {
 			method: "PATCH",
 			body: JSON.stringify(action),
 		}),
+
+	users: {
+		list: (params: { role?: string; q?: string; page?: number }) => {
+			const sp = new URLSearchParams();
+			if (params.role && params.role !== "ALL") sp.set("role", params.role);
+			if (params.q) sp.set("q", params.q);
+			if (params.page) sp.set("page", String(params.page));
+			const qs = sp.toString();
+			return getJson<{
+				items: AdminUserRow[];
+				total: number;
+				page: number;
+				pageSize: number;
+			}>(`/api/admin/users${qs ? `?${qs}` : ""}`);
+		},
+		moderate: (id: string, action: UserAction) =>
+			getJson<{ id: string; role: Role }>(
+				`/api/admin/users/${encodeURIComponent(id)}`,
+				{ method: "PATCH", body: JSON.stringify(action) }
+			),
+	},
+
+	stats: {
+		get: () => getJson<AdminStats>("/api/admin/stats"),
+	},
 };

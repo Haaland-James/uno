@@ -5,6 +5,7 @@ import { toDetailDto } from "@/lib/property-mappers";
 import { propertyUpdateSchema } from "@/lib/validators/property";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { deriveStatusFields } from "@/lib/property-status";
 
 export async function GET(
   req: NextRequest,
@@ -25,9 +26,13 @@ export async function GET(
 
   if (!property) return err("not_found", "Property not found", 404);
 
-  // Public surface — only show ACTIVE listings (or to the owner / admin)
+  // Public surface — only show ACTIVE listings (or to the owner / admin).
+  // Soft-deleted listings are hidden from everyone except admins.
   const isOwner = session?.user?.id === property.landlordId;
   const isAdmin = session?.user?.role === "ADMIN";
+  if (property.deletedAt && !isAdmin) {
+    return err("not_found", "Property not found", 404);
+  }
   if (property.status !== "ACTIVE" && !isOwner && !isAdmin) {
     return err("not_found", "Property not found", 404);
   }
@@ -50,7 +55,7 @@ export async function GET(
     .update({ where: { id }, data: { views: { increment: 1 } } })
     .catch((e) => console.error("[property:view] increment failed", e));
 
-  return ok(toDetailDto(property, isFavourited));
+  return ok(toDetailDto(property, isFavourited, { revealAddress: isOwner || isAdmin }));
 }
 
 /**
@@ -68,9 +73,9 @@ export async function PATCH(
 
   const property = await db.property.findUnique({
     where: { id },
-    select: { id: true, landlordId: true },
+    select: { id: true, landlordId: true, status: true, deletedAt: true },
   });
-  if (!property) return err("not_found", "Property not found", 404);
+  if (!property || property.deletedAt) return err("not_found", "Property not found", 404);
 
   const isOwner = property.landlordId === session.user.id;
   const isAdmin = session.user.role === "ADMIN";
@@ -87,6 +92,19 @@ export async function PATCH(
   const parsed = propertyUpdateSchema.safeParse(body);
   if (!parsed.success) return zodErr(parsed.error);
   const data = parsed.data;
+
+  // If availableFrom changed, recompute the derived display fields against the
+  // current lifecycle status — keeps `availabilityStatus` + `isRented` in sync.
+  const nextAvailableFrom =
+    data.availableFrom !== undefined
+      ? data.availableFrom
+        ? new Date(data.availableFrom)
+        : null
+      : undefined;
+  const derived =
+    nextAvailableFrom !== undefined
+      ? deriveStatusFields(property.status, nextAvailableFrom)
+      : null;
 
   const updated = await db.$transaction(async (tx) => {
     const propertyData = {
@@ -140,10 +158,8 @@ export async function PATCH(
       ...(data.serviceCharge !== undefined && { serviceCharge: data.serviceCharge }),
       ...(data.negotiable !== undefined && { negotiable: data.negotiable }),
 
-      ...(data.availabilityStatus !== undefined && { availabilityStatus: data.availabilityStatus }),
-      ...(data.availableFrom !== undefined && {
-        availableFrom: data.availableFrom ? new Date(data.availableFrom) : null,
-      }),
+      ...(data.availableFrom !== undefined && { availableFrom: nextAvailableFrom }),
+      ...(derived ?? {}),
       ...(data.minimumLease !== undefined && { minimumLease: data.minimumLease }),
     };
 
@@ -188,9 +204,9 @@ export async function DELETE(
 
   const property = await db.property.findUnique({
     where: { id },
-    select: { landlordId: true },
+    select: { landlordId: true, deletedAt: true },
   });
-  if (!property) return err("not_found", "Property not found", 404);
+  if (!property || property.deletedAt) return err("not_found", "Property not found", 404);
 
   const isOwner = property.landlordId === session.user.id;
   const isAdmin = session.user.role === "ADMIN";
@@ -198,6 +214,11 @@ export async function DELETE(
     return err("forbidden", "You don't have permission to delete this listing", 403);
   }
 
-  await db.property.delete({ where: { id } });
+  // Soft delete — also flip status to PAUSED so any cached query that misses
+  // the deletedAt filter still hides the listing.
+  await db.property.update({
+    where: { id },
+    data: { deletedAt: new Date(), status: "PAUSED" },
+  });
   return ok({ ok: true });
 }

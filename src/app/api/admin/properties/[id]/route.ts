@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { requireAdmin } from "@/lib/admin";
+import { deriveStatusFields } from "@/lib/property-status";
 
 /**
  * PATCH /api/admin/properties/[id] — admin moderation actions.
@@ -32,7 +33,7 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 
 	const property = await db.property.findUnique({
 		where: { id: ctx.params.id },
-		select: { id: true },
+		select: { id: true, availableFrom: true },
 	});
 	if (!property) return err("not_found", "Property not found", 404);
 
@@ -58,6 +59,7 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 					approvedAt: now,
 					goesLiveAt: now,
 					rejectionReason: null,
+					...(deriveStatusFields("ACTIVE", property.availableFrom) ?? {}),
 				},
 				select: { id: true, status: true },
 			});
@@ -104,7 +106,7 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 		case "pause": {
 			const updated = await db.property.update({
 				where: { id: property.id },
-				data: { status: "PAUSED" },
+				data: { status: "PAUSED", ...(deriveStatusFields("PAUSED", property.availableFrom) ?? {}) },
 				select: { id: true, status: true },
 			});
 			return ok(updated);
@@ -112,7 +114,7 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 		case "reactivate": {
 			const updated = await db.property.update({
 				where: { id: property.id },
-				data: { status: "ACTIVE", goesLiveAt: now },
+				data: { status: "ACTIVE", goesLiveAt: now, ...(deriveStatusFields("ACTIVE", property.availableFrom) ?? {}) },
 				select: { id: true, status: true },
 			});
 			return ok(updated);

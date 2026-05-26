@@ -20,9 +20,9 @@ export async function POST(
   // Make sure the property exists and is visible
   const property = await db.property.findUnique({
     where: { id: propertyId },
-    select: { id: true, status: true },
+    select: { id: true, status: true, deletedAt: true },
   });
-  if (!property) return err("not_found", "Property not found", 404);
+  if (!property || property.deletedAt) return err("not_found", "Property not found", 404);
   if (property.status !== "ACTIVE") {
     return err("not_active", "Property is not currently available", 409);
   }

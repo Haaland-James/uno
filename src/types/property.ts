@@ -125,6 +125,9 @@ export interface PropertyCardData {
 	createdAt: Date;
 	latitude?: number | null;
 	longitude?: number | null;
+	// True when the lister chose to hide their exact address. Coords on this DTO
+	// are jittered (~100m) so the UI should render a privacy circle around them.
+	addressPrivate?: boolean;
 	// Landlord-side fields (optional; populated for "My Listings" view)
 	status?: PropertyStatus;
 	views?: number;
@@ -154,6 +157,20 @@ export interface PropertyDetailData extends PropertyCardData {
 	listedBy: { name: string; company: string };
 	listingUpdated: string;
 	unoChecked: string;
+}
+
+/**
+ * Minimal pin payload returned by /api/properties/map for cluster rendering.
+ * No photos, no description — just enough to draw a price pill on the map.
+ * Coords are already jittered server-side when `addressPrivate` is true.
+ */
+export interface MapPin {
+	id: string;
+	lng: number;
+	lat: number;
+	rent: number;
+	currency: string;
+	addressPrivate: boolean;
 }
 
 // Search/filter types

@@ -1,6 +1,7 @@
 import type { Property, PropertyPhoto, User, LandlordProfile } from "@prisma/client";
 import type { PropertyCardData, PropertyDetailData } from "@/types/property";
 import { fallbackCoordsFor } from "@/lib/area-coords";
+import { privatize } from "@/lib/privacy";
 
 type PropertyWithPhotos = Property & {
   photos: PropertyPhoto[];
@@ -10,13 +11,26 @@ type PropertyWithLandlord = PropertyWithPhotos & {
   landlord: User & { landlordProfile: LandlordProfile | null };
 };
 
-/** Maps a Prisma Property + photos to the lightweight card DTO. */
-export function toCardDto(p: PropertyWithPhotos, isFavourited = false): PropertyCardData {
+/**
+ * Maps a Prisma Property + photos to the lightweight card DTO.
+ *
+ * `opts.revealAddress` — pass `true` when the caller is the owner or an admin
+ * who is allowed to see the unredacted location (e.g. My Listings). Public
+ * surfaces must leave this false so `fullAddressVisible=false` listings get
+ * jittered coords + `addressPrivate: true`.
+ */
+export function toCardDto(
+  p: PropertyWithPhotos,
+  isFavourited = false,
+  opts: { revealAddress?: boolean } = {}
+): PropertyCardData {
   const photos = p.photos
     .sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0) || a.order - b.order)
     .map((ph) => ({ url: ph.url, isMain: ph.isMain }));
 
   const resolved = resolveCoords(p);
+  const effectivelyVisible = opts.revealAddress || p.fullAddressVisible;
+  const priv = privatize(p.id, resolved.lng, resolved.lat, effectivelyVisible);
 
   return {
     id: p.id,
@@ -37,8 +51,9 @@ export function toCardDto(p: PropertyWithPhotos, isFavourited = false): Property
     availabilityStatus: p.availabilityStatus,
     isFavourited,
     createdAt: p.createdAt,
-    latitude: resolved.lat,
-    longitude: resolved.lng,
+    latitude: priv.lat,
+    longitude: priv.lng,
+    addressPrivate: priv.addressPrivate,
   };
 }
 
@@ -65,9 +80,11 @@ function hashString(s: string): number {
 /** Maps to the full detail DTO. Hides streetAddress unless fullAddressVisible. */
 export function toDetailDto(
   p: PropertyWithLandlord,
-  isFavourited = false
+  isFavourited = false,
+  opts: { revealAddress?: boolean } = {}
 ): PropertyDetailData {
-  const card = toCardDto(p, isFavourited);
+  const card = toCardDto(p, isFavourited, opts);
+  const showFullAddress = opts.revealAddress || p.fullAddressVisible;
 
   const daysOnUno = Math.max(
     0,
@@ -84,7 +101,7 @@ export function toDetailDto(
 
   return {
     ...card,
-    streetAddress: p.fullAddressVisible ? p.streetAddress ?? undefined : undefined,
+    streetAddress: showFullAddress ? p.streetAddress ?? undefined : undefined,
     description: p.description ?? undefined,
     listingStatus:
       p.listingType === "SALE"

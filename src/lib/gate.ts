@@ -75,6 +75,7 @@ export async function computeGateSignals(input: GateInput): Promise<GateResult> 
 		const maxRent = Math.round(input.rent * (1 + DUP_PRICE_TOLERANCE));
 		const dupCount = await db.property.count({
 			where: {
+				deletedAt: null,
 				status: "ACTIVE",
 				bedrooms: input.bedrooms,
 				latitude: { gte: lat - DUP_RADIUS_DEG, lte: lat + DUP_RADIUS_DEG },

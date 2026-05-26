@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { ok, err } from "@/lib/api";
 import { requireAdmin } from "@/lib/admin";
-import { isCanonicalArea, NIGERIAN_STATES } from "@/../config/constants";
+import { isAnyCanonicalLgaArea } from "@/lib/admin-stats";
 import type { Prisma, PropertyStatus, VerificationStatus } from "@prisma/client";
 
 /**
@@ -23,9 +23,11 @@ export async function GET(req: NextRequest) {
 	const verification = sp.get("verification") as VerificationStatus | null;
 	const verifyRequested = sp.get("verifyRequested") === "1";
 	const pendingArea = sp.get("pendingArea") === "1";
+	const includeDeleted = sp.get("includeDeleted") === "1";
 	const q = sp.get("q")?.trim();
 
 	const where: Prisma.PropertyWhereInput = {
+		...(!includeDeleted && { deletedAt: null }),
 		...(status !== "ALL" && { status }),
 		...(verification && { verificationStatus: verification }),
 		...(verifyRequested && { verificationRequestedAt: { not: null } }),
@@ -61,16 +63,4 @@ export async function GET(req: NextRequest) {
 		: raw;
 
 	return ok({ items: items.slice(0, 100), total: items.length });
-}
-
-/**
- * Property doesn't carry `state`, only `lga` + `area`. Treat the area as canonical
- * if ANY state's coverage entry for this LGA contains it. (LGA names are roughly
- * unique enough across states for this to work — when collisions happen, the
- * worst case is a false negative, i.e. we surface it for review unnecessarily.)
- */
-function isAnyCanonicalLgaArea(lga: string | null, area: string): boolean {
-	if (!lga || !area) return false;
-	// Reuse isCanonicalArea by trying every state — cheap, list is small.
-	return NIGERIAN_STATES.some((s) => isCanonicalArea(s, lga, area));
 }

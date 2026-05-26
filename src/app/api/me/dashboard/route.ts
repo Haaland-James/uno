@@ -25,13 +25,13 @@ export async function GET() {
 	const [counts, aggregates, recentListings] = await Promise.all([
 		// Active vs total counts
 		Promise.all([
-			db.property.count({ where: { landlordId: userId, status: "ACTIVE" } }),
-			db.property.count({ where: { landlordId: userId } }),
+			db.property.count({ where: { landlordId: userId, status: "ACTIVE", deletedAt: null } }),
+			db.property.count({ where: { landlordId: userId, deletedAt: null } }),
 		]),
 
 		// Sum views, contactCount, savedCount across all the user's properties
 		db.property.aggregate({
-			where: { landlordId: userId },
+			where: { landlordId: userId, deletedAt: null },
 			_sum: {
 				views: true,
 				contactCount: true,
@@ -41,7 +41,7 @@ export async function GET() {
 
 		// 5 most recently updated properties for "Recent Activity"
 		db.property.findMany({
-			where: { landlordId: userId },
+			where: { landlordId: userId, deletedAt: null },
 			orderBy: { updatedAt: "desc" },
 			take: 5,
 			select: {

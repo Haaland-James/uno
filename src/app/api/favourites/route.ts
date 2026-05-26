@@ -22,9 +22,9 @@ export async function GET() {
     },
   });
 
-  // Hide non-ACTIVE properties — landlord may have paused/rented since user favourited
+  // Hide non-ACTIVE or soft-deleted properties — landlord may have paused/rented/deleted since user favourited
   const items = favs
-    .filter((f) => f.property.status === "ACTIVE")
+    .filter((f) => f.property.status === "ACTIVE" && !f.property.deletedAt)
     .map((f) => toCardDto(f.property, true));
 
   return ok({ items, total: items.length });

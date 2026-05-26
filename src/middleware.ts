@@ -15,10 +15,18 @@ const publicRoutes = [
 	"/verify",
 	"/terms",
 	"/privacy",
+	// Admin auth surfaces. Note: order matters relative to the /admin role
+	// check below — /admin/login and /admin/verify must be reachable to non-admins.
+	"/admin/login",
+	"/admin/verify",
 ];
 
 // Pages that should bounce logged-in users straight to their feed
 const authOnlyForGuests = ["/login", "/signup"];
+
+// Admin sign-in surfaces. Treated specially: signed-in users should not see them.
+// ADMINs go to /admin; everyone else goes to /feed.
+const adminAuthRoutes = ["/admin/login", "/admin/verify"];
 
 function isPublic(pathname: string): boolean {
 	return publicRoutes.some(
@@ -26,6 +34,10 @@ function isPublic(pathname: string): boolean {
 			pathname === route ||
 			(route !== "/" && pathname.startsWith(`${route}/`))
 	);
+}
+
+function isAdminAuthRoute(pathname: string): boolean {
+	return adminAuthRoutes.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 }
 
 export async function middleware(request: NextRequest) {
@@ -41,6 +53,31 @@ export async function middleware(request: NextRequest) {
 	// Logged-in users should not see /login or /signup
 	if (token && authOnlyForGuests.some((r) => pathname === r || pathname.startsWith(`${r}/`))) {
 		return NextResponse.redirect(new URL("/feed", request.url));
+	}
+
+	// Logged-in users shouldn't sit on the admin sign-in pages either.
+	// ADMIN → /admin, anyone else → /feed (they don't belong in the admin flow).
+	if (token && isAdminAuthRoute(pathname)) {
+		const dest = token.role === "ADMIN" ? "/admin" : "/feed";
+		return NextResponse.redirect(new URL(dest, request.url));
+	}
+
+	// Admin route gate (defence-in-depth alongside (admin)/layout.tsx). Any
+	// /admin/* path other than the auth surfaces requires an ADMIN token; everyone
+	// else is bounced to /admin/login. This stops non-admins from ever reaching
+	// the gated layout and being silently redirected to /, which would look broken.
+	if (pathname.startsWith("/admin") && !isAdminAuthRoute(pathname)) {
+		if (!token) {
+			const loginUrl = new URL("/admin/login", request.url);
+			loginUrl.searchParams.set("callbackUrl", pathname);
+			return NextResponse.redirect(loginUrl);
+		}
+		if (token.role !== "ADMIN") {
+			const loginUrl = new URL("/admin/login", request.url);
+			loginUrl.searchParams.set("error", "not_admin");
+			return NextResponse.redirect(loginUrl);
+		}
+		return NextResponse.next();
 	}
 
 	// Anything not public requires auth. /listing/* is auth-only — any signed-in user

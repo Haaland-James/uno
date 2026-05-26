@@ -141,6 +141,9 @@ model Property {
   landmark            String?
   latitude            Float?
   longitude           Float?
+  // Generated column populated by the map_polish_postgis migration.
+  // Prisma treats it as Unsupported (read-only) — never set it from app code.
+  geom                Unsupported("geography(Point,4326)")?
   geocodeAccuracy     String?
   fullAddressVisible  Boolean            @default(false)
   rent                Int
@@ -177,8 +180,11 @@ model Property {
   submittedAt         DateTime?
   approvedAt          DateTime?
   goesLiveAt          DateTime?
+  deletedAt           DateTime?
   favourites          Favourite[]
   contactRequests     ContactRequest[]
+
+  @@index([deletedAt])
 }
 
 enum PropertyKind {

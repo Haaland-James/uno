@@ -162,28 +162,6 @@ export function ListingPropertyCard({
 									Delete Draft
 								</DropdownMenu.Item>
 							</>
-						) : verificationStatus === "PENDING" ? (
-							<>
-								<DropdownMenu.Item
-									icon={<Edit2 size={16} />}
-									onClick={() => emitAction("edit")}
-								>
-									Edit Listing
-								</DropdownMenu.Item>
-								<DropdownMenu.Item
-									icon={<EyeIcon size={16} />}
-									onClick={() => emitAction("preview")}
-								>
-									Preview
-								</DropdownMenu.Item>
-								<DropdownMenu.Item
-									icon={<Trash2 size={16} />}
-									destructive
-									onClick={() => emitAction("delete")}
-								>
-									Delete Listing
-								</DropdownMenu.Item>
-							</>
 						) : listingStatus === "PUBLISHED" ? (
 							<>
 								<DropdownMenu.Item

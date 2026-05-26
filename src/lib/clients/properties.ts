@@ -1,4 +1,4 @@
-import type { PropertyCardData, PropertyDetailData } from "@/types/property";
+import type { PropertyCardData, PropertyDetailData, MapPin } from "@/types/property";
 
 export type FeaturedType = "latest" | "hot" | "virgin" | "top";
 
@@ -68,6 +68,17 @@ export const propertiesClient = {
     getJson<{ items: PropertyCardData[] }>(
       `/api/properties/${encodeURIComponent(id)}/similar?limit=${limit}`
     ).then((d) => d.items),
+
+  /** Lightweight pins for the map at a given bbox + filters. */
+  mapPins: (params: PropertyListParams & {
+    minLng: number;
+    minLat: number;
+    maxLng: number;
+    maxLat: number;
+  }) =>
+    getJson<{ pins: MapPin[]; total: number; capped: boolean }>(
+      `/api/properties/map${toQuery(params as unknown as Record<string, unknown>)}`
+    ),
 
   featured: (type: FeaturedType, limit = 8, area?: string) =>
     getJson<{ type: FeaturedType; items: PropertyCardData[] }>(

@@ -24,22 +24,21 @@ const NG_CENTER: [number, number] = [8.6753, 9.082];
 type GeocodeFeature = {
 	center: [number, number];
 	place_name: string;
-	properties?: { accuracy?: string };
+	accuracy?: string;
 };
 
+/**
+ * Forward + reverse geocode both go through our server proxies so the Mapbox
+ * geocoding token stays out of the client bundle. The map *tiles* still use
+ * `NEXT_PUBLIC_MAPBOX_TOKEN` (URL-restricted in the Mapbox dashboard) — that's
+ * unavoidable since tiles load directly from the browser.
+ */
 async function geocode(query: string, signal: AbortSignal): Promise<GeocodeFeature | null> {
-	if (!TOKEN || !query.trim()) return null;
-	const url = new URL(
-		`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`
-	);
-	url.searchParams.set("access_token", TOKEN);
-	url.searchParams.set("country", "ng");
-	url.searchParams.set("limit", "1");
-	url.searchParams.set("bbox", NG_BBOX.join(","));
-	const res = await fetch(url.toString(), { signal });
+	if (!query.trim()) return null;
+	const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}&limit=1`, { signal });
 	if (!res.ok) return null;
-	const json = (await res.json()) as { features?: GeocodeFeature[] };
-	return json.features?.[0] ?? null;
+	const json = (await res.json()) as { data?: { features?: GeocodeFeature[] } };
+	return json.data?.features?.[0] ?? null;
 }
 
 async function reverseGeocode(
@@ -47,16 +46,10 @@ async function reverseGeocode(
 	lat: number,
 	signal: AbortSignal
 ): Promise<GeocodeFeature | null> {
-	if (!TOKEN) return null;
-	const url = new URL(
-		`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json`
-	);
-	url.searchParams.set("access_token", TOKEN);
-	url.searchParams.set("limit", "1");
-	const res = await fetch(url.toString(), { signal });
+	const res = await fetch(`/api/reverse-geocode?lng=${lng}&lat=${lat}`, { signal });
 	if (!res.ok) return null;
-	const json = (await res.json()) as { features?: GeocodeFeature[] };
-	return json.features?.[0] ?? null;
+	const json = (await res.json()) as { data?: { feature?: GeocodeFeature | null } };
+	return json.data?.feature ?? null;
 }
 
 export function LocationMapPicker({
@@ -151,7 +144,7 @@ export function LocationMapPicker({
 			onLocationChange({
 				latitude: lat,
 				longitude: lng,
-				geocodeAccuracy: feature.properties?.accuracy ?? "geocoded",
+				geocodeAccuracy: feature.accuracy ?? "geocoded",
 				resolvedAddress: feature.place_name,
 			});
 		}, 700);

@@ -24,3 +24,12 @@ export const authIpLimiter = new Ratelimit({
   prefix: "rl:auth:ip",
   analytics: true,
 });
+
+// Mapbox geocode proxy: 30 req/min per session/IP. Tight enough to stop a
+// runaway typeahead from burning the Mapbox quota, loose enough for normal use.
+export const geocodeLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, "1 m"),
+  prefix: "rl:geocode",
+  analytics: true,
+});

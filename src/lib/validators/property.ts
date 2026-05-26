@@ -186,7 +186,10 @@ export const propertyWizardSubmitSchema = z.object({
  * structured facts, kind-specific fields). All optional; only fields actually
  * sent get persisted.
  */
-export const propertyUpdateSchema = propertyCreateSchema.partial().extend({
+export const propertyUpdateSchema = propertyCreateSchema
+	.omit({ availabilityStatus: true })
+	.partial()
+	.extend({
 	lga: z.string().max(120).optional(),
 	ownershipType: z.string().max(60).optional(),
 	geocodeAccuracy: z.string().max(40).optional(),

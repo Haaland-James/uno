@@ -40,7 +40,7 @@ import {
   type SearchState,
 } from "@/lib/search-url";
 import { findBySlug, type LocationNode } from "@/lib/coverage";
-import type { PropertyCardData } from "@/types/property";
+import type { PropertyCardData, MapPin } from "@/types/property";
 import { cn } from "@/lib/utils";
 
 type OpenFilter = "beds" | "type" | "price" | "sort" | "listingType" | null;
@@ -115,6 +115,10 @@ export default function PropertiesSearchPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const reqId = useRef(0);
+  // Pins for the map (lightweight, bbox-scoped). Independent of the paginated
+  // list — drives clustering so the map stays meaningful across all matches.
+  const [pins, setPins] = useState<MapPin[]>([]);
+  const pinsReqId = useRef(0);
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -159,6 +163,33 @@ export default function PropertiesSearchPage() {
     }, 200);
     return () => clearTimeout(handle);
   }, [state, bbox]);
+
+  // Map pins — bbox-scoped, debounced on user pan. Keyed off pendingBbox
+  // (which the map publishes after every settle) so the cluster set tracks
+  // the current viewport without waiting for the user to click "Search this area".
+  useEffect(() => {
+    const viewport = pendingBbox ?? bbox;
+    if (!viewport) return;
+    const myId = ++pinsReqId.current;
+    const apiParams = searchStateToApiParams({ ...state, page: 1 });
+    apiParams.minLng = viewport.minLng;
+    apiParams.minLat = viewport.minLat;
+    apiParams.maxLng = viewport.maxLng;
+    apiParams.maxLat = viewport.maxLat;
+    const handle = setTimeout(() => {
+      propertiesClient
+        .mapPins(apiParams as Parameters<typeof propertiesClient.mapPins>[0])
+        .then((res) => {
+          if (myId !== pinsReqId.current) return;
+          setPins(res.pins);
+        })
+        .catch(() => {
+          if (myId !== pinsReqId.current) return;
+          setPins([]);
+        });
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [state, bbox, pendingBbox]);
 
   // ── URL navigation helpers ─────────────────────────────────────
   const navigate = useCallback(
@@ -233,6 +264,7 @@ export default function PropertiesSearchPage() {
   const mapContent = (
     <SearchMap
       items={items}
+      pins={pins}
       activeId={hoverId}
       onMarkerHover={setHoverId}
       onUserMove={setPendingBbox}

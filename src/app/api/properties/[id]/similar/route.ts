@@ -4,6 +4,7 @@ import { ok, err } from "@/lib/api";
 import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { notDeleted } from "@/lib/property-status";
 
 export async function GET(
   req: NextRequest,
@@ -28,6 +29,7 @@ export async function GET(
   const [items, session] = await Promise.all([
     db.property.findMany({
       where: {
+        ...notDeleted,
         id: { not: id },
         status: "ACTIVE",
         OR: [

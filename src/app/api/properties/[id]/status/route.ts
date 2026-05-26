@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { deriveStatusFields } from "@/lib/property-status";
+import type { PropertyStatus } from "@prisma/client";
 
 /**
  * PATCH /api/properties/[id]/status — owner status changes.
@@ -32,9 +34,9 @@ export async function PATCH(
 
 	const property = await db.property.findUnique({
 		where: { id },
-		select: { id: true, landlordId: true, status: true },
+		select: { id: true, landlordId: true, status: true, availableFrom: true, deletedAt: true },
 	});
-	if (!property) return err("not_found", "Property not found", 404);
+	if (!property || property.deletedAt) return err("not_found", "Property not found", 404);
 
 	const isOwner = property.landlordId === session.user.id;
 	const isAdmin = session.user.role === "ADMIN";
@@ -53,37 +55,26 @@ export async function PATCH(
 
 	const { action } = parsed.data;
 
-	// Determine the new DB state based on the action
-	let data: { status: "ACTIVE" | "PAUSED" | "RENTED"; isRented?: boolean };
+	const nextStatus: PropertyStatus =
+		action === "pause"
+			? "PAUSED"
+			: action === "mark_rented"
+				? "RENTED"
+				: "ACTIVE"; // activate + mark_available
 
-	switch (action) {
-		case "pause":
-			if (property.status === "PAUSED") {
-				return ok({ id, status: property.status, message: "Already paused" });
-			}
-			data = { status: "PAUSED" };
-			break;
-
-		case "activate":
-			if (property.status === "ACTIVE") {
-				return ok({ id, status: property.status, message: "Already active" });
-			}
-			data = { status: "ACTIVE", isRented: false };
-			break;
-
-		case "mark_rented":
-			data = { status: "RENTED", isRented: true };
-			break;
-
-		case "mark_available":
-			data = { status: "ACTIVE", isRented: false };
-			break;
+	if (property.status === nextStatus && action !== "mark_rented") {
+		return ok({
+			id,
+			status: property.status,
+			message: action === "pause" ? "Already paused" : "Already active",
+		});
 	}
 
+	const derived = deriveStatusFields(nextStatus, property.availableFrom);
 	const updated = await db.property.update({
 		where: { id },
-		data,
-		select: { id: true, status: true, isRented: true },
+		data: { status: nextStatus, ...(derived ?? {}) },
+		select: { id: true, status: true, isRented: true, availabilityStatus: true },
 	});
 
 	return ok(updated);
