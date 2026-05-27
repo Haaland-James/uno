@@ -178,6 +178,12 @@ export const propertyWizardSubmitSchema = z.object({
 	contactLastName: z.string().optional().default(""),
 	contactEmail: z.string().email().optional().or(z.literal("")).default(""),
 	contactPhone: z.string().optional().default(""),
+
+	// Off-platform owner (in-house agents only). Optional in the schema —
+	// the route handler enforces presence when the submitter is an
+	// in-house agent and ignores them otherwise.
+	offPlatformOwnerName: z.string().max(120).optional().default(""),
+	offPlatformOwnerPhone: z.string().max(40).optional().default(""),
 });
 
 /**

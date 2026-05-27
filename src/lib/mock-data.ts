@@ -74,6 +74,8 @@ export const mockPropertyDetails: Record<string, PropertyDetailData> = {
 		listedBy: { name: "Ryan Cherney", company: "Circle One Realty" },
 		listingUpdated: "Dec 23, 2025 at 02:04pm",
 		unoChecked: "a few seconds ago",
+		landlordId: "mock_landlord_001",
+		contact: { hasWhatsApp: true, hasPhone: true, hasEmail: true },
 	},
 };
 
@@ -952,6 +954,8 @@ for (const prop of mockProperties) {
 			listedBy: AGENTS[Math.floor(Math.random() * AGENTS.length)],
 			listingUpdated: "Dec 23, 2025 at 02:04pm",
 			unoChecked: "a few seconds ago",
+			landlordId: `mock_landlord_${prop.id}`,
+			contact: { hasWhatsApp: true, hasPhone: true, hasEmail: true },
 			photos: [
 				...prop.photos,
 				{ url: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=600&q=75", isMain: false },

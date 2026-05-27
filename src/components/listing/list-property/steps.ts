@@ -10,6 +10,9 @@ export interface StepDef {
 const OVERVIEW: StepDef = { key: "overview", label: "Overview", counted: false };
 const KIND: StepDef = { key: "kind", label: "Property Kind", counted: false };
 const LOCATION: StepDef = { key: "location", label: "Location", counted: true };
+// Off-platform owner step. Injected only for in-house UNO agents. Captures
+// the real owner's name + phone for the agent's records — never shown to renters.
+const OWNER: StepDef = { key: "owner", label: "Property Owner", counted: true };
 const PROPERTY_INFO: StepDef = { key: "property-info", label: "Property Info", counted: true };
 const DESCRIPTION: StepDef = { key: "description", label: "Description", counted: true };
 const AMENITIES: StepDef = { key: "amenities", label: "Amenities", counted: true };
@@ -27,12 +30,17 @@ export type WizardKind = "RESIDENTIAL" | "COMMERCIAL" | "LAND" | "";
  * - Land flow skips bedrooms/bathrooms/amenities — replaces them with a single LandDetailsStep.
  * - Commercial flow keeps Property Info but the step itself adapts its fields.
  * - SELL skips the lease-terms step.
+ * - In-house agents get an extra OWNER step right after LOCATION to capture
+ *   the off-platform landlord's contact details. Regular landlords never see it.
  */
 export function getSteps(
 	objective: ListingObjective | null,
-	kind: WizardKind = ""
+	kind: WizardKind = "",
+	isInHouseAgent: boolean = false
 ): StepDef[] {
-	const head: StepDef[] = [OVERVIEW, KIND, LOCATION];
+	const head: StepDef[] = isInHouseAgent
+		? [OVERVIEW, KIND, LOCATION, OWNER]
+		: [OVERVIEW, KIND, LOCATION];
 
 	let middle: StepDef[];
 	if (kind === "LAND") {
@@ -50,17 +58,21 @@ export function getSteps(
 }
 
 /** Convenience: derive the step list from the full wizard data object. */
-export function getStepsFromData(data: Pick<ListPropertyData, "objective" | "propertyKind">): StepDef[] {
-	return getSteps(data.objective, data.propertyKind as WizardKind);
+export function getStepsFromData(
+	data: Pick<ListPropertyData, "objective" | "propertyKind">,
+	isInHouseAgent: boolean = false
+): StepDef[] {
+	return getSteps(data.objective, data.propertyKind as WizardKind, isInHouseAgent);
 }
 
 /** Counted step info: { current, total } for the "Step X of N" label, or null if uncounted. */
 export function getCountedStepInfo(
 	stepIndex: number,
 	objective: ListingObjective | null,
-	kind: WizardKind = ""
+	kind: WizardKind = "",
+	isInHouseAgent: boolean = false
 ): { current: number; total: number } | null {
-	const steps = getSteps(objective, kind);
+	const steps = getSteps(objective, kind, isInHouseAgent);
 	const step = steps[stepIndex];
 	if (!step?.counted) return null;
 	const counted = steps.filter((s) => s.counted);

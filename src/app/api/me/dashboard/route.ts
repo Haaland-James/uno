@@ -22,7 +22,7 @@ export async function GET() {
 
 	const userId = session.user.id;
 
-	const [counts, aggregates, recentListings] = await Promise.all([
+	const [counts, aggregates, recentListings, unreadContactCount] = await Promise.all([
 		// Active vs total counts
 		Promise.all([
 			db.property.count({ where: { landlordId: userId, status: "ACTIVE", deletedAt: null } }),
@@ -55,6 +55,15 @@ export async function GET() {
 				photos: { orderBy: { order: "asc" }, take: 1, select: { url: true } },
 			},
 		}),
+
+		// Unread tenant enquiries across all of the user's properties — drives
+		// the sidebar Messages badge.
+		db.contactRequest.count({
+			where: {
+				property: { landlordId: userId, deletedAt: null },
+				status: "UNREAD",
+			},
+		}),
 	]);
 
 	return ok({
@@ -64,5 +73,6 @@ export async function GET() {
 		totalInquiries: aggregates._sum.contactCount ?? 0,
 		totalSaves: aggregates._sum.savedCount ?? 0,
 		recentListings,
+		unreadContactCount,
 	});
 }

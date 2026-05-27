@@ -29,6 +29,8 @@ import type { PropertyDetailData, PropertyCardData } from "@/types/property";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { useSession } from "next-auth/react";
 import { useFavourites } from "@/hooks/useFavourites";
+import { useContact } from "@/hooks/useContact";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 
 // ─── Photo Gallery (Desktop) ───────────────────────────────────────
 
@@ -380,6 +382,7 @@ export default function PropertyDetailPage() {
   const propertyId = params.id as string;
   const { toggleFavourite, isFavourited } = useFavourites();
   const { status } = useSession();
+  const { contact: sendContact, pending: contactPending } = useContact();
   const saved = isFavourited(propertyId);
   const [showPhotoGrid, setShowPhotoGrid] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -777,6 +780,50 @@ export default function PropertyDetailPage() {
               <p>Uno checked: {property.unoChecked}</p>
             </div>
 
+            {/* Agent reveal — when a UNO agent listed this property on
+                behalf of an off-platform owner. The card and "Listed by"
+                line stay UNO-first (institutional trust); this block
+                reveals the agent as a friendly human face below. */}
+            {property.agent && (
+              <div className="mt-6 rounded-[15px] border border-black/10 bg-white p-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-black/[0.05]">
+                    {property.agent.photo ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={property.agent.photo}
+                        alt={property.agent.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-black/60">
+                        {property.agent.name?.[0]?.toUpperCase() ?? "?"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] text-black/60">Your UNO agent</div>
+                    <div className="truncate text-[15px] font-semibold text-[#161515]">
+                      {property.agent.name}
+                    </div>
+                    {property.agent.bio && (
+                      <p className="mt-1 line-clamp-2 text-[13px] text-black/60">
+                        {property.agent.bio}
+                      </p>
+                    )}
+                  </div>
+                  {property.agent.slug && (
+                    <Link
+                      href={`/agents/${property.agent.slug}`}
+                      className="shrink-0 rounded-full border border-black/15 px-3 py-1.5 text-[13px] font-medium text-[#161515] hover:bg-black/5"
+                    >
+                      View profile
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* ─── RIGHT SIDEBAR (Desktop) ─── */}
@@ -785,25 +832,81 @@ export default function PropertyDetailPage() {
               <div className="flex flex-col gap-[13px] items-center">
                 {/* Profile avatar */}
                 <div className="flex items-center justify-center w-[70px] h-[70px] rounded-full bg-[#e8e8e8]">
-                  <User size={36} className="text-[#888]" />
+                  {property.listedBy.name ? (
+                    <span className="text-[22px] font-semibold text-[#161515]">
+                      {property.listedBy.name
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((w) => w[0]?.toUpperCase())
+                        .join("")}
+                    </span>
+                  ) : (
+                    <User size={36} className="text-[#888]" />
+                  )}
                 </div>
+                {property.listedBy.name && (
+                  <div className="text-[13px] text-black/70">
+                    Listed by {property.listedBy.name}
+                  </div>
+                )}
                 <div className="flex flex-col gap-[15px] w-[301px]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-[22px] font-semibold text-[#161515]">
                       Send Message
                     </h3>
                     <div className="flex gap-[12px]">
-                      <button className="bg-[#af2525] rounded-full w-[40px] h-[41px] flex items-center justify-center hover:bg-[#93191d] transition-colors">
-                        <Phone size={16} className="text-white" />
-                      </button>
-                      <button className="bg-[#af2525] rounded-full w-[41px] h-[41px] flex items-center justify-center hover:bg-[#93191d] transition-colors">
-                        <MessageCircle size={18} className="text-white" />
-                      </button>
+                      {property.contact.hasPhone && (
+                        <button
+                          onClick={() =>
+                            sendContact({
+                              propertyId,
+                              method: "PHONE",
+                              source: "detail-desktop",
+                            })
+                          }
+                          disabled={contactPending === "PHONE"}
+                          aria-label="Call lister"
+                          className="bg-[#af2525] rounded-full w-[40px] h-[41px] flex items-center justify-center hover:bg-[#93191d] transition-colors disabled:opacity-60"
+                        >
+                          <Phone size={16} className="text-white" />
+                        </button>
+                      )}
+                      {property.contact.hasWhatsApp && (
+                        <button
+                          onClick={() =>
+                            sendContact({
+                              propertyId,
+                              method: "WHATSAPP",
+                              source: "detail-desktop",
+                              whatsappMessage: `Hi, I'm interested in your listing "${property.title}" on UNO.`,
+                            })
+                          }
+                          disabled={contactPending === "WHATSAPP"}
+                          aria-label="Message on WhatsApp"
+                          className="bg-[#25D366] rounded-full w-[41px] h-[41px] flex items-center justify-center hover:bg-[#1ebe5d] transition-colors disabled:opacity-60"
+                        >
+                          <WhatsAppIcon size={20} className="text-white" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <hr className="border-t border-black/10" />
                 </div>
-                <button className="border border-[#161515] rounded-[50px] h-[41px] w-[301px] flex items-center justify-center text-[15px] text-black tracking-[-0.3px] hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() =>
+                    sendContact({
+                      propertyId,
+                      method: property.contact.hasWhatsApp ? "WHATSAPP" : "PHONE",
+                      source: "detail-inspect",
+                      whatsappMessage: `Hi, I'd like to inspect "${property.title}" listed for ${formatNaira(
+                        property.rent
+                      )}. When would be a good time?`,
+                    })
+                  }
+                  disabled={!property.contact.hasWhatsApp && !property.contact.hasPhone}
+                  className="border border-[#161515] rounded-[50px] h-[41px] w-[301px] flex items-center justify-center text-[15px] text-black tracking-[-0.3px] hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
                   Message for Inspection
                 </button>
               </div>
@@ -875,26 +978,39 @@ export default function PropertyDetailPage() {
               Send a Message
             </span>
             <div className="flex items-center gap-[16px]">
-              <button className="bg-[#af2525] rounded-full w-[32px] h-[33px] flex items-center justify-center">
-                <MessageCircle size={16} className="text-white" />
-              </button>
-              <button className="bg-[#af2525] rounded-full w-[32px] h-[33px] flex items-center justify-center">
-                <Phone size={14} className="text-white" />
-              </button>
-              <button className="bg-[#af2525] rounded-full w-[33px] h-[33px] flex items-center justify-center">
-                <svg
-                  width="19"
-                  height="21"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+              {property.contact.hasPhone && (
+                <button
+                  onClick={() =>
+                    sendContact({
+                      propertyId,
+                      method: "PHONE",
+                      source: "detail-mobile",
+                    })
+                  }
+                  disabled={contactPending === "PHONE"}
+                  aria-label="Call lister"
+                  className="bg-[#af2525] rounded-full w-[32px] h-[33px] flex items-center justify-center disabled:opacity-60"
                 >
-                  <path
-                    d="M17.6 6.32C16.12 4.82 14.12 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 13.41 4.37 14.77 5.06 15.97L4 20L8.12 18.96C9.28 19.59 10.59 19.92 11.92 19.92H11.93C16.35 19.92 20 16.34 20 11.92C20 9.82 19.18 7.82 17.6 6.32Z"
-                    fill="white"
-                  />
-                </svg>
-              </button>
+                  <Phone size={14} className="text-white" />
+                </button>
+              )}
+              {property.contact.hasWhatsApp && (
+                <button
+                  onClick={() =>
+                    sendContact({
+                      propertyId,
+                      method: "WHATSAPP",
+                      source: "detail-mobile",
+                      whatsappMessage: `Hi, I'm interested in your listing "${property.title}" on UNO.`,
+                    })
+                  }
+                  disabled={contactPending === "WHATSAPP"}
+                  aria-label="Message on WhatsApp"
+                  className="bg-[#25D366] rounded-full w-[33px] h-[33px] flex items-center justify-center disabled:opacity-60"
+                >
+                  <WhatsAppIcon size={18} className="text-white" />
+                </button>
+              )}
             </div>
           </div>
         </div>

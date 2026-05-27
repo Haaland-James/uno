@@ -54,6 +54,7 @@ export function toCardDto(
     latitude: priv.lat,
     longitude: priv.lng,
     addressPrivate: priv.addressPrivate,
+    listedByAgent: p.listedByAgent,
   };
 }
 
@@ -124,12 +125,28 @@ export function toDetailDto(
     },
     additionalInfo: buildAdditionalInfo(p),
     features: p.amenities.slice(0, 6),
-    listedBy: {
-      name: p.landlord.name,
-      company: p.landlord.landlordProfile?.bio ?? "",
-    },
+    listedBy: p.listedByAgent
+      ? { name: "UNO", company: "UNO Verified Listing" }
+      : {
+          name: p.landlord.name,
+          company: p.landlord.landlordProfile?.bio ?? "",
+        },
+    agent: p.listedByAgent
+      ? {
+          name: p.landlord.name,
+          slug: p.landlord.agentSlug ?? null,
+          photo: p.landlord.agentPhoto ?? p.landlord.photo ?? null,
+          bio: p.landlord.agentBio ?? null,
+        }
+      : null,
     listingUpdated: formatRelativeDate(p.updatedAt),
     unoChecked: p.verifiedAt ? formatRelativeDate(p.verifiedAt) : "Pending verification",
+    landlordId: p.landlord.id,
+    contact: {
+      hasWhatsApp: !!(p.landlord.landlordProfile?.whatsappNumber || p.landlord.phone),
+      hasPhone: !!p.landlord.phone,
+      hasEmail: !!p.landlord.email,
+    },
   };
 }
 

@@ -136,6 +136,29 @@ export async function POST(req: NextRequest) {
       create: { userId: session.user.id },
     });
 
+    // Detect in-house agents. They get the off-platform-owner fields persisted
+    // and the listedByAgent flag flipped — which is the single source of truth
+    // the public UI reads to display "Listed by UNO" instead of the lister's
+    // name. Regular landlords ignore both fields entirely (defence-in-depth: a
+    // malicious payload from a non-agent can't smuggle owner data in).
+    const submitter = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { agentStatus: true, agentEmployment: true },
+    });
+    const isInHouseAgent =
+      submitter?.agentStatus === "VERIFIED" &&
+      submitter?.agentEmployment === "IN_HOUSE";
+
+    if (isInHouseAgent) {
+      if (!w.offPlatformOwnerName.trim() || !w.offPlatformOwnerPhone.trim()) {
+        return err(
+          "validation_error",
+          "Off-platform owner name and phone are required for agent listings",
+          400
+        );
+      }
+    }
+
     // Map wizard payload → Prisma Property fields.
     const propertyType = mapPropertyType(w.propertyType);
     if (!propertyType) {
@@ -235,6 +258,13 @@ export async function POST(req: NextRequest) {
         negotiable: w.negotiable ?? false,
         availableFrom: availableFromDate,
         minimumLease: w.minimumLease || null,
+        listedByAgent: isInHouseAgent,
+        offPlatformOwnerName: isInHouseAgent
+          ? w.offPlatformOwnerName.trim() || null
+          : null,
+        offPlatformOwnerPhone: isInHouseAgent
+          ? w.offPlatformOwnerPhone.trim() || null
+          : null,
         status: initialStatus,
         ...(derived ?? {}),
         verificationStatus: "PENDING",

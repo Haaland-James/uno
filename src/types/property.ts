@@ -134,6 +134,9 @@ export interface PropertyCardData {
 	inquiryCount?: number;
 	savedCount?: number;
 	streetAddress?: string;
+	// True when this listing was created by an in-house UNO agent on behalf
+	// of an off-platform owner. Drives the "Listed by UNO" badge on cards.
+	listedByAgent?: boolean;
 }
 
 // Detailed property data for single-view page
@@ -155,8 +158,24 @@ export interface PropertyDetailData extends PropertyCardData {
 	additionalInfo: { label: string; value: string }[];
 	features: string[];
 	listedBy: { name: string; company: string };
+	// When `listedByAgent` is true on the parent, `listedBy.name` is set to
+	// "UNO" institutionally and `agent` carries the field agent's identity
+	// so the detail page can reveal them (with a link to /agents/[slug])
+	// without losing the UNO-first trust framing.
+	agent?: {
+		name: string;
+		slug: string | null;
+		photo: string | null;
+		bio: string | null;
+	} | null;
 	listingUpdated: string;
 	unoChecked: string;
+	landlordId: string;
+	contact: {
+		hasWhatsApp: boolean;
+		hasPhone: boolean;
+		hasEmail: boolean;
+	};
 }
 
 /**

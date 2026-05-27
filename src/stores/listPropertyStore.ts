@@ -98,6 +98,14 @@ export interface ListPropertyData {
 	contactLastName: string;
 	contactEmail: string;
 	contactPhone: string;
+
+	// Off-platform owner (in-house agents only). When the lister is a UNO
+	// agent acting on behalf of a landlord who isn't on UNO, these capture
+	// the real owner's contact info for the agent's records. NEVER shown
+	// to renters; populated only on the OwnerStep which is hidden from
+	// regular landlords.
+	offPlatformOwnerName: string;
+	offPlatformOwnerPhone: string;
 }
 
 const initialData: ListPropertyData = {
@@ -163,6 +171,8 @@ const initialData: ListPropertyData = {
 	contactLastName: "",
 	contactEmail: "",
 	contactPhone: "",
+	offPlatformOwnerName: "",
+	offPlatformOwnerPhone: "",
 };
 
 interface ListPropertyState {

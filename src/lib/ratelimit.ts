@@ -33,3 +33,13 @@ export const geocodeLimiter = new Ratelimit({
   prefix: "rl:geocode",
   analytics: true,
 });
+
+// Contact requests: max 10/hour per tenant. Spam shield for the reveal-and-log
+// flow on property detail pages — well above legitimate use, low enough that a
+// runaway script can't flood any single landlord's inbox.
+export const contactRequestLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, "1 h"),
+  prefix: "rl:contact",
+  analytics: true,
+});

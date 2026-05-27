@@ -17,6 +17,24 @@ model User {
   photo           String?
   role            Role      @default(RENTER)
 
+  // Agent fields. agentStatus gates access to /agent/* console.
+  // agentEmployment distinguishes salaried UNO staff (IN_HOUSE) from
+  // self-serve verified agents (EXTERNAL, Phase 2). Both render under the
+  // UNO institutional badge in Phase 1 — only IN_HOUSE ships now.
+  agentStatus       AgentStatus     @default(NONE)
+  agentEmployment   AgentEmployment?
+  agentSlug         String?         @unique
+  agentBio          String?
+  agentPhoto        String?
+  agentTerritory    String[]        @default([])
+  agentVerifiedAt   DateTime?
+  agentVerifiedBy   String?
+  // Phase 2 reserved — nullable so adding them later is non-breaking.
+  agentBusinessType AgentBusinessType?
+  agentBusinessName String?
+  subscriptionTier  String?
+  listingCredits    Int?
+
   landlordProfile LandlordProfile?
   properties      Property[]
   propertyDrafts  PropertyDraft[]
@@ -24,11 +42,31 @@ model User {
   savedSearches   SavedSearch[]
   contactsSent    ContactRequest[] @relation("TenantContacts")
   otpCodes        OtpCode[]
+  reviewsReceived AgentReview[]    @relation("AgentReviewed")
+  reviewsAuthored AgentReview[]    @relation("AgentReviewAuthor")
 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   @@index([phone])
+  @@index([agentStatus, agentEmployment])
+}
+
+enum AgentStatus {
+  NONE
+  PENDING
+  VERIFIED
+  SUSPENDED
+}
+
+enum AgentEmployment {
+  IN_HOUSE
+  EXTERNAL
+}
+
+enum AgentBusinessType {
+  INDIVIDUAL
+  AGENCY
 }
 
 model OtpCode {
@@ -167,6 +205,14 @@ model Property {
   views               Int                @default(0)
   contactCount        Int                @default(0)
   savedCount          Int                @default(0)
+  // Agent attribution. When listedByAgent=true the public UI shows
+  // "Listed by UNO" and the landlord field points to the agent user, not
+  // the property's owner. Off-platform owner fields capture the real
+  // owner's contact details for the in-house agent's records only —
+  // they are never shown to renters.
+  listedByAgent          Boolean         @default(false)
+  offPlatformOwnerName   String?
+  offPlatformOwnerPhone  String?
   verificationStatus  VerificationStatus @default(PENDING)
   verifiedBy          String?
   verifiedAt          DateTime?
@@ -351,4 +397,22 @@ enum ContactStatus {
   READ
   RESPONDED
   ARCHIVED
+}
+
+// Phase 2 reserved — table exists from day one so the read side (avg
+// rating on /agent/[slug]) can ship without a later migration. Writes
+// are gated behind Phase 2 UI; no API routes are wired yet.
+model AgentReview {
+  id         String   @id @default(cuid())
+  agentId    String
+  agent      User     @relation("AgentReviewed", fields: [agentId], references: [id])
+  authorId   String
+  author     User     @relation("AgentReviewAuthor", fields: [authorId], references: [id])
+  rating     Int
+  comment    String?
+  propertyId String?
+  createdAt  DateTime @default(now())
+
+  @@index([agentId, createdAt])
+  @@unique([agentId, authorId, propertyId])
 }

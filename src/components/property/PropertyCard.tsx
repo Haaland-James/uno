@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MapPin, Bath, BedDouble, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MapPin, Bath, BedDouble, ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
 import { cn, formatNaira } from "@/lib/utils";
 import type { PropertyCardData } from "@/types/property";
 
@@ -128,6 +128,17 @@ export function PropertyCard({
               ))}
             </div>
           </>
+        )}
+
+        {/* "Listed by UNO" institutional badge — shown only when an in-house
+            agent created the listing. The trust signal here is intentional:
+            renters know UNO vouches for this listing institutionally, not
+            just that some individual posted it. */}
+        {data.listedByAgent && (
+          <div className="absolute top-[12px] left-[12px] z-10 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold text-[#161515] shadow-sm">
+            <ShieldCheck size={11} className="text-[#af2525]" />
+            Listed by UNO
+          </div>
         )}
 
         {/* Heart button — auth gate lives inside useFavourites */}

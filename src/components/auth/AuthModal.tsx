@@ -6,6 +6,8 @@ import { X } from "lucide-react";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { favouritesClient } from "@/lib/clients/favourites";
 import { savedSearchesClient } from "@/lib/clients/savedSearches";
+import { contactsClient } from "@/lib/clients/contacts";
+import { getWhatsAppLink } from "@/lib/utils";
 import { toast } from "@/stores/toastStore";
 import { broadcastAuthChange } from "@/lib/auth-sync";
 import { LoginForm } from "./LoginForm";
@@ -67,12 +69,29 @@ export function AuthModal() {
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not save search — try again");
       }
+    } else if (intent?.type === "contact") {
+      try {
+        // Default replay channel after auth is WhatsApp (most popular in NG).
+        // The user can pick a specific channel by tapping again on the page.
+        const res = await contactsClient.create({
+          propertyId: intent.propertyId,
+          contactMethod: "WHATSAPP",
+          source: "auth-replay",
+        });
+        if (res.contactTarget.whatsapp) {
+          window.open(getWhatsAppLink(res.contactTarget.whatsapp), "_blank");
+        }
+        toast.success("Opening WhatsApp…");
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Could not reach the lister — try again"
+        );
+      }
     } else if (wasSignup) {
       toast.success("Welcome to UNO!");
     } else {
       toast.success("Signed in");
     }
-    // Future intents: contact (Stage 5)
 
     // Fresh signups land on /feed (their new home) when there's nothing to do here.
     // Otherwise refresh in place so the new session reflects everywhere.

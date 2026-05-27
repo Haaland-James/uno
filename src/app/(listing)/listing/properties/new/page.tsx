@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useListPropertyStore, type ListPropertyData } from "@/stores/listPropertyStore";
 import { useUserStore } from "@/stores/userStore";
@@ -18,6 +19,7 @@ import { DraftWarningModal } from "@/components/listing/list-property/DraftWarni
 import { ObjectiveStep } from "@/components/listing/list-property/steps/ObjectiveStep";
 import { KindStep } from "@/components/listing/list-property/steps/KindStep";
 import { LocationStep } from "@/components/listing/list-property/steps/LocationStep";
+import { OwnerStep } from "@/components/listing/list-property/steps/OwnerStep";
 import { PropertyInfoStep } from "@/components/listing/list-property/steps/PropertyInfoStep";
 import { LandDetailsStep } from "@/components/listing/list-property/steps/LandDetailsStep";
 import { DescriptionStep } from "@/components/listing/list-property/steps/DescriptionStep";
@@ -100,7 +102,7 @@ function NewPropertyPage() {
 					setHydrating(false);
 				} else {
 					toast.error(msg || "Could not load draft");
-					router.push("/listing/properties");
+					router.push(exitDestination);
 				}
 			});
 		return () => {
@@ -109,13 +111,21 @@ function NewPropertyPage() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [draftIdParam]);
 
+	// In-house agent flag drives step list assembly. Read from the session
+	// so it's always in sync with the server-side gate — Zustand's local
+	// user store doesn't carry agentEmployment.
+	const { data: sessionData } = useSession();
+	const isInHouseAgent =
+		sessionData?.user?.agentStatus === "VERIFIED" &&
+		sessionData?.user?.agentEmployment === "IN_HOUSE";
+
 	const wizardKind = (data.propertyKind || "") as "RESIDENTIAL" | "COMMERCIAL" | "LAND" | "";
-	const steps = getSteps(data.objective, wizardKind);
+	const steps = getSteps(data.objective, wizardKind, isInHouseAgent);
 	const safeIdx = Math.min(Math.max(currentStep - 1, 0), steps.length - 1);
 	const currentStepDef = steps[safeIdx];
 	const isReview = currentStepDef.key === "review";
 	const canNext = isStepValid(currentStepDef.key, data);
-	const countedInfo = getCountedStepInfo(safeIdx, data.objective, wizardKind);
+	const countedInfo = getCountedStepInfo(safeIdx, data.objective, wizardKind, isInHouseAgent);
 
 	const [draftOpen, setDraftOpen] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
@@ -195,6 +205,11 @@ function NewPropertyPage() {
 
 	const goToStep = (idx: number) => setStep(idx + 1);
 
+	// Where to send the user after they close, save, discard, or submit.
+	// In-house agents belong in their staff console — bouncing them to the
+	// landlord My Listings page would feel like the wrong app.
+	const exitDestination = isInHouseAgent ? "/agent/listings" : "/listing/properties";
+
 	const handleClose = () => setDraftOpen(true);
 
 	const handleDiscard = () => {
@@ -203,7 +218,7 @@ function NewPropertyPage() {
 		// from the listing card. (Closing a doc shouldn't delete the doc.)
 		reset();
 		setDraftOpen(false);
-		router.push("/listing/properties");
+		router.push(exitDestination);
 	};
 
 	const handleSaveDraft = async () => {
@@ -213,7 +228,7 @@ function NewPropertyPage() {
 			invalidateHasListings();
 			reset();
 			toast.success("Draft saved");
-			router.push("/listing/properties");
+			router.push(exitDestination);
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : "Could not save draft");
 		}
@@ -247,7 +262,7 @@ function NewPropertyPage() {
 			invalidateHasListings();
 			toast.success("Listing submitted for review");
 			reset();
-			router.push("/listing/properties");
+			router.push(exitDestination);
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : "Could not submit listing — try again");
 		} finally {
@@ -263,6 +278,8 @@ function NewPropertyPage() {
 				return <KindStep />;
 			case "location":
 				return <LocationStep />;
+			case "owner":
+				return <OwnerStep />;
 			case "property-info":
 				return <PropertyInfoStep />;
 			case "land-details":
@@ -298,7 +315,7 @@ function NewPropertyPage() {
 		<div className="fixed inset-0 z-[80] flex flex-col bg-bg-page">
 			{/* Top bar */}
 			<header className="flex h-16 shrink-0 items-center justify-between border-b border-black/10 bg-white px-4 md:px-8">
-				<Link href="/listing/properties" className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">
+				<Link href={exitDestination} className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">
 					<span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#af2525] text-[12px] leading-none text-white">
 						◆
 					</span>

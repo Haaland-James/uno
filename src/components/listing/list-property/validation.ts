@@ -16,6 +16,13 @@ export function isStepValid(stepKey: string, data: ListPropertyData): boolean {
 				data.area.trim().length > 0 &&
 				data.streetAddress.trim().length > 0
 			);
+		case "owner":
+			// Off-platform owner step (in-house agents only). Name + phone are
+			// both required so the agent has a way back to the landlord.
+			return (
+				data.offPlatformOwnerName.trim().length >= 2 &&
+				data.offPlatformOwnerPhone.trim().length >= 7
+			);
 		case "property-info":
 			if (isCommercial) {
 				return (

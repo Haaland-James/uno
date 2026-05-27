@@ -1,5 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
-import type { Role } from "@prisma/client";
+import type { Role, AgentStatus, AgentEmployment } from "@prisma/client";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "./db";
 import { verifyOtp } from "./otp";
@@ -62,16 +62,40 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          agentStatus: user.agentStatus,
+          agentEmployment: user.agentEmployment,
           image: user.photo ?? undefined,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
-        token.id = (user as { id: string }).id;
-        token.role = (user as { role: Role }).role;
+        const u = user as {
+          id: string;
+          role: Role;
+          agentStatus?: AgentStatus;
+          agentEmployment?: AgentEmployment | null;
+        };
+        token.id = u.id;
+        token.role = u.role;
+        token.agentStatus = u.agentStatus ?? "NONE";
+        token.agentEmployment = u.agentEmployment ?? null;
+      }
+      // Refresh agent fields from DB when the session is updated explicitly
+      // (e.g. after an admin verifies the user as an agent). Without this
+      // refresh the user would have to sign out + back in to gain access.
+      if (trigger === "update" && token.id) {
+        const fresh = await db.user.findUnique({
+          where: { id: token.id },
+          select: { role: true, agentStatus: true, agentEmployment: true },
+        });
+        if (fresh) {
+          token.role = fresh.role;
+          token.agentStatus = fresh.agentStatus;
+          token.agentEmployment = fresh.agentEmployment;
+        }
       }
       return token;
     },
@@ -79,6 +103,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.agentStatus = token.agentStatus;
+        session.user.agentEmployment = token.agentEmployment;
       }
       return session;
     },

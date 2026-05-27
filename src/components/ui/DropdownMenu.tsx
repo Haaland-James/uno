@@ -62,6 +62,12 @@ function DropdownMenuItem({
 	);
 }
 
+// Rough max-height estimate used to decide whether to flip the menu above
+// the trigger. Doesn't have to be exact — just needs to be conservative so
+// we flip when the natural-down render would be clipped by the viewport.
+const ESTIMATED_MENU_HEIGHT = 280;
+const ESTIMATED_MENU_WIDTH = 200;
+
 export function DropdownMenu({
 	trigger,
 	align = "right",
@@ -69,7 +75,12 @@ export function DropdownMenu({
 	children,
 }: DropdownMenuProps) {
 	const [open, setOpen] = useState(false);
+	const [placement, setPlacement] = useState<{
+		vertical: "top" | "bottom";
+		horizontal: "left" | "right";
+	}>({ vertical: "bottom", horizontal: align });
 	const ref = useRef<HTMLDivElement>(null);
+	const triggerWrapRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (!open) return;
@@ -89,6 +100,25 @@ export function DropdownMenu({
 		};
 	}, [open]);
 
+	// Position-aware: when opening, sample the trigger's location vs the
+	// viewport and flip the menu up / sideways if needed.
+	function computePlacement() {
+		const el = triggerWrapRef.current;
+		if (!el) return { vertical: "bottom" as const, horizontal: align };
+		const rect = el.getBoundingClientRect();
+		const spaceBelow = window.innerHeight - rect.bottom;
+		const spaceAbove = rect.top;
+		const vertical: "top" | "bottom" =
+			spaceBelow < ESTIMATED_MENU_HEIGHT && spaceAbove > spaceBelow ? "top" : "bottom";
+
+		// Horizontal: respect requested align unless it would overflow.
+		let horizontal: "left" | "right" = align;
+		if (align === "right" && rect.right - ESTIMATED_MENU_WIDTH < 0) horizontal = "left";
+		if (align === "left" && rect.left + ESTIMATED_MENU_WIDTH > window.innerWidth)
+			horizontal = "right";
+		return { vertical, horizontal };
+	}
+
 	const close = () => setOpen(false);
 
 	const triggerEl = cloneElement(trigger, {
@@ -96,7 +126,10 @@ export function DropdownMenu({
 			e.preventDefault();
 			e.stopPropagation();
 			trigger.props.onClick?.(e);
-			setOpen((v) => !v);
+			setOpen((v) => {
+				if (!v) setPlacement(computePlacement());
+				return !v;
+			});
 		},
 		"aria-expanded": open,
 		"aria-haspopup": "menu",
@@ -104,13 +137,14 @@ export function DropdownMenu({
 
 	return (
 		<div ref={ref} className="relative inline-block">
-			{triggerEl}
+			<div ref={triggerWrapRef}>{triggerEl}</div>
 			{open && (
 				<div
 					role="menu"
 					className={cn(
-						"absolute z-50 mt-2 min-w-[180px] rounded-[12px] border border-black/10 bg-white py-2 shadow-[0px_4px_17px_0px_rgba(0,0,0,0.1)]",
-						align === "right" ? "right-0" : "left-0",
+						"absolute z-50 min-w-[180px] rounded-[12px] border border-black/10 bg-white py-2 shadow-[0px_4px_17px_0px_rgba(0,0,0,0.1)]",
+						placement.vertical === "bottom" ? "top-full mt-2" : "bottom-full mb-2",
+						placement.horizontal === "right" ? "right-0" : "left-0",
 						menuClassName
 					)}
 				>

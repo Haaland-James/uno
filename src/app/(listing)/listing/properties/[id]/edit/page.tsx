@@ -174,6 +174,7 @@ function EditPropertyPage({ id }: { id: string }) {
 						salePrice: null, negotiable: p.negotiable, titleDocuments: "",
 						leaseTerms: "", contactFirstName: "", contactLastName: "",
 						contactEmail: "", contactPhone: "",
+						offPlatformOwnerName: "", offPlatformOwnerPhone: "",
 					},
 					currentStep: 1, completedSteps: [],
 				});

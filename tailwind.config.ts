@@ -18,6 +18,21 @@ const config: Config = {
 					light: "var(--color-brand-light)",
 				},
 
+				// Alias for the brand red. Used as `bg-uno-red`, `text-uno-red`,
+				// `bg-uno-red-hover` across admin + agent consoles. Kept here
+				// (not in tokens.css) so changing the brand colour in one place
+				// (--color-brand) cascades to every uno-red utility.
+				"uno-red": {
+					DEFAULT: "var(--color-brand)",
+					hover: "var(--color-brand-hover)",
+				},
+
+				// Content text aliases used by admin/agent shells. These map to
+				// the existing text tokens so we don't have to refactor every
+				// "text-content-primary" call site.
+				"content-primary": "var(--text-primary)",
+				"content-secondary": "var(--text-secondary)",
+
 				// Actions
 				action: {
 					primary: "var(--action-primary)",

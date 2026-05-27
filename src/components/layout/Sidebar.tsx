@@ -10,7 +10,6 @@ import {
 	Home,
 	User,
 	Building2,
-	MessageSquare,
 	BarChart3,
 	Settings,
 } from "lucide-react";
@@ -63,18 +62,15 @@ const navItems: NavItem[] = [
 	},
 ];
 
+// Messages (/listing/contacts) is intentionally omitted — listers handle
+// enquiries directly in WhatsApp / on the phone, not via an in-app inbox.
+// The route still exists for direct navigation but isn't surfaced here.
 const listingNavItems: NavItem[] = [
 	{
 		label: "My Listings",
 		href: "/listing/properties",
 		icon: <Building2 size={18} strokeWidth={2} />,
 		iconBg: "#ffcfcf",
-	},
-	{
-		label: "Messages",
-		href: "/listing/contacts",
-		icon: <MessageSquare size={18} strokeWidth={2} />,
-		iconBg: "#f5b324",
 	},
 	{
 		label: "Analytics",
