@@ -9,7 +9,6 @@ import {
 	Rss,
 	Heart,
 	BookmarkCheck,
-	Home,
 	User,
 	Building2,
 	Users,
@@ -62,13 +61,7 @@ const navItems: NavItem[] = [
 		iconBg: "#db8ff6",
 	},
 	{
-		label: "My House",
-		href: "/my-house",
-		icon: <Home size={18} strokeWidth={2} />,
-		iconBg: "#dd6bb1",
-	},
-	{
-		label: "Profile",
+		label: "Settings",
 		href: "/profile",
 		icon: <User size={18} strokeWidth={2} />,
 		iconBg: "#81cdc8",

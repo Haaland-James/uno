@@ -392,7 +392,7 @@ export const MOBILE_NAV_ITEMS = [
 	{ href: "/feed", label: "Home", icon: "Home" },
 	{ href: "/search", label: "Search", icon: "Search" },
 	{ href: "/favourites", label: "Saved", icon: "Heart" },
-	{ href: "/profile", label: "Profile", icon: "User" },
+	{ href: "/profile", label: "Settings", icon: "User" },
 ] as const;
 
 // Landlord Sidebar Items
