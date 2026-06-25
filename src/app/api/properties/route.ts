@@ -13,6 +13,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { computeGateSignals } from "@/lib/gate";
 import { deriveStatusFields, notDeleted } from "@/lib/property-status";
+import { mockProperties } from "@/lib/mock-data";
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -97,12 +98,23 @@ export async function GET(req: NextRequest) {
     favIds = new Set(favs.map((f) => f.propertyId));
   }
 
+  if (items.length > 0) {
+    return ok({
+      items: items.map((p) => toCardDto(p, favIds.has(p.id))),
+      page: f.page,
+      pageSize: f.pageSize,
+      total,
+      hasMore: skip + items.length < total,
+    });
+  }
+
+  const mockSlice = mockProperties.slice(skip, skip + f.pageSize);
   return ok({
-    items: items.map((p) => toCardDto(p, favIds.has(p.id))),
+    items: mockSlice,
     page: f.page,
     pageSize: f.pageSize,
-    total,
-    hasMore: skip + items.length < total,
+    total: mockProperties.length,
+    hasMore: skip + mockSlice.length < mockProperties.length,
   });
 }
 

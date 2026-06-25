@@ -7,6 +7,7 @@ import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { notDeleted } from "@/lib/property-status";
+import { mockProperties } from "@/lib/mock-data";
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -61,8 +62,12 @@ export async function GET(req: NextRequest) {
     favIds = new Set(favs.map((f) => f.propertyId));
   }
 
-  return ok({
-    type,
-    items: items.map((p) => toCardDto(p, favIds.has(p.id))),
-  });
+  if (items.length > 0) {
+    return ok({
+      type,
+      items: items.map((p) => toCardDto(p, favIds.has(p.id))),
+    });
+  }
+
+  return ok({ type, items: mockProperties.slice(0, limit) });
 }
