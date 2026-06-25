@@ -141,6 +141,12 @@ export function PropertyCard({
           </div>
         )}
 
+        {data.id.startsWith("prop_") && (
+          <div className="absolute bottom-[28px] left-[8px] z-10 rounded bg-yellow-400 px-1.5 py-0.5 text-[9px] font-bold uppercase text-black shadow">
+            Mock
+          </div>
+        )}
+
         {/* Heart button — auth gate lives inside useFavourites */}
         <button
           onClick={(e) => {
