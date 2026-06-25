@@ -16,6 +16,8 @@ model User {
   phoneVerified   Boolean   @default(false)
   name            String
   photo           String?
+  gender          Gender?
+  address         String?
   role            Role      @default(RENTER)
 
   // Agent fields. agentStatus gates access to /agent/* console.
@@ -68,6 +70,13 @@ enum AgentEmployment {
 enum AgentBusinessType {
   INDIVIDUAL
   AGENCY
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  PREFER_NOT_TO_SAY
 }
 
 model OtpCode {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CircleUser } from "lucide-react";
+import { CircleUser, Loader2 } from "lucide-react";
 
 interface AvatarRowProps {
 	currentPhoto?: string | null;
@@ -9,9 +9,32 @@ interface AvatarRowProps {
 	onSave: (photoUrl: string) => void;
 }
 
+async function uploadToCloudinary(file: File): Promise<string> {
+	const res = await fetch("/api/uploads/sign", { method: "POST" });
+	if (!res.ok) throw new Error("Failed to get upload signature");
+	const { data } = await res.json();
+
+	const form = new FormData();
+	form.append("file", file);
+	form.append("api_key", data.apiKey);
+	form.append("timestamp", String(data.timestamp));
+	form.append("signature", data.signature);
+	form.append("folder", data.folder);
+
+	const upload = await fetch(
+		`https://api.cloudinary.com/v1_1/${data.cloudName}/image/upload`,
+		{ method: "POST", body: form }
+	);
+	if (!upload.ok) throw new Error("Upload failed");
+	const result = await upload.json();
+	return result.secure_url;
+}
+
 export function AvatarRow({ currentPhoto, initials, onSave }: AvatarRowProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+	const [pendingFile, setPendingFile] = useState<File | null>(null);
+	const [uploading, setUploading] = useState(false);
 
 	useEffect(() => {
 		return () => {
@@ -28,12 +51,22 @@ export function AvatarRow({ currentPhoto, initials, onSave }: AvatarRowProps) {
 		if (!file) return;
 		if (pendingUrl) URL.revokeObjectURL(pendingUrl);
 		setPendingUrl(URL.createObjectURL(file));
+		setPendingFile(file);
 	};
 
-	const handleSave = () => {
-		if (!pendingUrl) return;
-		onSave(pendingUrl);
-		setPendingUrl(null);
+	const handleSave = async () => {
+		if (!pendingFile) return;
+		setUploading(true);
+		try {
+			const cloudinaryUrl = await uploadToCloudinary(pendingFile);
+			onSave(cloudinaryUrl);
+			setPendingUrl(null);
+			setPendingFile(null);
+		} catch {
+			// onSave caller handles toast
+		} finally {
+			setUploading(false);
+		}
 	};
 
 	let subtitle: React.ReactNode;
@@ -44,9 +77,17 @@ export function AvatarRow({ currentPhoto, initials, onSave }: AvatarRowProps) {
 				<button
 					type="button"
 					onClick={handleSave}
-					className="font-semibold text-[#af2525] underline-offset-2 hover:underline"
+					disabled={uploading}
+					className="font-semibold text-[#af2525] underline-offset-2 hover:underline disabled:opacity-50"
 				>
-					SAVE
+					{uploading ? (
+						<span className="inline-flex items-center gap-1">
+							<Loader2 className="h-3 w-3 animate-spin" />
+							Saving…
+						</span>
+					) : (
+						"SAVE"
+					)}
 				</button>
 			</span>
 		);

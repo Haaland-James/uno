@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
 	User,
@@ -32,6 +32,7 @@ function GenderIcon({ size = 20 }: { size?: number }) {
 	);
 }
 import { useUserStore } from "@/stores/userStore";
+import { toast } from "@/stores/toastStore";
 import { AvatarRow } from "@/components/profile/AvatarRow";
 import { ProfileRow } from "@/components/profile/ProfileRow";
 import {
@@ -59,18 +60,58 @@ const GENDER_LABELS: Record<Gender, string> = {
 
 type RowKey = "name" | "gender" | "email" | "phone" | "address";
 
+async function patchProfile(patch: Record<string, unknown>) {
+	const res = await fetch("/api/me", {
+		method: "PATCH",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(patch),
+	});
+	if (!res.ok) {
+		const body = await res.json().catch(() => null);
+		throw new Error(body?.error?.message ?? "Failed to save");
+	}
+	const { data } = await res.json();
+	return data;
+}
+
 export default function ProfilePage() {
 	const router = useRouter();
 	const user = useUserStore((s) => s.user);
 	const updateUser = useUserStore((s) => s.updateUser);
 
 	const [openRow, setOpenRow] = useState<RowKey | null>(null);
+	const [saving, setSaving] = useState(false);
+
+	useEffect(() => {
+		fetch("/api/me")
+			.then((r) => r.json())
+			.then(({ data }) => {
+				if (data) updateUser(data);
+			})
+			.catch(() => {});
+	}, [updateUser]);
+
+	const save = useCallback(
+		async (patch: Record<string, unknown>) => {
+			setSaving(true);
+			try {
+				const updated = await patchProfile(patch);
+				updateUser(updated);
+				setOpenRow(null);
+				toast.success("Profile updated");
+			} catch (e) {
+				toast.error(e instanceof Error ? e.message : "Failed to save");
+			} finally {
+				setSaving(false);
+			}
+		},
+		[updateUser]
+	);
 
 	if (!user) return null;
 
 	const toggle = (key: RowKey) =>
 		setOpenRow((prev) => (prev === key ? null : key));
-	const close = () => setOpenRow(null);
 
 	const initials = user.name ? getInitials(user.name) : "U";
 
@@ -87,7 +128,7 @@ export default function ProfilePage() {
 				<AvatarRow
 					currentPhoto={user.photo}
 					initials={initials}
-					onSave={(photo) => updateUser({ photo })}
+					onSave={(photo) => save({ photo })}
 				/>
 
 				<ProfileRow
@@ -99,10 +140,8 @@ export default function ProfilePage() {
 				>
 					<NameEditor
 						current={user.name}
-						onSave={(name) => {
-							updateUser({ name });
-							close();
-						}}
+						onSave={(name) => save({ name })}
+						disabled={saving}
 					/>
 				</ProfileRow>
 
@@ -115,10 +154,8 @@ export default function ProfilePage() {
 				>
 					<GenderEditor
 						current={user.gender ?? null}
-						onSave={(gender) => {
-							updateUser({ gender });
-							close();
-						}}
+						onSave={(gender) => save({ gender })}
+						disabled={saving}
 					/>
 				</ProfileRow>
 
@@ -128,16 +165,11 @@ export default function ProfilePage() {
 					value={user.email}
 					isOpen={openRow === "email"}
 					onToggle={() => toggle("email")}
+					actionMode="edit"
 				>
-					<SimpleEditor
-						current={user.email}
-						placeholder="your@email.com"
-						type="email"
-						onSave={(email) => {
-							updateUser({ email });
-							close();
-						}}
-					/>
+					<p className="px-1 text-[13px] text-black/50">
+						Email changes require verification and are not available yet.
+					</p>
 				</ProfileRow>
 
 				<ProfileRow
@@ -151,10 +183,8 @@ export default function ProfilePage() {
 						current={user.phone ?? ""}
 						placeholder="+234 801 234 5678"
 						type="tel"
-						onSave={(phone) => {
-							updateUser({ phone });
-							close();
-						}}
+						onSave={(phone) => save({ phone })}
+						disabled={saving}
 					/>
 				</ProfileRow>
 
@@ -168,10 +198,8 @@ export default function ProfilePage() {
 					<SimpleEditor
 						current={user.address}
 						placeholder="Street, City, State"
-						onSave={(address) => {
-							updateUser({ address });
-							close();
-						}}
+						onSave={(address) => save({ address })}
+						disabled={saving}
 					/>
 				</ProfileRow>
 

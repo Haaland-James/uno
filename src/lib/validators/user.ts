@@ -23,8 +23,10 @@ export const signupSchema = z.object({
 
 export const profileUpdateSchema = z.object({
 	name: z.string().min(2).max(100).optional(),
-	email: z.string().email().optional().or(z.literal("")),
-	photo: z.string().url().optional(),
+	phone: z.string().regex(nigerianPhoneRegex, "Please enter a valid Nigerian phone number").optional().or(z.literal("")),
+	gender: z.enum(["MALE", "FEMALE", "NON_BINARY", "PREFER_NOT_TO_SAY"]).optional().nullable(),
+	address: z.string().max(300).optional().or(z.literal("")),
+	photo: z.string().url().optional().or(z.literal("")),
 });
 
 export const landlordProfileSchema = z.object({

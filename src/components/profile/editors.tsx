@@ -21,9 +21,10 @@ function SaveButton({ onClick, disabled }: { onClick: () => void; disabled?: boo
 interface NameEditorProps {
 	current?: string | null;
 	onSave: (name: string) => void;
+	disabled?: boolean;
 }
 
-export function NameEditor({ current, onSave }: NameEditorProps) {
+export function NameEditor({ current, onSave, disabled }: NameEditorProps) {
 	const [first = "", last = ""] = (current ?? "").split(" ");
 	const [firstName, setFirstName] = useState(first);
 	const [lastName, setLastName] = useState(last);
@@ -48,7 +49,7 @@ export function NameEditor({ current, onSave }: NameEditorProps) {
 			<div className="flex justify-end">
 				<SaveButton
 					onClick={handleSave}
-					disabled={!firstName.trim() && !lastName.trim()}
+					disabled={disabled || (!firstName.trim() && !lastName.trim())}
 				/>
 			</div>
 		</div>
@@ -65,9 +66,10 @@ const GENDER_OPTIONS: { value: Gender; label: string }[] = [
 interface GenderEditorProps {
 	current?: Gender | null;
 	onSave: (gender: Gender) => void;
+	disabled?: boolean;
 }
 
-export function GenderEditor({ current, onSave }: GenderEditorProps) {
+export function GenderEditor({ current, onSave, disabled }: GenderEditorProps) {
 	const [selected, setSelected] = useState<Gender | null>(current ?? null);
 
 	return (
@@ -107,7 +109,7 @@ export function GenderEditor({ current, onSave }: GenderEditorProps) {
 			<div className="flex justify-end">
 				<SaveButton
 					onClick={() => selected && onSave(selected)}
-					disabled={!selected}
+					disabled={disabled || !selected}
 				/>
 			</div>
 		</div>
@@ -119,9 +121,10 @@ interface SimpleEditorProps {
 	placeholder: string;
 	type?: "text" | "email" | "tel";
 	onSave: (value: string) => void;
+	disabled?: boolean;
 }
 
-export function SimpleEditor({ current, placeholder, type = "text", onSave }: SimpleEditorProps) {
+export function SimpleEditor({ current, placeholder, type = "text", onSave, disabled }: SimpleEditorProps) {
 	const [value, setValue] = useState(current ?? "");
 
 	return (
@@ -135,7 +138,7 @@ export function SimpleEditor({ current, placeholder, type = "text", onSave }: Si
 			<div className="flex justify-end">
 				<SaveButton
 					onClick={() => onSave(value.trim())}
-					disabled={!value.trim()}
+					disabled={disabled || !value.trim()}
 				/>
 			</div>
 		</div>
