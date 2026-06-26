@@ -46,6 +46,7 @@ export const mockPropertyDetails: Record<string, PropertyDetailData> = {
 		favourites: 53,
 		fees: {
 			annualRent: 450000,
+			priceLabel: "Annual Rent",
 			legalFeePercent: 10,
 			agentFeePercent: 10,
 			totalPackage: "590k",
@@ -807,6 +808,7 @@ function getFees(prop: PropertyCardData, id: string) {
 		// For Sale — no rent fees, show sale price breakdown
 		return {
 			annualRent: prop.rent,
+			priceLabel: "Sale Price",
 			legalFeePercent: 5,
 			agentFeePercent: 5,
 			totalPackage: `${(prop.rent / 1000000).toFixed(1)}M`,
@@ -821,6 +823,7 @@ function getFees(prop: PropertyCardData, id: string) {
 		// For Lease
 		return {
 			annualRent: prop.rent,
+			priceLabel: "Annual Lease",
 			legalFeePercent: 10,
 			agentFeePercent: 10,
 			totalPackage: `${(prop.rent * 1.2 / 1000000).toFixed(1)}M`,
@@ -834,6 +837,7 @@ function getFees(prop: PropertyCardData, id: string) {
 	// Default (For Rent including commercial)
 	return {
 		annualRent: prop.rent,
+		priceLabel: "Annual Rent",
 		legalFeePercent: 10,
 		agentFeePercent: 10,
 		totalPackage: `${Math.round((prop.rent * 1.2) / 1000)}k`,
