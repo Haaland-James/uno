@@ -9,7 +9,6 @@ import {
 	Rss,
 	Heart,
 	BookmarkCheck,
-	User,
 	Building2,
 	Users,
 	HelpCircle,
@@ -63,7 +62,7 @@ const navItems: NavItem[] = [
 	{
 		label: "Settings",
 		href: "/profile",
-		icon: <User size={18} strokeWidth={2} />,
+		icon: <Settings size={18} strokeWidth={2} />,
 		iconBg: "#81cdc8",
 	},
 ];
@@ -86,12 +85,6 @@ const listingNavItems: NavItem[] = [
 		href: "/listing/analytics",
 		icon: <BarChart3 size={18} strokeWidth={2} />,
 		iconBg: "#db8ff6",
-	},
-	{
-		label: "Settings",
-		href: "/settings",
-		icon: <Settings size={18} strokeWidth={2} />,
-		iconBg: "#dd6bb1",
 	},
 ];
 

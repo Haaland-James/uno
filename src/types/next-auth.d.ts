@@ -24,5 +24,6 @@ declare module "next-auth/jwt" {
     role: Role;
     agentStatus: AgentStatus;
     agentEmployment: AgentEmployment | null;
+    deactivatedAt?: string | null;
   }
 }

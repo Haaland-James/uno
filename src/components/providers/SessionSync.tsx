@@ -14,6 +14,7 @@ import type { Role } from "@/types";
 export function SessionSync() {
   const { data: session, status, update } = useSession();
   const setUser = useUserStore((s) => s.setUser);
+  const updateUser = useUserStore((s) => s.updateUser);
   const setLoading = useUserStore((s) => s.setLoading);
 
   // Cross-tab sync: when any other tab signs in or out, force this tab's
@@ -40,22 +41,31 @@ export function SessionSync() {
     }
 
     if (status === "authenticated" && session?.user) {
-      setUser({
+      const currentUser = useUserStore.getState().user;
+      const sessionData = {
         id: session.user.id,
         email: session.user.email ?? "",
         emailVerified: true,
-        phone: null,
-        phoneVerified: false,
         name: session.user.name ?? "",
         photo: session.user.image ?? null,
         role: (session.user.role ?? "RENTER") as Role,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      };
+
+      if (currentUser?.id === session.user.id) {
+        updateUser(sessionData);
+      } else {
+        setUser({
+          ...sessionData,
+          phone: null,
+          phoneVerified: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
     } else {
       setUser(null);
     }
-  }, [session, status, setUser, setLoading]);
+  }, [session, status, setUser, updateUser, setLoading]);
 
   return null;
 }

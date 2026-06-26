@@ -21,6 +21,8 @@ export interface User {
 	gender?: Gender | null;
 	address?: string | null;
 	role: Role;
+	hasPassword?: boolean;
+	language?: string;
 	createdAt: Date;
 	updatedAt: Date;
 }

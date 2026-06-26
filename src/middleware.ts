@@ -65,6 +65,16 @@ export async function middleware(request: NextRequest) {
 
 	const publicPath = isPublic(pathname);
 
+	// Block deactivated users — clear their session and redirect to login
+	if (token?.deactivatedAt) {
+		const response = NextResponse.redirect(
+			new URL("/login?error=deactivated", request.url)
+		);
+		response.cookies.delete("next-auth.session-token");
+		response.cookies.delete("__Secure-next-auth.session-token");
+		return response;
+	}
+
 	// Logged-in users should not see /login or /signup
 	if (token && authOnlyForGuests.some((r) => pathname === r || pathname.startsWith(`${r}/`))) {
 		return NextResponse.redirect(new URL("/feed", request.url));

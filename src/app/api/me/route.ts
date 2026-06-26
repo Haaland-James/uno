@@ -16,6 +16,11 @@ const PROFILE_SELECT = {
   address: true,
   photo: true,
   role: true,
+  passwordHash: true,
+  language: true,
+  notifyNewProperties: true,
+  notifyPriceDrops: true,
+  notifyWeeklyDigest: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -35,7 +40,8 @@ export async function GET() {
     return err("not_found", "User not found", 404);
   }
 
-  return ok(user);
+  const { passwordHash, ...rest } = user;
+  return ok({ ...rest, hasPassword: !!passwordHash });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -68,6 +74,9 @@ export async function PATCH(req: NextRequest) {
   if (parsed.data.photo !== undefined) {
     data.photo = parsed.data.photo || null;
   }
+  if (parsed.data.language !== undefined) {
+    data.language = parsed.data.language;
+  }
   if (parsed.data.phone !== undefined) {
     const newPhone = parsed.data.phone || null;
     const current = await db.user.findUnique({
@@ -90,5 +99,6 @@ export async function PATCH(req: NextRequest) {
     select: PROFILE_SELECT,
   });
 
-  return ok(updated);
+  const { passwordHash: _ph, ...updatedRest } = updated;
+  return ok({ ...updatedRest, hasPassword: !!_ph });
 }

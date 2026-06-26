@@ -27,6 +27,18 @@ export const profileUpdateSchema = z.object({
 	gender: z.enum(["MALE", "FEMALE", "NON_BINARY", "PREFER_NOT_TO_SAY"]).optional().nullable(),
 	address: z.string().max(300).optional().or(z.literal("")),
 	photo: z.string().url().optional().or(z.literal("")),
+	language: z.string().min(2).max(10).optional(),
+});
+
+export const setPasswordSchema = z.object({
+	currentPassword: z.string().min(1).optional(),
+	newPassword: z.string().min(8, "Password must be at least 8 characters").max(128),
+});
+
+export const notificationPrefsSchema = z.object({
+	notifyNewProperties: z.boolean().optional(),
+	notifyPriceDrops: z.boolean().optional(),
+	notifyWeeklyDigest: z.boolean().optional(),
 });
 
 export const landlordProfileSchema = z.object({
@@ -56,5 +68,7 @@ export const contactRequestSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+export type SetPasswordInput = z.infer<typeof setPasswordSchema>;
+export type NotificationPrefsInput = z.infer<typeof notificationPrefsSchema>;
 export type LandlordProfileInput = z.infer<typeof landlordProfileSchema>;
 export type ContactRequestInput = z.infer<typeof contactRequestSchema>;
