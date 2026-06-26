@@ -44,8 +44,8 @@ export function BrowseHeader({
   return (
     <>
       {/* Desktop */}
-      <header className="sticky top-0 z-50 hidden w-full flex-shrink-0 border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] md:block">
-        <div className="flex items-center justify-between px-[41px] py-[6px]">
+      <header className="sticky top-0 z-50 hidden h-16 w-full flex-shrink-0 border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] md:block">
+        <div className="flex h-full items-center justify-between px-[41px]">
           <div className="flex items-center gap-[50px]">
             <Link href="/" className="flex items-center gap-[6px]">
               <div className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#f5d0d0]">

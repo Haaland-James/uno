@@ -13,13 +13,14 @@ export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
   const parsed = featuredQuerySchema.safeParse(params);
   if (!parsed.success) return zodErr(parsed.error);
-  const { type, limit, area } = parsed.data;
+  const { type, limit, area, listingType } = parsed.data;
 
   const where: Prisma.PropertyWhereInput = {
     ...notDeleted,
     status: "ACTIVE",
     // Use `contains` so a tab like "Nwaniba" matches stored area "Nwaniba Road"
     ...(area && { area: { contains: area, mode: "insensitive" } }),
+    ...(listingType && { listingType }),
   };
   let orderBy: Prisma.PropertyOrderByWithRelationInput;
 
@@ -69,5 +70,8 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return ok({ type, items: mockProperties.slice(0, limit) });
+  const mockFiltered = listingType
+    ? mockProperties.filter((p) => p.listingType === listingType)
+    : mockProperties;
+  return ok({ type, items: mockFiltered.slice(0, limit) });
 }

@@ -3,26 +3,16 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { buildSearchUrl } from "@/lib/search-url";
 import {
   ChevronLeft,
   ChevronRight,
   MapPin,
   Home,
-  BedDouble,
-  Building2,
-  Search,
-  ChevronDown,
 } from "lucide-react";
 import { GuestHeader } from "@/components/layout/GuestHeader";
 import { Footer } from "@/components/layout/Footer";
 import { PropertyCard } from "@/components/property/PropertyCard";
-import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
-import { findBySlug, type LocationNode } from "@/lib/coverage";
-import { BedsDropDown } from "@/components/property/BedsDropDown";
-import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
-import { PricingDropDown } from "@/components/property/PricingDropDown";
+import { HeroSearch } from "@/components/search/HeroSearch";
 import { SeeAllCard } from "@/components/property/SeeAllCard";
 import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
 import { useFavourites } from "@/hooks/useFavourites";
@@ -106,79 +96,13 @@ function useCarousel() {
   return { ref, prev: () => scroll("left"), next: () => scroll("right"), canPrev, canNext };
 }
 
-type SearchField = "location" | "beds" | "type" | "price" | null;
-
 export default function HomePage() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState("Ewet Housing");
   const { isFavourited, toggleFavourite } = useFavourites();
-  const [openField, setOpenField] = useState<SearchField>(null);
 
-  function runHeroSearch() {
-    // Map UI prop type tokens to schema enum values
-    const typeFilter = propertyTypes
-      .map((t) => t.toUpperCase().replace(/[\s-]/g, "_"))
-      .filter((t) =>
-        ["FLAT", "HOUSE", "DUPLEX", "SELF_CONTAIN", "BUNGALOW", "COMMERCIAL", "LAND"].includes(t)
-      );
-
-    // Resolve picked LocationNode → state/city/area for path-based URL
-    let stateNode: LocationNode | undefined;
-    let cityNode: LocationNode | undefined;
-    let areaNode: LocationNode | undefined;
-    if (selectedLocation) {
-      if (selectedLocation.type === "state") {
-        stateNode = selectedLocation;
-      } else if (selectedLocation.type === "city") {
-        cityNode = selectedLocation;
-        if (selectedLocation.parent) stateNode = findBySlug(selectedLocation.parent);
-      } else if (selectedLocation.type === "area") {
-        areaNode = selectedLocation;
-        if (selectedLocation.parent) cityNode = findBySlug(selectedLocation.parent);
-        if (cityNode?.parent) stateNode = findBySlug(cityNode.parent);
-      }
-    }
-
-    const url = buildSearchUrl({
-      category: "rent",
-      state: stateNode,
-      city: cityNode,
-      area: areaNode,
-      beds: beds > 0 ? [beds] : [],
-      baths: baths > 0 ? [baths] : [],
-      type: typeFilter,
-      furnishing: [],
-      amenities: [],
-      verifiedOnly: false,
-      availableNow: false,
-      page: 1,
-      minPrice: minPrice > 0 ? minPrice : undefined,
-      maxPrice: maxPrice < 100_000_000 ? maxPrice : undefined,
-    });
-    router.push(url);
-  }
-  const [selectedLocation, setSelectedLocation] = useState<LocationNode | null>(null);
-  const [beds, setBeds] = useState(0);
-  const [baths, setBaths] = useState(0);
-  const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(100_000_000);
-  const [mobileOpenField, setMobileOpenField] = useState<SearchField>(null);
-  const searchBarRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (searchBarRef.current && !searchBarRef.current.contains(e.target as Node)) {
-        setOpenField(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const { items: latest, isLoading: latestLoading } = useFeaturedProperties("latest", 7);
-  const { items: topListings, isLoading: topLoading } = useFeaturedProperties("top", 7, { area: activeTab });
-  const { items: hot, isLoading: hotLoading } = useFeaturedProperties("hot", 7);
+  const { items: latest, isLoading: latestLoading } = useFeaturedProperties("latest", 7, { listingType: "RENT" });
+  const { items: topListings, isLoading: topLoading } = useFeaturedProperties("top", 7, { area: activeTab, listingType: "RENT" });
+  const { items: hot, isLoading: hotLoading } = useFeaturedProperties("hot", 7, { listingType: "SALE" });
 
   // "See All" URLs.
   // Latest + Hot are platform-wide → no state pinned (works across whatever
@@ -228,255 +152,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Search bar — matches Figma node 100:3397 */}
-          <div
-            ref={searchBarRef}
-            className="relative mx-auto mt-[-38px] hidden md:block"
-            style={{ width: "fit-content" }}
-          >
-            <div className="flex items-center gap-[18px] rounded-[40px] border border-[rgba(0,0,0,0.11)] bg-white px-[7px] py-[4px]">
-              {/* Fields row */}
-              <div className="relative flex items-center gap-[12px]">
-                {/* Location */}
-                <button
-                  type="button"
-                  onClick={() => setOpenField(openField === "location" ? null : "location")}
-                  className={`flex h-[67px] w-[363px] flex-col justify-center gap-[4px] rounded-[40px] px-[23px] py-[13px] text-left transition-all ${
-                    openField === "location" ? "bg-[rgba(0,0,0,0.04)] shadow-[0_0_0_1.5px_rgba(0,0,0,0.12)]" : "hover:bg-[rgba(0,0,0,0.03)]"
-                  }`}
-                >
-                  <span className="text-[11px] font-semibold text-black">Location</span>
-                  <div className="flex items-center gap-[6px]">
-                    <MapPin size={20} className="shrink-0 text-[#0a0a0a]" />
-                    <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
-                      {selectedLocation?.name ?? "Location"}
-                    </span>
-                  </div>
-                </button>
-
-                {/* Divider 1 */}
-                <div className={`h-[61px] w-px shrink-0 bg-[rgba(0,0,0,0.12)] transition-opacity ${openField === "location" || openField === "beds" ? "opacity-0" : ""}`} />
-
-                {/* Beds/Baths */}
-                <button
-                  type="button"
-                  onClick={() => setOpenField(openField === "beds" ? null : "beds")}
-                  className={`flex h-[67px] w-[245px] shrink-0 flex-col justify-center gap-[4px] rounded-[40px] px-[31px] py-[11px] text-left transition-all ${
-                    openField === "beds" ? "bg-[rgba(0,0,0,0.04)] shadow-[0_0_0_1.5px_rgba(0,0,0,0.12)]" : "hover:bg-[rgba(0,0,0,0.03)]"
-                  }`}
-                >
-                  <span className="text-[11px] font-semibold text-black">Beds/Baths</span>
-                  <div className="flex items-center gap-[6px]">
-                    <BedDouble size={24} className="shrink-0 text-[#0a0a0a]" />
-                    <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
-                      {beds === 0 && baths === 0 ? "select bed/bath" : `${beds} bed / ${baths} bath`}
-                    </span>
-                  </div>
-                </button>
-
-                {/* Divider 2 */}
-                <div className={`h-[61px] w-px shrink-0 bg-[rgba(0,0,0,0.12)] transition-opacity ${openField === "beds" || openField === "type" ? "opacity-0" : ""}`} />
-
-                {/* Property Type */}
-                <button
-                  type="button"
-                  onClick={() => setOpenField(openField === "type" ? null : "type")}
-                  className={`flex h-[67px] w-[245px] shrink-0 flex-col justify-center gap-[4px] rounded-[40px] px-[31px] py-[11px] text-left transition-all ${
-                    openField === "type" ? "bg-[rgba(0,0,0,0.04)] shadow-[0_0_0_1.5px_rgba(0,0,0,0.12)]" : "hover:bg-[rgba(0,0,0,0.03)]"
-                  }`}
-                >
-                  <span className="text-[11px] font-semibold text-black">Property Type</span>
-                  <div className="flex items-center gap-[6px]">
-                    <Building2 size={23} className="shrink-0 text-[#0a0a0a]" />
-                    <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
-                      {propertyTypes.length === 0 ? "select property type" : propertyTypes.slice(0, 2).join(", ")}
-                    </span>
-                  </div>
-                </button>
-
-                {/* Divider 3 */}
-                <div className={`h-[61px] w-px shrink-0 bg-[rgba(0,0,0,0.12)] transition-opacity ${openField === "type" || openField === "price" ? "opacity-0" : ""}`} />
-
-                {/* Price Range */}
-                <button
-                  type="button"
-                  onClick={() => setOpenField(openField === "price" ? null : "price")}
-                  className={`flex h-[67px] w-[245px] shrink-0 flex-col justify-center gap-[4px] rounded-[40px] px-[31px] py-[11px] text-left transition-all ${
-                    openField === "price" ? "bg-[rgba(0,0,0,0.04)] shadow-[0_0_0_1.5px_rgba(0,0,0,0.12)]" : "hover:bg-[rgba(0,0,0,0.03)]"
-                  }`}
-                >
-                  <span className="text-[11px] font-semibold text-black">Price Range</span>
-                  <div className="flex items-center gap-[6px]">
-                    <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-[rgba(0,0,0,0.4)] text-[12px] font-semibold text-[#0a0a0a]">₦</span>
-                    <span className="text-[16px] font-normal text-[rgba(10,10,10,0.78)] whitespace-nowrap">
-                      {minPrice === 0 && maxPrice === 100_000_000 ? "select price range" : `₦${minPrice.toLocaleString("en-NG")} – ₦${maxPrice.toLocaleString("en-NG")}`}
-                    </span>
-                  </div>
-                </button>
-              </div>
-
-              {/* Search button */}
-              <button
-                type="button"
-                onClick={runHeroSearch}
-                className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-[25px] bg-[#af2525] text-white transition-opacity hover:opacity-90"
-                aria-label="Search"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Dropdowns */}
-            {openField === "location" && (
-              <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[363px]">
-                <LocationAutocomplete
-                  onPick={(node) => {
-                    setSelectedLocation(node);
-                    setOpenField(null);
-                  }}
-                  autoFocus
-                  placeholder="Type a state, city, or area"
-                />
-              </div>
-            )}
-            {openField === "beds" && (
-              <div className="absolute left-[400px] top-[calc(100%+8px)] z-50">
-                <BedsDropDown
-                  beds={beds}
-                  baths={baths}
-                  onApply={(b, ba) => {
-                    setBeds(b);
-                    setBaths(ba);
-                    setOpenField(null);
-                  }}
-                />
-              </div>
-            )}
-            {openField === "type" && (
-              <div className="absolute left-[660px] top-[calc(100%+8px)] z-50">
-                <PropertyTypesDropDown
-                  selected={propertyTypes}
-                  onChange={setPropertyTypes}
-                />
-              </div>
-            )}
-            {openField === "price" && (
-              <div className="absolute right-0 top-[calc(100%+8px)] z-50">
-                <PricingDropDown
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
-                  onApply={(min, max) => {
-                    setMinPrice(min);
-                    setMaxPrice(max);
-                    setOpenField(null);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Mobile search form */}
-          <div className="relative z-10 mx-auto mt-[-28px] max-w-[1440px] px-[16px] md:hidden">
-            <div className="flex flex-col gap-[14px] rounded-[16px] border border-[rgba(0,0,0,0.08)] bg-white px-[16px] py-[18px] shadow-md">
-              {/* Location autocomplete — coverage-aware, writes to selectedLocation state */}
-              <div className="pb-[4px]">
-                <LocationAutocomplete
-                  value={selectedLocation}
-                  onPick={(node) => setSelectedLocation(node)}
-                  placeholder="Location"
-                />
-              </div>
-
-              {/* Property Type + Beds & Baths row */}
-              <div className="flex items-center gap-[12px]">
-                <button
-                  type="button"
-                  onClick={() => setMobileOpenField(mobileOpenField === "type" ? null : "type")}
-                  className="flex items-center gap-[6px] rounded-[8px] border border-[rgba(0,0,0,0.1)] px-[12px] py-[8px]"
-                >
-                  <Building2 size={16} className="shrink-0 text-[rgba(0,0,0,0.5)]" />
-                  <span className="truncate text-[13px] text-[rgba(0,0,0,0.6)]">
-                    {propertyTypes.length === 0 ? "Property Type" : propertyTypes.slice(0, 1).join(", ")}
-                  </span>
-                  <ChevronDown size={14} className="shrink-0 text-[rgba(0,0,0,0.4)]" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileOpenField(mobileOpenField === "beds" ? null : "beds")}
-                  className="flex items-center gap-[6px] rounded-[8px] border border-[rgba(0,0,0,0.1)] px-[12px] py-[8px]"
-                >
-                  <BedDouble size={16} className="shrink-0 text-[rgba(0,0,0,0.5)]" />
-                  <span className="text-[13px] text-[rgba(0,0,0,0.6)] whitespace-nowrap">
-                    {beds === 0 && baths === 0 ? "Beds & Baths" : `${beds}bd / ${baths}ba`}
-                  </span>
-                </button>
-              </div>
-
-              {/* Mobile dropdowns — inline */}
-              {mobileOpenField === "type" && (
-                <div className="rounded-[12px] border border-[rgba(0,0,0,0.06)] bg-[#fbfbfb] p-[8px]">
-                  <PropertyTypesDropDown
-                    selected={propertyTypes}
-                    onChange={setPropertyTypes}
-                    className="w-full shadow-none rounded-none"
-                  />
-                </div>
-              )}
-              {mobileOpenField === "beds" && (
-                <div className="rounded-[12px] border border-[rgba(0,0,0,0.06)] bg-[#fbfbfb] p-[8px]">
-                  <BedsDropDown
-                    beds={beds}
-                    baths={baths}
-                    onApply={(b, ba) => {
-                      setBeds(b);
-                      setBaths(ba);
-                      setMobileOpenField(null);
-                    }}
-                    className="w-full shadow-none rounded-none"
-                  />
-                </div>
-              )}
-
-              {/* Price Range */}
-              <button
-                type="button"
-                onClick={() => setMobileOpenField(mobileOpenField === "price" ? null : "price")}
-                className="flex items-center gap-[6px] rounded-[8px] border border-[rgba(0,0,0,0.1)] px-[12px] py-[8px]"
-              >
-                <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border border-[rgba(0,0,0,0.3)] text-[10px] font-semibold text-[rgba(0,0,0,0.5)]">₦</span>
-                <span className="text-[13px] text-[rgba(0,0,0,0.6)]">
-                  {minPrice === 0 && maxPrice === 100_000_000 ? "Price Range" : `₦${minPrice.toLocaleString("en-NG")} – ₦${maxPrice.toLocaleString("en-NG")}`}
-                </span>
-                <ChevronDown size={14} className="ml-auto shrink-0 text-[rgba(0,0,0,0.4)]" />
-              </button>
-
-              {mobileOpenField === "price" && (
-                <div className="rounded-[12px] border border-[rgba(0,0,0,0.06)] bg-[#fbfbfb] p-[8px]">
-                  <PricingDropDown
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onApply={(min, max) => {
-                      setMinPrice(min);
-                      setMaxPrice(max);
-                      setMobileOpenField(null);
-                    }}
-                    className="w-full shadow-none rounded-none"
-                  />
-                </div>
-              )}
-
-              {/* Search button */}
-              <button
-                type="button"
-                onClick={runHeroSearch}
-                className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-[#af2525] text-[15px] font-medium text-white transition-opacity hover:opacity-90"
-              >
-                Search
-              </button>
-            </div>
+          {/* HeroSearch — unified for desktop and mobile */}
+          <div className="relative z-10 mx-auto mt-[-76px] max-w-[560px] px-[16px] md:px-0">
+            <HeroSearch />
           </div>
         </section>
 
@@ -485,7 +163,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-[1440px] px-[16px] md:px-[40px]">
             <div className="mb-[16px] flex items-center justify-between md:mb-[21px]">
               <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
-                Latest Market Listings
+                Latest Market Listings <span className="text-[#af2525]">for Rent</span>
               </h2>
               <CarouselNav onPrev={latestCarousel.prev} onNext={latestCarousel.next} canPrev={latestCarousel.canPrev} canNext={latestCarousel.canNext} />
             </div>
@@ -521,7 +199,8 @@ export default function HomePage() {
             <div className="mb-[16px] flex items-start justify-between gap-[12px]">
               <div className="flex items-center gap-[10px]">
                 <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
-                  Top Listings {activeTab}
+                  Top Listings <span className="text-[#af2525]">for Rent</span>{" "}
+                  <span className="text-[#161515]/50">({activeTab})</span>
                 </h2>
                 <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#f5d0d0]">
                   <MapPin size={14} className="text-[#af2525]" />
@@ -579,7 +258,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-[1440px] px-[16px] md:px-[40px]">
             <div className="mb-[16px] flex items-center justify-between md:mb-[21px]">
               <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
-                Hot Properties
+                Hot Properties <span className="text-[#af2525]">for Sale</span>
               </h2>
               <CarouselNav onPrev={hotCarousel.prev} onNext={hotCarousel.next} canPrev={hotCarousel.canPrev} canNext={hotCarousel.canNext} />
             </div>

@@ -80,8 +80,8 @@ export const propertiesClient = {
       `/api/properties/map${toQuery(params as unknown as Record<string, unknown>)}`
     ),
 
-  featured: (type: FeaturedType, limit = 8, area?: string) =>
+  featured: (type: FeaturedType, limit = 8, area?: string, listingType?: "RENT" | "LEASE" | "SALE") =>
     getJson<{ type: FeaturedType; items: PropertyCardData[] }>(
-      `/api/properties/featured?type=${type}&limit=${limit}${area ? `&area=${encodeURIComponent(area)}` : ""}`
+      `/api/properties/featured?type=${type}&limit=${limit}${area ? `&area=${encodeURIComponent(area)}` : ""}${listingType ? `&listingType=${listingType}` : ""}`
     ).then((d) => d.items),
 };

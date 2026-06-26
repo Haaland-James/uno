@@ -3,9 +3,36 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MapPin, Bath, BedDouble, ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
+import {
+  Heart, MapPin, Bath, BedDouble,
+  ChevronLeft, ChevronRight,
+  ShieldCheck, Sparkles, Flame, Lock,
+  Ruler, Map, Building2, Warehouse,
+} from "lucide-react";
 import { cn, formatNaira } from "@/lib/utils";
+import { getTopLeftBadge, isOffMarket } from "@/lib/property-badges";
 import type { PropertyCardData } from "@/types/property";
+
+const RESIDENTIAL_TYPES = new Set([
+  "FLAT", "HOUSE", "DUPLEX", "SELF_CONTAIN", "BUNGALOW",
+  "PENTHOUSE", "MINI_FLAT",
+]);
+
+const LAND_TYPES = new Set([
+  "LAND", "COMMERCIAL_PLOT", "AGRICULTURAL_LAND", "MIXED_USE_LAND",
+]);
+
+function nonResidentialTypeIcon(propertyType: string) {
+  if (LAND_TYPES.has(propertyType)) return <Map size={13} className="flex-shrink-0" />;
+  if (propertyType === "WAREHOUSE") return <Warehouse size={13} className="flex-shrink-0" />;
+  return <Building2 size={13} className="flex-shrink-0" />;
+}
+
+function nonResidentialTypeLabel(propertyType: string) {
+  return propertyType
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 interface PropertyCardProps {
   data: PropertyCardData;
@@ -13,16 +40,6 @@ interface PropertyCardProps {
   onToggleFavourite?: (id: string) => void;
   className?: string;
 }
-
-const BED_LABELS: Record<string, string> = {
-  FLAT: "Flat",
-  HOUSE: "House",
-  DUPLEX: "Duplex",
-  SELF_CONTAIN: "Self-con",
-  BUNGALOW: "Bungalow",
-  COMMERCIAL: "Commercial",
-  LAND: "Land",
-};
 
 export function PropertyCard({
   data,
@@ -48,16 +65,18 @@ export function PropertyCard({
     setImgIndex((i) => i + 1);
   };
 
-  // Bed label: use property type for self-contain, otherwise show bedroom count
   const bedLabel =
     data.propertyType === "SELF_CONTAIN"
       ? "Self-con"
       : `${data.bedrooms} bed`;
 
-  // Pick up to 3 amenities for the features row
-  const features = data.amenities.slice(0, 3);
+  const showBedBath = RESIDENTIAL_TYPES.has(data.propertyType);
 
+  const features = data.amenities.slice(0, 3);
   const detailHref = `/property/${data.id}`;
+
+  const topLeftBadge = getTopLeftBadge(data.createdAt);
+  const offMarket = isOffMarket(data);
 
   return (
     <Link
@@ -65,7 +84,7 @@ export function PropertyCard({
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "flex flex-col bg-white border border-[rgba(0,0,0,0.06)] rounded-[15px] pb-[10px]",
+        "flex flex-col bg-white border border-[rgba(0,0,0,0.06)] rounded-[15px]",
         "w-[234px] md:w-[325px]",
         "transition-shadow duration-200 hover:shadow-lg cursor-pointer",
         className
@@ -78,15 +97,28 @@ export function PropertyCard({
             src={currentPhoto.url}
             alt={data.title}
             fill
-            className="object-cover transition-opacity duration-200"
+            className={cn(
+              "object-cover transition-opacity duration-200",
+              offMarket && "brightness-75"
+            )}
             sizes="(max-width: 768px) 234px, 325px"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-[#e8e0e0] to-[#c9b8b8]" />
         )}
 
-        {/* Carousel arrows — visible only on hover */}
-        {hasMultiple && (
+        {/* Off-market scrim */}
+        {offMarket && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1 text-[11px] font-semibold text-white">
+              <Lock size={11} />
+              Rented
+            </span>
+          </div>
+        )}
+
+        {/* Carousel arrows */}
+        {hasMultiple && !offMarket && (
           <>
             {imgIndex > 0 && (
               <button
@@ -130,24 +162,41 @@ export function PropertyCard({
           </>
         )}
 
-        {/* "Listed by UNO" institutional badge — shown only when an in-house
-            agent created the listing. The trust signal here is intentional:
-            renters know UNO vouches for this listing institutionally, not
-            just that some individual posted it. */}
-        {data.listedByAgent && (
-          <div className="absolute top-[12px] left-[12px] z-10 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold text-[#161515] shadow-sm">
-            <ShieldCheck size={11} className="text-[#af2525]" />
-            Listed by UNO
+        {/* Top-left badge zone: New Listing or Listed X ago */}
+        {!offMarket && topLeftBadge && (
+          <div className="absolute top-[10px] left-[10px] z-10">
+            {topLeftBadge.kind === "new" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#af2525] px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                <Sparkles size={10} />
+                New Listing
+              </span>
+            )}
+            {topLeftBadge.kind === "listed_ago" && (
+              <span className="inline-flex items-center rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white shadow-sm">
+                {topLeftBadge.days}d ago
+              </span>
+            )}
           </div>
         )}
 
+        {/* Bottom-right badge zone: Featured */}
+        {data.isFeatured && !offMarket && (
+          <div className="absolute bottom-[10px] right-[10px] z-10">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-semibold text-black shadow-sm">
+              <Flame size={10} />
+              Featured
+            </span>
+          </div>
+        )}
+
+        {/* Dev-only mock indicator */}
         {data.id.startsWith("prop_") && (
           <div className="absolute bottom-[28px] left-[8px] z-10 rounded bg-yellow-400 px-1.5 py-0.5 text-[9px] font-bold uppercase text-black shadow">
             Mock
           </div>
         )}
 
-        {/* Heart button — auth gate lives inside useFavourites */}
+        {/* Heart button */}
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -170,14 +219,19 @@ export function PropertyCard({
       </div>
 
       {/* Content */}
-      <div className="flex flex-col gap-[16px] px-[6px] pt-[10px]">
+      <div className={cn("flex flex-col flex-1 gap-[10px] px-[6px] pt-[10px] pb-[10px]", offMarket && "opacity-60")}>
+
         <div className="flex flex-col gap-[15px]">
-          {/* Price + badges row */}
+          {/* Price + bed/bath row */}
           <div className="flex items-end justify-between">
-            {/* Left: price + location */}
             <div className="flex flex-col gap-[8px] min-w-0">
               <span className="font-extrabold text-[16px] md:text-[25px] text-[#161515] leading-tight truncate">
                 {formatNaira(data.rent)}
+                {data.listingType !== "SALE" && (
+                  <span className="text-[11px] md:text-[14px] font-medium text-black/50 ml-[3px]">
+                    {data.rentPeriod === "MONTH" ? "/mn" : "/yr"}
+                  </span>
+                )}
               </span>
               <div className="flex items-center gap-[4px]">
                 <MapPin size={14} className="text-[rgba(0,0,0,0.6)] flex-shrink-0" />
@@ -187,17 +241,31 @@ export function PropertyCard({
               </div>
             </div>
 
-            {/* Right: bath + bed badges stacked */}
-            <div className="flex flex-col gap-[4px] flex-shrink-0">
-              <span className="flex items-center gap-[4px] md:gap-[6px] border border-[rgba(0,0,0,0.6)] rounded-[14px] h-[24px] md:h-[27px] w-[72px] md:w-[84px] px-[8px] md:px-[12px] text-[9px] md:text-[10px] text-[rgba(0,0,0,0.6)] whitespace-nowrap">
-                <Bath size={14} className="flex-shrink-0 md:w-[16px] md:h-[16px]" />
-                {data.bathrooms} bath
-              </span>
-              <span className="flex items-center gap-[4px] md:gap-[6px] border border-[rgba(0,0,0,0.6)] rounded-[14px] h-[24px] md:h-[27px] w-[72px] md:w-[84px] px-[8px] md:px-[12px] text-[9px] md:text-[10px] text-[rgba(0,0,0,0.6)] whitespace-nowrap">
-                <BedDouble size={13} className="flex-shrink-0 md:w-[15px] md:h-[15px]" />
-                {bedLabel}
-              </span>
-            </div>
+            {showBedBath ? (
+              <div className="flex flex-col gap-[4px] flex-shrink-0">
+                <span className="flex items-center gap-[4px] md:gap-[6px] border border-[rgba(0,0,0,0.6)] rounded-[14px] h-[24px] md:h-[27px] w-[72px] md:w-[84px] px-[8px] md:px-[12px] text-[9px] md:text-[10px] text-[rgba(0,0,0,0.6)] whitespace-nowrap">
+                  <Bath size={14} className="flex-shrink-0 md:w-[16px] md:h-[16px]" />
+                  {data.bathrooms} bath
+                </span>
+                <span className="flex items-center gap-[4px] md:gap-[6px] border border-[rgba(0,0,0,0.6)] rounded-[14px] h-[24px] md:h-[27px] w-[72px] md:w-[84px] px-[8px] md:px-[12px] text-[9px] md:text-[10px] text-[rgba(0,0,0,0.6)] whitespace-nowrap">
+                  <BedDouble size={13} className="flex-shrink-0 md:w-[15px] md:h-[15px]" />
+                  {bedLabel}
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-[4px] flex-shrink-0">
+                {data.sizeSqm && (
+                  <span className="flex items-center gap-[4px] md:gap-[6px] border border-[rgba(0,0,0,0.6)] rounded-[14px] h-[24px] md:h-[27px] px-[8px] md:px-[12px] text-[9px] md:text-[10px] text-[rgba(0,0,0,0.6)] whitespace-nowrap">
+                    <Ruler size={13} className="flex-shrink-0" />
+                    {data.sizeSqm.toLocaleString()} SQM
+                  </span>
+                )}
+                <span className="flex items-center gap-[4px] md:gap-[6px] border border-[rgba(0,0,0,0.6)] rounded-[14px] h-[24px] md:h-[27px] px-[8px] md:px-[12px] text-[9px] md:text-[10px] text-[rgba(0,0,0,0.6)] whitespace-nowrap">
+                  {nonResidentialTypeIcon(data.propertyType)}
+                  {nonResidentialTypeLabel(data.propertyType)}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Features row */}
@@ -215,7 +283,17 @@ export function PropertyCard({
           )}
         </div>
 
-        {/* CTA button — navigates to detail page (same target as the card body) */}
+        {/* Trust badge */}
+        {data.listedByAgent && (
+          <div className="mt-auto h-[20px] flex items-center">
+            <div className="inline-flex items-center gap-1 rounded-full bg-[#f5f0f0] px-2 py-0.5 text-[10px] font-semibold text-[#161515]">
+              <ShieldCheck size={11} className="text-[#af2525]" />
+              Listed by UNO
+            </div>
+          </div>
+        )}
+
+        {/* CTA */}
         <div
           className={cn(
             "flex items-center justify-center",

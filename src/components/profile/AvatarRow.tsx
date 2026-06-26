@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CircleUser, Loader2 } from "lucide-react";
+import { toast } from "@/stores/toastStore";
 
 interface AvatarRowProps {
 	currentPhoto?: string | null;
@@ -10,7 +11,11 @@ interface AvatarRowProps {
 }
 
 async function uploadToCloudinary(file: File): Promise<string> {
-	const res = await fetch("/api/uploads/sign", { method: "POST" });
+	const res = await fetch("/api/uploads/sign", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ type: "avatar" }),
+	});
 	if (!res.ok) throw new Error("Failed to get upload signature");
 	const { data } = await res.json();
 
@@ -62,8 +67,8 @@ export function AvatarRow({ currentPhoto, initials, onSave }: AvatarRowProps) {
 			onSave(cloudinaryUrl);
 			setPendingUrl(null);
 			setPendingFile(null);
-		} catch {
-			// onSave caller handles toast
+		} catch (e) {
+			toast.error(e instanceof Error ? e.message : "Upload failed");
 		} finally {
 			setUploading(false);
 		}

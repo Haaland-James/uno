@@ -99,6 +99,7 @@ export const featuredQuerySchema = z.object({
   type: z.enum(["latest", "hot", "virgin", "top"]).default("latest"),
   limit: z.coerce.number().int().min(1).max(20).default(8),
   area: z.string().trim().optional(),
+  listingType: z.enum(["RENT", "LEASE", "SALE"]).optional(),
 });
 
 export type PropertyListQuery = z.infer<typeof propertyListQuerySchema>;

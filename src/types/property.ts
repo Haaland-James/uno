@@ -111,6 +111,7 @@ export interface PropertyCardData {
 	listingType?: ListingType;
 	bedrooms: number;
 	bathrooms: number;
+	sizeSqm?: number | null;
 	area: string;
 	city: string;
 	rent: number;
@@ -137,6 +138,8 @@ export interface PropertyCardData {
 	// True when this listing was created by an in-house UNO agent on behalf
 	// of an off-platform owner. Drives the "Listed by UNO" badge on cards.
 	listedByAgent?: boolean;
+	// Promoted listing — toggled by admin. Drives the "Featured" badge on cards.
+	isFeatured?: boolean;
 }
 
 // Detailed property data for single-view page
@@ -149,6 +152,7 @@ export interface PropertyDetailData extends PropertyCardData {
 	favourites: number;
 	fees: {
 		annualRent: number;
+		priceLabel: string;
 		legalFeePercent: number;
 		agentFeePercent: number;
 		totalPackage: string;

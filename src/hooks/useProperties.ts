@@ -82,13 +82,14 @@ export function useProperties() {
   };
 }
 
-/** Fetches a single featured carousel by type, optionally narrowed to an area. */
+/** Fetches a single featured carousel by type, optionally narrowed to an area and/or listing type. */
 export function useFeaturedProperties(
   type: FeaturedType,
   limit = 8,
-  opts?: { area?: string }
+  opts?: { area?: string; listingType?: "RENT" | "LEASE" | "SALE" }
 ) {
   const area = opts?.area;
+  const listingType = opts?.listingType;
   const [items, setItems] = useState<PropertyCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +99,7 @@ export function useFeaturedProperties(
     setIsLoading(true);
     setError(null);
     propertiesClient
-      .featured(type, limit, area)
+      .featured(type, limit, area, listingType)
       .then((res) => {
         if (cancelled) return;
         setItems(res);

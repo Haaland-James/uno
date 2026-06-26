@@ -317,6 +317,71 @@ function Lightbox({
   );
 }
 
+// ─── Static Map Thumbnail ─────────────────────────────────────────
+
+function StaticMapThumbnail({
+  lat,
+  lng,
+  address,
+  title,
+  className,
+  pinSize = 24,
+}: {
+  lat?: number | null;
+  lng?: number | null;
+  address?: string | null;
+  title: string;
+  className?: string;
+  pinSize?: number;
+}) {
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const mapsHref =
+    lat && lng
+      ? `https://www.google.com/maps?q=${lat},${lng}`
+      : `https://www.google.com/maps/search/${encodeURIComponent(address ?? title)}`;
+
+  if (token && lat && lng) {
+    const src = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+af2525(${lng},${lat})/${lng},${lat},13,0/300x300@2x?access_token=${token}`;
+    return (
+      <a href={mapsHref} target="_blank" rel="noopener noreferrer" className={cn("block overflow-hidden rounded-[20px] relative group", className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="Map location" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-200" />
+      </a>
+    );
+  }
+
+  // Fallback: OpenStreetMap tile (no key needed). We show a 2×2 tile grid
+  // centred on the property, or a styled placeholder when no coords.
+  if (lat && lng) {
+    const zoom = 14;
+    const latRad = (lat * Math.PI) / 180;
+    const tanVal = Math.tan(latRad) + 1 / Math.cos(latRad);
+    const x = Math.floor(((lng + 180) / 360) * Math.pow(2, zoom));
+    const y = !isFinite(tanVal) || tanVal <= 0
+      ? 0
+      : Math.floor(((1 - Math.log(tanVal) / Math.PI) / 2) * Math.pow(2, zoom));
+    const tileUrl = `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+    return (
+      <a href={mapsHref} target="_blank" rel="noopener noreferrer" className={cn("block overflow-hidden rounded-[20px] relative group bg-[#e8e0d0]", className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={tileUrl} alt="Map location" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-200" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <MapPin size={pinSize} className="text-[#af2525] drop-shadow-md" />
+        </div>
+      </a>
+    );
+  }
+
+  // No coords at all — static placeholder
+  return (
+    <a href={mapsHref} target="_blank" rel="noopener noreferrer" className={cn("block overflow-hidden rounded-[20px] relative bg-[#f0e8d8] group", className)}>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <MapPin size={pinSize} className="text-[#af2525]" />
+      </div>
+    </a>
+  );
+}
+
 // ─── Info Card ─────────────────────────────────────────────────────
 
 function InfoCard({
@@ -364,7 +429,7 @@ function BulletItem({
       />
       <span
         className={cn(
-          "text-[15px] tracking-[-0.3px] leading-[22px]",
+          "text-[15px] md:text-[16px] tracking-[-0.3px] leading-[22px] md:leading-[26px]",
           bold ? "font-bold text-black" : "font-light text-black"
         )}
       >
@@ -468,8 +533,42 @@ export default function PropertyDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-        <div className="text-[14px] text-black/50">Loading property…</div>
+      <div className="flex flex-col min-h-screen bg-white animate-pulse">
+        {/* Gallery skeleton */}
+        <div className="hidden md:flex gap-[10px] px-[42px] max-w-[1440px] mx-auto w-full mt-[20px]">
+          <div className="flex-1 min-h-[340px] rounded-[15px] bg-neutral-200" />
+          <div className="grid grid-cols-2 gap-[10px] w-[40%]">
+            {[0,1,2,3].map(i => <div key={i} className="rounded-[15px] bg-neutral-200 min-h-[162px]" />)}
+          </div>
+        </div>
+        <div className="md:hidden w-full h-[431px] bg-neutral-200" />
+
+        {/* Content skeleton */}
+        <div className="flex-1 md:px-[42px] md:max-w-[1440px] md:mx-auto md:w-full md:pb-[60px]">
+          <div className="flex gap-[42px] md:mt-[30px]">
+            <div className="flex flex-col gap-[15px] w-full flex-1 px-[16px] md:px-0 pt-[20px] md:pt-0">
+              {/* Price line */}
+              <div className="flex gap-[12px] items-end">
+                <div className="h-[44px] w-[52%] rounded-[8px] bg-neutral-200" />
+                <div className="h-[20px] w-[80px] rounded-[8px] bg-neutral-200 mb-[4px]" />
+              </div>
+              {/* Address */}
+              <div className="h-[18px] w-[38%] rounded-[6px] bg-neutral-200" />
+              {/* Badges */}
+              <div className="flex gap-[8px]">
+                <div className="h-[34px] w-[90px] rounded-[14px] bg-neutral-200" />
+                <div className="h-[34px] w-[90px] rounded-[14px] bg-neutral-200" />
+              </div>
+              {/* Info cards */}
+              <div className="h-[160px] rounded-[20px] bg-neutral-200 mt-[4px]" />
+              <div className="h-[180px] rounded-[20px] bg-neutral-200" />
+              <div className="h-[140px] rounded-[20px] bg-neutral-200" />
+            </div>
+            <div className="hidden md:block w-[327px] flex-shrink-0">
+              <div className="h-[260px] rounded-[20px] bg-neutral-200" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -608,22 +707,22 @@ export default function PropertyDetailPage() {
 
       {/* ── MAIN CONTENT ── */}
       <main className="flex-1 md:px-[42px] md:max-w-[1440px] md:mx-auto md:w-full md:pb-[60px]">
-        <div className="flex gap-[49px] justify-center md:mt-[30px]">
+        <div className="flex gap-[42px] justify-center md:mt-[30px]">
           {/* ─── LEFT COLUMN ─── */}
-          <div className="flex flex-col gap-[15px] w-full md:max-w-[565px] px-[16px] md:px-0 pt-[20px] md:pt-0">
+          <div className="flex flex-col gap-[15px] w-full md:max-w-[680px] px-[16px] md:px-0 pt-[20px] md:pt-0">
             {/* Property header */}
             <div className="flex items-end justify-between">
               <div className="flex flex-col gap-[8px] p-0 md:p-[10px]">
                 {/* Status badge */}
-                <div className="flex items-center gap-[5px]">
-                  <span className="w-[6px] h-[6px] rounded-full bg-green-500" />
-                  <span className="text-[12px] text-[#0a0a0a]/78">
+                <div className="flex items-center gap-[6px]">
+                  <span className="w-[8px] h-[8px] rounded-full bg-green-500 flex-shrink-0" />
+                  <span className="text-[14px] md:text-[15px] font-medium text-[#0a0a0a]/78">
                     {property.listingStatus}
                   </span>
                 </div>
 
                 {/* Stats line */}
-                <p className="text-[10px] font-bold text-[#93191d] leading-[11px]">
+                <p className="text-[12px] md:text-[13px] font-semibold text-[#93191d] leading-[16px]">
                   {property.daysOnUno} days on UNO &bull;{" "}
                   {property.views.toLocaleString()} views &bull;{" "}
                   {property.favourites} favorites
@@ -632,38 +731,49 @@ export default function PropertyDetailPage() {
                 {/* Price */}
                 <div className="flex flex-col gap-[4px]">
                   <div className="flex items-center gap-[7px]">
-                    <span className="text-[35px] md:text-[40px] font-extrabold text-[#161515] leading-tight">
+                    <span className="text-[35px] md:text-[44px] font-extrabold text-[#161515] leading-tight">
                       {formatNaira(property.rent)}
                     </span>
-                    <span className="text-[12px] md:text-[14px] font-medium text-black/71 self-end mb-[4px]">
-                      Annually
-                    </span>
+                    {property.listingType !== "SALE" && (
+                      <span className="text-[12px] md:text-[16px] font-medium text-black/71 self-end mb-[4px]">
+                        {property.rentPeriod === "MONTH" ? "/ month" : "/ year"}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[12px] md:text-[14px] text-black/66">
+                  <span className="text-[13px] md:text-[16px] text-black/66">
                     {property.streetAddress}
                   </span>
                 </div>
 
-                {/* Bed / Bath badges */}
-                <div className="flex items-center gap-[7px] mt-[4px]">
-                  <span className="flex items-center gap-[6px] border border-black/60 rounded-[14px] h-[27px] px-[12px] text-[10px] text-black/60">
-                    <Bath size={16} className="flex-shrink-0" />
-                    {property.bathrooms} bath
-                  </span>
-                  <span className="flex items-center gap-[6px] border border-black/60 rounded-[14px] h-[27px] px-[12px] text-[10px] text-black/60">
-                    <BedDouble size={15} className="flex-shrink-0" />
-                    {property.bedrooms} bed
-                  </span>
-                </div>
+                {/* Bed / Bath badges — only for residential types with non-zero values */}
+                {["FLAT","HOUSE","DUPLEX","SELF_CONTAIN","BUNGALOW","PENTHOUSE","MINI_FLAT","STUDIO","TERRACE","DETACHED","SEMI_DETACHED","SHARED_ROOM"].includes(property.propertyType) && (
+                  <div className="flex items-center gap-[7px] mt-[4px]">
+                    {(property.bathrooms ?? 0) > 0 && (
+                      <span className="flex items-center gap-[6px] border border-black/60 rounded-[14px] h-[30px] md:h-[34px] px-[14px] text-[11px] md:text-[14px] text-black/60">
+                        <Bath size={16} className="flex-shrink-0" />
+                        {property.bathrooms} bath
+                      </span>
+                    )}
+                    {(property.bedrooms ?? 0) > 0 && (
+                      <span className="flex items-center gap-[6px] border border-black/60 rounded-[14px] h-[30px] md:h-[34px] px-[14px] text-[11px] md:text-[14px] text-black/60">
+                        <BedDouble size={15} className="flex-shrink-0" />
+                        {property.bedrooms} bed
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Map thumbnail (desktop) */}
-              <div className="hidden md:flex flex-col items-center gap-[7px] w-[90px]">
-                <div className="w-[90px] h-[90px] rounded-[20px] bg-[#f0e8d8] overflow-hidden relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <MapPin size={24} className="text-[#af2525]" />
-                  </div>
-                </div>
+              <div className="hidden md:flex flex-col items-center gap-[7px] w-[110px]">
+                <StaticMapThumbnail
+                  lat={property.latitude}
+                  lng={property.longitude}
+                  address={property.streetAddress}
+                  title={property.title}
+                  className="w-[110px] h-[110px]"
+                  pinSize={24}
+                />
                 <span className="text-[10px] font-bold text-[#93191d] text-center">
                   View in Map
                 </span>
@@ -671,101 +781,126 @@ export default function PropertyDetailPage() {
             </div>
 
             {/* Map (mobile only — before info cards) */}
-            <div className="md:hidden w-full h-[373px] rounded-[20px] bg-[#f0e8d8] overflow-hidden relative">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <MapPin size={40} className="text-[#af2525]" />
-              </div>
-            </div>
+            <StaticMapThumbnail
+              lat={property.latitude}
+              lng={property.longitude}
+              address={property.streetAddress}
+              title={property.title}
+              className="md:hidden w-full h-[373px]"
+              pinSize={40}
+            />
 
             {/* ─── INFO CARDS ─── */}
             <div className="flex flex-col gap-[13px]">
-              {/* About */}
-              <InfoCard id="about" sectionRef={(el) => { sectionRefs.current["about"] = el; }}>
-                <h2 className="text-[22px] font-medium text-[#161515] mb-[13px]">
-                  About
-                </h2>
-                <p className="text-[15px] text-black/80 leading-[22px] tracking-[-0.3px]">
-                  {property.description}
-                </p>
-              </InfoCard>
+              {/* About — hidden when no description */}
+              {property.description && (
+                <InfoCard id="about" sectionRef={(el) => { sectionRefs.current["about"] = el; }}>
+                  <h2 className="text-[22px] md:text-[24px] font-medium text-[#161515] mb-[13px]">
+                    About
+                  </h2>
+                  <p className="text-[15px] md:text-[16px] text-black/80 leading-[22px] md:leading-[26px] tracking-[-0.3px]">
+                    {property.description}
+                  </p>
+                </InfoCard>
+              )}
 
               {/* Fees */}
               <InfoCard id="fees" sectionRef={(el) => { sectionRefs.current["fees"] = el; }}>
-                <h2 className="text-[22px] font-medium text-[#161515] mb-[21px]">
+                <h2 className="text-[22px] md:text-[24px] font-medium text-[#161515] mb-[21px]">
                   Fees
                 </h2>
-                <div className="flex flex-col md:flex-row gap-[20px]">
+                <div className="flex flex-col md:flex-row gap-[24px]">
                   {/* Standard Pricing */}
-                  <div className="flex flex-col gap-[9px] md:w-[280px]">
-                    <span className="text-[10px] text-[#161515]">
+                  <div className="flex flex-col gap-[12px] md:w-[280px]">
+                    <span className="text-[12px] font-semibold uppercase tracking-wide text-black/50">
                       Standard Pricing
                     </span>
                     <div className="flex flex-col gap-[12px]">
                       <div className="flex flex-col gap-[5px]">
                         <BulletItem>
-                          Annual Rent: {formatNaira(property.fees.annualRent)}
+                          {property.fees.priceLabel}: {formatNaira(property.fees.annualRent)}
                         </BulletItem>
-                        <BulletItem>
-                          Legal Fee: {property.fees.legalFeePercent}%
-                        </BulletItem>
-                        <BulletItem>
-                          Agent Fee: {property.fees.agentFeePercent}%
-                        </BulletItem>
+                        {property.listingType !== "SALE" && (
+                          <>
+                            <BulletItem>
+                              Legal Fee: {property.fees.legalFeePercent}%
+                            </BulletItem>
+                            <BulletItem>
+                              Agent Fee: {property.fees.agentFeePercent}%
+                            </BulletItem>
+                          </>
+                        )}
                       </div>
-                      <BulletItem bold>
-                        Total package: {property.fees.totalPackage}
-                      </BulletItem>
+                      {/* Total package — prominent row */}
+                      <div className="flex items-center gap-[8px] bg-black/[0.04] rounded-[10px] px-[12px] py-[10px] mt-[4px]">
+                        <span className="text-[15px] md:text-[16px] font-bold text-[#161515]">
+                          Total package:
+                        </span>
+                        <span className="text-[15px] md:text-[16px] font-extrabold text-[#af2525]">
+                          {property.fees.totalPackage}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Additional Fees */}
-                  <div className="flex flex-col gap-[18px] md:w-[217px]">
-                    <div className="flex flex-col gap-[9px]">
-                      <span className="text-[10px] text-[#161515]">
-                        Additional Fees
-                      </span>
-                      <div className="flex flex-col gap-[5px]">
-                        {property.fees.additional.map((fee) => (
-                          <BulletItem key={fee.label}>
-                            {fee.label}: {formatNaira(fee.amount)}{" "}
-                            <span className="text-[9px]">{fee.period}</span>
-                          </BulletItem>
-                        ))}
+                  {/* Additional Fees — hidden when empty */}
+                  {property.fees.additional.length > 0 && (
+                    <div className="flex flex-col gap-[18px] md:w-[217px]">
+                      <div className="flex flex-col gap-[9px]">
+                        <span className="text-[12px] font-semibold uppercase tracking-wide text-black/50">
+                          Additional Fees
+                        </span>
+                        <div className="flex flex-col gap-[5px]">
+                          {property.fees.additional.map((fee) => (
+                            <BulletItem key={fee.label}>
+                              {fee.label}: {formatNaira(fee.amount)}{" "}
+                              <span className="text-[11px]">{fee.period}</span>
+                            </BulletItem>
+                          ))}
+                        </div>
                       </div>
+                      {property.fees.additionalNote && (
+                        <p className="text-[12px] font-light text-[#161515] leading-[16px]">
+                          Note: {property.fees.additionalNote}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-[10px] font-light text-[#161515] leading-[11px]">
-                      Note: {property.fees.additionalNote}
-                    </p>
-                  </div>
+                  )}
                 </div>
               </InfoCard>
 
               {/* Things to Know */}
               <InfoCard id="things-to-know" sectionRef={(el) => { sectionRefs.current["things-to-know"] = el; }}>
-                <h2 className="text-[22px] font-medium text-[#161515] mb-[21px]">
+                <h2 className="text-[22px] md:text-[24px] font-medium text-[#161515] mb-[21px]">
                   Things to Know
                 </h2>
-                <div className="flex flex-col md:flex-row gap-[20px]">
-                  <div className="flex flex-col gap-[12px] md:w-[280px]">
-                    <span className="text-[10px] text-[#161515]">
-                      Additional Information
-                    </span>
-                    <div className="flex flex-col gap-[5px]">
-                      {property.additionalInfo.map((info) => (
-                        <BulletItem key={info.label}>
-                          {info.label}: {info.value}
-                        </BulletItem>
-                      ))}
+                <div className="flex flex-col md:flex-row gap-[24px]">
+                  {property.additionalInfo.length > 0 && (
+                    <div className="flex flex-col gap-[12px] md:w-[280px]">
+                      <span className="text-[12px] font-semibold uppercase tracking-wide text-black/50">
+                        Additional Information
+                      </span>
+                      <div className="flex flex-col gap-[5px]">
+                        {property.additionalInfo.map((info) => (
+                          <BulletItem key={info.label}>
+                            {info.label}: {info.value}
+                          </BulletItem>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-col gap-[12px] md:w-[219px]">
-                    <span className="text-[10px] text-[#161515]">Features</span>
-                    <div className="flex flex-col gap-[5px]">
-                      {property.features.map((feature) => (
-                        <BulletItem key={feature}>{feature}</BulletItem>
-                      ))}
+                  )}
+                  {property.features.length > 0 && (
+                    <div className="flex flex-col gap-[12px] md:w-[219px]">
+                      <span className="text-[12px] font-semibold uppercase tracking-wide text-black/50">
+                        Features
+                      </span>
+                      <div className="flex flex-col gap-[5px]">
+                        {property.features.map((feature) => (
+                          <BulletItem key={feature}>{feature}</BulletItem>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </InfoCard>
             </div>
@@ -915,29 +1050,31 @@ export default function PropertyDetailPage() {
         </div>
 
         {/* ─── SIMILAR HOMES ─── */}
-        <section className="mt-[40px] md:mt-[60px] px-[16px] md:px-0 max-w-[1016px] mx-auto">
-          <h2 className="text-[20px] md:text-[30px] font-medium text-[#161515] mb-[25px] md:mb-[35px]">
-            Similar homes you might like
-          </h2>
+        {similar.length > 0 && (
+          <section className="mt-[40px] md:mt-[60px] px-[16px] md:px-0 md:w-[1049px] md:mx-auto">
+            <h2 className="text-[20px] md:text-[30px] font-medium text-[#161515] mb-[25px] md:mb-[35px]">
+              Similar homes you might like
+            </h2>
 
-          {/* Desktop: 3-column grid */}
-          <div className="hidden md:grid md:grid-cols-3 gap-[20px]">
-            {similar.map((prop) => (
-              <Link key={prop.id} href={`/property/${prop.id}`}>
-                <PropertyCard data={prop} />
-              </Link>
-            ))}
-          </div>
+            {/* Desktop: 3-column grid */}
+            <div className="hidden md:grid md:grid-cols-3 gap-[20px]">
+              {similar.map((prop) => (
+                <Link key={prop.id} href={`/property/${prop.id}`}>
+                  <PropertyCard data={prop} className="w-full" />
+                </Link>
+              ))}
+            </div>
 
-          {/* Mobile: horizontal scroll */}
-          <div className="md:hidden flex gap-[12px] overflow-x-auto pb-[8px] no-scrollbar" style={{ scrollbarWidth: "none" }}>
-            {similar.map((prop) => (
-              <Link key={prop.id} href={`/property/${prop.id}`} className="shrink-0">
-                <PropertyCard data={prop} className="w-[234px]" />
-              </Link>
-            ))}
-          </div>
-        </section>
+            {/* Mobile: horizontal scroll */}
+            <div className="md:hidden flex gap-[12px] overflow-x-auto pb-[8px] no-scrollbar" style={{ scrollbarWidth: "none" }}>
+              {similar.map((prop) => (
+                <Link key={prop.id} href={`/property/${prop.id}`} className="shrink-0">
+                  <PropertyCard data={prop} className="w-[234px]" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="h-[40px] md:h-[60px]" />
       </main>

@@ -251,6 +251,7 @@ model Property {
   listedByAgent          Boolean         @default(false)
   offPlatformOwnerName   String?
   offPlatformOwnerPhone  String?
+  isFeatured             Boolean         @default(false)
   verificationStatus  VerificationStatus @default(PENDING)
   verifiedBy          String?
   verifiedAt          DateTime?
@@ -269,6 +270,10 @@ model Property {
   contactRequests     ContactRequest[]
 
   @@index([deletedAt])
+  @@index([status, city, propertyType])
+  @@index([landlordId])
+  @@index([rent])
+  @@index([verificationStatus])
 }
 
 enum PropertyKind {
@@ -384,6 +389,8 @@ model PropertyPhoto {
   isMain     Boolean  @default(false)
   order      Int      @default(0)
   createdAt  DateTime @default(now())
+
+  @@index([propertyId])
 }
 
 model Favourite {
@@ -395,6 +402,7 @@ model Favourite {
   createdAt  DateTime @default(now())
 
   @@unique([userId, propertyId])
+  @@index([propertyId])
 }
 
 model SavedSearch {
@@ -410,6 +418,8 @@ model SavedSearch {
   newResultsCount Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model ContactRequest {
@@ -428,6 +438,9 @@ model ContactRequest {
   respondedAt   DateTime?
   source        String?
   createdAt     DateTime      @default(now())
+
+  @@index([propertyId])
+  @@index([tenantId])
 }
 
 enum ContactStatus {

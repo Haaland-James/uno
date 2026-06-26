@@ -39,6 +39,7 @@ export function toCardDto(
     listingType: p.listingType,
     bedrooms: p.bedrooms,
     bathrooms: p.bathrooms,
+    sizeSqm: p.size ?? null,
     area: p.area,
     city: p.city,
     rent: p.rent,
@@ -55,6 +56,7 @@ export function toCardDto(
     longitude: priv.lng,
     addressPrivate: priv.addressPrivate,
     listedByAgent: p.listedByAgent,
+    isFeatured: p.isFeatured,
   };
 }
 
@@ -93,12 +95,23 @@ export function toDetailDto(
   );
 
   // Fees: simple computed defaults until landlords can configure these per-listing.
-  const annualRent =
-    p.rentPeriod === "YEAR" ? p.rent : p.rent * 12;
+  const isSale = p.listingType === "SALE";
+  // For rent/lease: normalise to the annual figure for the fees breakdown.
+  // For sale: price is the asking price as-is, no period conversion.
+  const annualRent = isSale
+    ? p.rent
+    : p.rentPeriod === "YEAR"
+    ? p.rent
+    : p.rent * 12;
+  const priceLabel = isSale
+    ? "Asking Price"
+    : p.rentPeriod === "MONTH"
+    ? "Monthly Rent"
+    : "Annual Rent";
   const additional: { label: string; amount: number; period: string }[] = [];
   if (p.agencyFee) additional.push({ label: "Agency Fee", amount: p.agencyFee, period: "once" });
   if (p.cautionDeposit) additional.push({ label: "Caution Deposit", amount: p.cautionDeposit, period: "once" });
-  if (p.serviceCharge) additional.push({ label: "Service Charge", amount: p.serviceCharge, period: "annually" });
+  if (!isSale && p.serviceCharge) additional.push({ label: "Service Charge", amount: p.serviceCharge, period: "annually" });
 
   return {
     ...card,
@@ -117,9 +130,12 @@ export function toDetailDto(
     favourites: p.savedCount,
     fees: {
       annualRent,
+      priceLabel,
       legalFeePercent: 10,
       agentFeePercent: 10,
-      totalPackage: formatPackage(annualRent + (p.agencyFee ?? 0) + (p.cautionDeposit ?? 0)),
+      totalPackage: isSale
+        ? formatPackage(annualRent)
+        : formatPackage(annualRent + (p.agencyFee ?? 0) + (p.cautionDeposit ?? 0)),
       additional,
       additionalNote: "Additional fees are typically required before move-in.",
     },

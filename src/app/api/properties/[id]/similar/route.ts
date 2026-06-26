@@ -18,20 +18,25 @@ export async function GET(
 
   const seed = await db.property.findUnique({
     where: { id },
-    select: { area: true, city: true, propertyType: true, rent: true },
+    select: { area: true, city: true, propertyType: true, rent: true, listingType: true },
   });
   if (!seed) return err("not_found", "Property not found", 404);
 
-  // Score: same area > same city + type, within ±40% rent band
+  // Score: same area > same city + type, within ±40% price band
   const priceMin = Math.floor(seed.rent * 0.6);
   const priceMax = Math.ceil(seed.rent * 1.4);
 
-  const [items, session] = await Promise.all([
+  const baseWhere = {
+    ...notDeleted,
+    id: { not: id },
+    status: "ACTIVE" as const,
+    listingType: seed.listingType,
+  };
+
+  const [similar, session] = await Promise.all([
     db.property.findMany({
       where: {
-        ...notDeleted,
-        id: { not: id },
-        status: "ACTIVE",
+        ...baseWhere,
         OR: [
           { area: seed.area, city: seed.city },
           { city: seed.city, propertyType: seed.propertyType, rent: { gte: priceMin, lte: priceMax } },
@@ -43,6 +48,15 @@ export async function GET(
     }),
     getServerSession(authOptions),
   ]);
+
+  const items = similar.length > 0
+    ? similar
+    : await db.property.findMany({
+        where: baseWhere,
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        include: { photos: { orderBy: { order: "asc" } } },
+      });
 
   let favIds = new Set<string>();
   if (session?.user?.id && items.length) {

@@ -10,7 +10,7 @@ import { ok, err } from "@/lib/api";
  * `https://api.cloudinary.com/v1_1/{cloudName}/image/upload` with FormData containing
  * `{file, api_key, timestamp, signature, folder}` and gets back `{secure_url, ...}`.
  */
-export async function POST(_req: NextRequest) {
+export async function POST(req: NextRequest) {
 	const session = await getServerSession(authOptions);
 	if (!session?.user?.id) {
 		return err("unauthorized", "Sign in to upload photos", 401);
@@ -23,8 +23,11 @@ export async function POST(_req: NextRequest) {
 		return err("config_error", "Image uploads are not configured", 500);
 	}
 
+	const body = await req.json().catch(() => ({}));
+	const type = body?.type === "avatar" ? "avatars" : "listings";
+
 	const timestamp = Math.floor(Date.now() / 1000);
-	const folder = `uno/listings/${session.user.id}`;
+	const folder = `uno/${type}/${session.user.id}`;
 
 	const signature = cloudinary.utils.api_sign_request(
 		{ timestamp, folder },
