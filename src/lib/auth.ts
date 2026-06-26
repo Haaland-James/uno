@@ -163,9 +163,9 @@ export const authOptions: NextAuthOptions = {
         });
 
         user.id = targetUser.id;
-        (user as Record<string, unknown>).role = targetUser.role;
-        (user as Record<string, unknown>).agentStatus = targetUser.agentStatus;
-        (user as Record<string, unknown>).agentEmployment = targetUser.agentEmployment;
+        (user as unknown as Record<string, unknown>).role = targetUser.role;
+        (user as unknown as Record<string, unknown>).agentStatus = targetUser.agentStatus;
+        (user as unknown as Record<string, unknown>).agentEmployment = targetUser.agentEmployment;
       }
       return true;
     },
