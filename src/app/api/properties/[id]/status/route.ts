@@ -4,17 +4,18 @@ import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { deriveStatusFields } from "@/lib/property-status";
 import type { PropertyStatus } from "@prisma/client";
 
 /**
  * PATCH /api/properties/[id]/status — owner status changes.
  *
  * Actions:
- *   pause         → PAUSED   (take off market)
- *   activate      → ACTIVE   (re-list / put back on market)
- *   mark_rented   → RENTED   (property has been let)
- *   mark_available→ ACTIVE   (property is available again)
+ *   pause          → status=PAUSED  (take off market, hides from feed)
+ *   activate       → status=ACTIVE  (re-list)
+ *   mark_rented    → isRented=true, availabilityStatus=RENTED, rentedAt=now
+ *                    status stays ACTIVE — property remains visible with a
+ *                    "Rented" badge. Does NOT unpublish the listing.
+ *   mark_available → isRented=false, availabilityStatus=AVAILABLE_NOW, rentedAt=null
  */
 
 const bodySchema = z.object({
@@ -45,36 +46,40 @@ export async function PATCH(
 	}
 
 	let body: unknown;
-	try {
-		body = await req.json();
-	} catch {
-		return err("bad_request", "Invalid JSON body", 400);
-	}
+	try { body = await req.json(); }
+	catch { return err("bad_request", "Invalid JSON body", 400); }
+
 	const parsed = bodySchema.safeParse(body);
 	if (!parsed.success) return zodErr(parsed.error);
 
 	const { action } = parsed.data;
 
-	const nextStatus: PropertyStatus =
-		action === "pause"
-			? "PAUSED"
-			: action === "mark_rented"
-				? "RENTED"
-				: "ACTIVE"; // activate + mark_available
+	let updateData: Parameters<typeof db.property.update>[0]["data"];
 
-	if (property.status === nextStatus && action !== "mark_rented") {
-		return ok({
-			id,
-			status: property.status,
-			message: action === "pause" ? "Already paused" : "Already active",
-		});
+	if (action === "pause") {
+		updateData = { status: "PAUSED" as PropertyStatus };
+	} else if (action === "activate") {
+		updateData = { status: "ACTIVE" as PropertyStatus };
+	} else if (action === "mark_rented") {
+		// Keep status=ACTIVE so the listing stays in the feed with a Rented badge
+		updateData = {
+			isRented: true,
+			availabilityStatus: "RENTED",
+			rentedAt: new Date(),
+		};
+	} else {
+		// mark_available — clear the rented state, keep published
+		updateData = {
+			isRented: false,
+			availabilityStatus: property.availableFrom ? "AVAILABLE_FROM" : "AVAILABLE_NOW",
+			rentedAt: null,
+		};
 	}
 
-	const derived = deriveStatusFields(nextStatus, property.availableFrom);
 	const updated = await db.property.update({
 		where: { id },
-		data: { status: nextStatus, ...(derived ?? {}) },
-		select: { id: true, status: true, isRented: true, availabilityStatus: true },
+		data: updateData,
+		select: { id: true, status: true, isRented: true, availabilityStatus: true, rentedAt: true },
 	});
 
 	return ok(updated);

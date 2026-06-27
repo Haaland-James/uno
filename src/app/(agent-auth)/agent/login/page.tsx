@@ -1,16 +1,36 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, AlertCircle } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { requestOtp } from "@/lib/authClient";
 
 function AgentLoginForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const callbackUrl = searchParams.get("callbackUrl") ?? "/agent";
+	const needsSignout = searchParams.get("signout") === "1";
+
+	// Middleware detected a non-agent session on an agent auth route and
+	// redirected here with ?signout=1. Clear it now so the browser cookie
+	// is gone before the user enters their agent email.
+	useEffect(() => {
+		if (needsSignout) {
+			signOut({ redirect: false }).then(() => {
+				setSigningOut(false);
+				// Remove the signout param so a refresh doesn't loop
+				const params = new URLSearchParams(searchParams.toString());
+				params.delete("signout");
+				const qs = params.toString();
+				router.replace(`/agent/login${qs ? `?${qs}` : ""}`);
+			});
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 	const errorParam = searchParams.get("error");
 
+	const [signingOut, setSigningOut] = useState(needsSignout);
 	const [email, setEmail] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(
@@ -24,7 +44,7 @@ function AgentLoginForm() {
 		setError(null);
 		setSubmitting(true);
 
-		const result = await requestOtp({ email, purpose: "LOGIN" });
+		const result = await requestOtp({ email, purpose: "LOGIN", agentOnly: true });
 		if (!result.ok) {
 			setError(result.error ?? "Could not send code");
 			setSubmitting(false);
@@ -34,6 +54,14 @@ function AgentLoginForm() {
 		const params = new URLSearchParams({ email, mode: "LOGIN", callbackUrl });
 		if (result.devCode) params.set("devCode", result.devCode);
 		router.push(`/agent/verify?${params.toString()}`);
+	}
+
+	if (signingOut) {
+		return (
+			<div className="flex min-h-screen items-center justify-center">
+				<p className="text-sm text-white/40">Signing out…</p>
+			</div>
+		);
 	}
 
 	return (

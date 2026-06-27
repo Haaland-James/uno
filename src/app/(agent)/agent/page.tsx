@@ -16,44 +16,43 @@ export default async function AgentDashboardPage() {
 	const now = new Date();
 	const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-	// Phase 1 scope: an in-house agent is the `landlord` on properties they
-	// created on behalf of off-platform owners (listedByAgent=true). All
-	// counts/queries below scope to that — admins viewing this page see
-	// their own (empty) numbers, which is fine; admin oversight lives in
-	// /admin/listings.
 	const [
 		myListingsByStatus,
 		ownersCount,
 		newListings7d,
 		contacts7d,
+		viewsAgg,
 		recentListings,
 	] = await Promise.all([
 		db.property.groupBy({
 			by: ["status"],
-			where: { landlordId: agentId, listedByAgent: true, deletedAt: null },
+			where: { landlordId: agentId, deletedAt: null },
 			_count: { _all: true },
 		}),
 		db.property.findMany({
-			where: { landlordId: agentId, listedByAgent: true, deletedAt: null },
+			where: { landlordId: agentId, deletedAt: null },
 			select: { offPlatformOwnerPhone: true },
 			distinct: ["offPlatformOwnerPhone"],
 		}),
 		db.property.count({
 			where: {
 				landlordId: agentId,
-				listedByAgent: true,
 				deletedAt: null,
 				createdAt: { gte: weekAgo },
 			},
 		}),
 		db.contactRequest.count({
 			where: {
-				property: { landlordId: agentId, listedByAgent: true },
+				property: { landlordId: agentId },
 				createdAt: { gte: weekAgo },
 			},
 		}),
+		db.property.aggregate({
+			where: { landlordId: agentId, deletedAt: null },
+			_sum: { views: true },
+		}),
 		db.property.findMany({
-			where: { landlordId: agentId, listedByAgent: true, deletedAt: null },
+			where: { landlordId: agentId, deletedAt: null },
 			orderBy: { createdAt: "desc" },
 			take: 8,
 			select: {
@@ -76,7 +75,7 @@ export default async function AgentDashboardPage() {
 		0
 	);
 	const uniqueOwners = ownersCount.filter((o) => o.offPlatformOwnerPhone).length;
-	const totalViews = 0; // TODO Phase 1.1: aggregate Property.views for agent's listings
+	const totalViews = viewsAgg._sum.views ?? 0;
 
 	return (
 		<div className="page-container py-4 md:py-6">

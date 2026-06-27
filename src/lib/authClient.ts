@@ -7,6 +7,7 @@ interface RequestOtpArgs {
   purpose: "SIGNUP" | "LOGIN";
   name?: string;
   phone?: string;
+  agentOnly?: boolean;
 }
 
 interface RequestOtpResponse {

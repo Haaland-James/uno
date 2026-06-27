@@ -87,15 +87,23 @@ export async function middleware(request: NextRequest) {
 		return NextResponse.redirect(new URL(dest, request.url));
 	}
 
-	// Same treatment for agent staff sign-in pages. Verified agents and
-	// admins (admins can act on agent surfaces for support) go to /agent;
-	// regular consumer users go to /feed — they signed in to the wrong portal.
+	// Agent staff sign-in pages. Verified agents and admins skip past them to
+	// /agent. Everyone else — including logged-in renters and agents with a
+	// stale JWT — is signed out via NextAuth's signout endpoint before being
+	// sent back to the login page. A plain cookie.delete() on NextResponse.next()
+	// doesn't actually clear the browser cookie; the signout endpoint does.
 	if (token && isAgentAuthRoute(pathname)) {
 		const isAgent =
 			token.role === "ADMIN" ||
 			(token.agentStatus === "VERIFIED" && token.agentEmployment === "IN_HOUSE");
-		const dest = isAgent ? "/agent" : "/feed";
-		return NextResponse.redirect(new URL(dest, request.url));
+		if (isAgent) {
+			return NextResponse.redirect(new URL("/agent", request.url));
+		}
+		// POST to /api/auth/signout is CSRF-protected, so we redirect through a
+		// dedicated page that calls signOut() client-side and then returns here.
+		const signoutUrl = new URL("/agent/login", request.url);
+		signoutUrl.searchParams.set("signout", "1");
+		return NextResponse.redirect(signoutUrl);
 	}
 
 	// Admin route gate (defence-in-depth alongside (admin)/layout.tsx). Any

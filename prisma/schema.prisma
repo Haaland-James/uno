@@ -24,14 +24,15 @@ model User {
   // agentEmployment distinguishes salaried UNO staff (IN_HOUSE) from
   // self-serve verified agents (EXTERNAL, Phase 2). Both render under the
   // UNO institutional badge in Phase 1 — only IN_HOUSE ships now.
-  agentStatus       AgentStatus     @default(NONE)
-  agentEmployment   AgentEmployment?
-  agentSlug         String?         @unique
-  agentBio          String?
-  agentPhoto        String?
-  agentTerritory    String[]        @default([])
-  agentVerifiedAt   DateTime?
-  agentVerifiedBy   String?
+  agentStatus          AgentStatus          @default(NONE)
+  agentEmployment      AgentEmployment?
+  agentSlug            String?              @unique
+  agentBio             String?
+  agentPhoto           String?
+  agentTerritory       String[]             @default([])
+  agentSpecializations AgentSpecialization[] @default([])
+  agentVerifiedAt      DateTime?
+  agentVerifiedBy      String?
   // Phase 2 reserved — nullable so adding them later is non-breaking.
   agentBusinessType AgentBusinessType?
   agentBusinessName String?
@@ -98,6 +99,12 @@ enum AgentEmployment {
 enum AgentBusinessType {
   INDIVIDUAL
   AGENCY
+}
+
+enum AgentSpecialization {
+  RENTALS      // residential rentals
+  SALES        // land and properties for sale
+  COMMERCIAL   // commercial spaces and long-term leases
 }
 
 enum Gender {
@@ -210,6 +217,7 @@ model Property {
   accessRoad          String?
   fencing             Boolean?
   photos              PropertyPhoto[]
+  state               String?
   city                String
   area                String
   lga                 String?
@@ -235,6 +243,7 @@ model Property {
   negotiable          Boolean            @default(false)
   status              PropertyStatus     @default(PENDING)
   availabilityStatus  AvailabilityStatus @default(AVAILABLE_NOW)
+  rentedAt            DateTime?
   availableFrom       DateTime?
   minimumLease        String?
   isRented            Boolean            @default(false)
@@ -271,6 +280,7 @@ model Property {
 
   @@index([deletedAt])
   @@index([status, city, propertyType])
+  @@index([state])
   @@index([landlordId])
   @@index([rent])
   @@index([verificationStatus])

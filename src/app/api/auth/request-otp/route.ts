@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const parsed = requestOtpSchema.safeParse(body);
   if (!parsed.success) return zodErr(parsed.error);
 
-  const { email, purpose, name } = parsed.data;
+  const { email, purpose, name, agentOnly } = parsed.data;
 
   // Per-email rate limit
   const emailCheck = await otpRequestLimiter.limit(email);
@@ -54,6 +54,20 @@ export async function POST(req: NextRequest) {
       "No account found for this email. Sign up first.",
       404
     );
+  }
+
+  // Agent-portal gate: only VERIFIED IN_HOUSE agents may receive codes here
+  if (agentOnly) {
+    const isAgent =
+      existingUser?.agentStatus === "VERIFIED" &&
+      existingUser?.agentEmployment === "IN_HOUSE";
+    if (!isAgent) {
+      return err(
+        "not_agent",
+        "That account isn't a UNO staff account. Use the main sign-in page.",
+        403
+      );
+    }
   }
 
   const code = await createOtp({

@@ -6,6 +6,8 @@ export const requestOtpSchema = z.object({
   // Required only for SIGNUP
   name: z.string().trim().min(1).max(100).optional(),
   phone: z.string().trim().max(20).optional(),
+  // When true, rejects the request if the email doesn't belong to a VERIFIED IN_HOUSE agent
+  agentOnly: z.boolean().optional(),
 });
 
 export const verifyOtpSchema = z.object({

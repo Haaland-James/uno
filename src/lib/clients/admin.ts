@@ -67,6 +67,9 @@ export type AdminUserRow = {
 	emailVerified: boolean;
 	phoneVerified: boolean;
 	createdAt: string;
+	agentStatus: import("@prisma/client").AgentStatus;
+	agentSlug: string | null;
+	agentSpecializations: import("@prisma/client").AgentSpecialization[];
 	_count: { properties: number; contactsSent: number };
 };
 

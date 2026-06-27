@@ -8,6 +8,7 @@ import {
 	Home,
 	Users,
 	UserCircle,
+	BarChart2,
 	LogOut,
 	ExternalLink,
 	X,
@@ -26,6 +27,7 @@ const NAV: NavItem[] = [
 	{ href: "/agent", label: "Dashboard", icon: LayoutDashboard },
 	{ href: "/agent/listings", label: "My Listings", icon: Home },
 	{ href: "/agent/owners", label: "Property Owners", icon: Users },
+	{ href: "/agent/analytics", label: "Analytics", icon: BarChart2 },
 	{ href: "/agent/profile", label: "My Profile", icon: UserCircle },
 ];
 

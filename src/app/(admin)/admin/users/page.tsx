@@ -12,6 +12,12 @@ import { StatusPill, roleTone } from "@/components/admin/StatusPill";
 import { getInitials } from "@/lib/utils";
 import type { Role } from "@prisma/client";
 
+const SPECIALIZATION_LABELS: Record<string, string> = {
+	RENTALS: "Rentals",
+	SALES: "Sales",
+	COMMERCIAL: "Commercial",
+};
+
 type RoleFilter = "ALL" | Role;
 
 const TABS: AdminTab<RoleFilter>[] = [
@@ -175,6 +181,17 @@ function UserRow({
 			status={
 				<>
 					<StatusPill tone={roleTone(u.role)}>{u.role}</StatusPill>
+					{u.role === "AGENT" && (
+						<StatusPill tone={u.agentStatus === "VERIFIED" ? "success" : "warning"}>
+							{u.agentStatus}
+						</StatusPill>
+					)}
+					{u.agentSpecializations.length > 0 &&
+						u.agentSpecializations.map((s) => (
+							<StatusPill key={s} tone="neutral">
+								{SPECIALIZATION_LABELS[s] ?? s}
+							</StatusPill>
+						))}
 					{!u.emailVerified && (
 						<StatusPill tone="warning">Email unverified</StatusPill>
 					)}

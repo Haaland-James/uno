@@ -250,6 +250,7 @@ export async function POST(req: NextRequest) {
         topography: w.topography || null,
         accessRoad: w.accessRoad || null,
         fencing: w.fencing ?? null,
+        state: w.state || null,
         city: w.city,
         area: w.area,
         lga: w.lga || null,

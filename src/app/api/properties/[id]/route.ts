@@ -138,6 +138,7 @@ export async function PATCH(
       ...(data.accessRoad !== undefined && { accessRoad: data.accessRoad }),
       ...(data.fencing !== undefined && { fencing: data.fencing }),
 
+      ...(data.state !== undefined && { state: data.state }),
       ...(data.city !== undefined && { city: data.city }),
       ...(data.area !== undefined && { area: data.area }),
       ...(data.lga !== undefined && { lga: data.lga }),

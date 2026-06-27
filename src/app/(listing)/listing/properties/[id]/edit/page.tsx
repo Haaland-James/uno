@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Save, Bath, Home, ArrowLeft, ChevronDown } from "lucide-react";
 import { useListPropertyStore, type ListPropertyData } from "@/stores/listPropertyStore";
@@ -87,6 +87,8 @@ export default function EditPropertyPageOuter({ params }: { params: { id: string
 
 function EditPropertyPage({ id }: { id: string }) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const returnTo = searchParams.get("returnTo") ?? "/listing/properties";
 	const user = useUserStore((s) => s.user);
 	const data = useListPropertyStore((s) => s.data);
 	const replaceAll = useListPropertyStore((s) => s.replaceAll);
@@ -183,7 +185,7 @@ function EditPropertyPage({ id }: { id: string }) {
 			.catch((e) => {
 				if (cancelled) return;
 				toast.error(e instanceof Error ? e.message : "Could not load property");
-				router.push("/listing/properties");
+				router.push(returnTo);
 			});
 		return () => { cancelled = true; };
 	}, [id, replaceAll, router]);
@@ -250,13 +252,13 @@ function EditPropertyPage({ id }: { id: string }) {
 			});
 			toast.success("Listing updated");
 			reset();
-			router.push("/listing/properties");
+			router.push(returnTo);
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : "Could not save changes");
 		} finally { setSaving(false); }
 	};
 
-	const handleClose = () => { reset(); router.push("/listing/properties"); };
+	const handleClose = () => { reset(); router.push(returnTo); };
 
 	if (hydrating) {
 		return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-bg-page"><Loader2 className="h-6 w-6 animate-spin text-black/30" /></div>;
