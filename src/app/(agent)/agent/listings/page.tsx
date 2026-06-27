@@ -60,9 +60,9 @@ export default async function AgentListingsPage({ searchParams }: PageProps) {
 		statusSet.add(p.status);
 		monthSet.add(monthKey(new Date(p.createdAt)));
 	}
-	const states = [...stateSet].sort();
-	const statuses = [...statusSet].sort();
-	const months = [...monthSet]
+	const states = Array.from(stateSet).sort();
+	const statuses = Array.from(statusSet).sort();
+	const months = Array.from(monthSet)
 		.sort()
 		.reverse()
 		.map((v) => ({ value: v, label: formatMonth(v) }));
