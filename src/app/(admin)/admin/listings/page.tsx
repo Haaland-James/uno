@@ -11,6 +11,8 @@ import {
 	Pause,
 	Play,
 	AlertTriangle,
+	Pencil,
+	ArrowRightLeft,
 } from "lucide-react";
 import { adminClient, type AdminListingRow } from "@/lib/clients/admin";
 import { toast } from "@/stores/toastStore";
@@ -18,6 +20,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTabs, type AdminTab } from "@/components/admin/AdminTabs";
 import { AdminRow } from "@/components/admin/AdminRow";
 import { AdminBtn } from "@/components/admin/AdminBtn";
+import { ReassignDialog } from "@/components/admin/ReassignDialog";
 import { StatusPill, propertyStatusTone } from "@/components/admin/StatusPill";
 import type { PropertyStatus } from "@prisma/client";
 
@@ -43,6 +46,7 @@ export default function AdminListingsPage() {
 	const [items, setItems] = useState<AdminListingRow[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [busyId, setBusyId] = useState<string | null>(null);
+	const [reassignFor, setReassignFor] = useState<AdminListingRow | null>(null);
 
 	const load = async (t: Tab) => {
 		setIsLoading(true);
@@ -105,9 +109,23 @@ export default function AdminListingsPage() {
 							p={p}
 							busy={busyId === p.id}
 							onAction={(a) => moderate(p.id, a)}
+							onReassign={() => setReassignFor(p)}
 						/>
 					))}
 				</div>
+			)}
+
+			{reassignFor && (
+				<ReassignDialog
+					listingId={reassignFor.id}
+					listingTitle={reassignFor.title}
+					currentOwnerId={reassignFor.landlord.id}
+					onClose={() => setReassignFor(null)}
+					onDone={() => {
+						setReassignFor(null);
+						load(tab);
+					}}
+				/>
 			)}
 		</div>
 	);
@@ -117,10 +135,12 @@ function ListingRow({
 	p,
 	busy,
 	onAction,
+	onReassign,
 }: {
 	p: AdminListingRow;
 	busy: boolean;
 	onAction: (a: Parameters<typeof adminClient.moderate>[1]) => void;
+	onReassign: () => void;
 }) {
 	const photo = p.photos[0]?.url;
 	const failures = p.verificationSignals
@@ -260,6 +280,22 @@ function ListingRow({
 							Reactivate
 						</AdminBtn>
 					)}
+					<Link
+						href={`/listing/properties/${p.id}/edit`}
+						target="_blank"
+						className="inline-flex items-center gap-1.5 rounded-md border border-black/10 bg-white px-3 py-1.5 text-sm font-medium text-content-secondary hover:bg-black/5"
+					>
+						<Pencil className="h-4 w-4" />
+						Edit
+					</Link>
+					<AdminBtn
+						onClick={onReassign}
+						disabled={busy}
+						tone="gray"
+						icon={<ArrowRightLeft className="h-4 w-4" />}
+					>
+						Reassign
+					</AdminBtn>
 				</>
 			}
 		/>

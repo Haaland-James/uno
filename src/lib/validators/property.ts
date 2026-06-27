@@ -196,6 +196,7 @@ export const propertyUpdateSchema = propertyCreateSchema
 	.omit({ availabilityStatus: true })
 	.partial()
 	.extend({
+	state: z.string().max(120).optional(),
 	lga: z.string().max(120).optional(),
 	ownershipType: z.string().max(60).optional(),
 	geocodeAccuracy: z.string().max(40).optional(),

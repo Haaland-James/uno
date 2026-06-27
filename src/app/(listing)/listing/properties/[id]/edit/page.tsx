@@ -88,7 +88,13 @@ export default function EditPropertyPageOuter({ params }: { params: { id: string
 function EditPropertyPage({ id }: { id: string }) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const returnTo = searchParams.get("returnTo") ?? "/listing/properties";
+	// Only honour same-origin relative paths — never an absolute or
+	// protocol-relative ("//evil.com") URL, which would be an open redirect.
+	const rawReturnTo = searchParams.get("returnTo");
+	const returnTo =
+		rawReturnTo && rawReturnTo.startsWith("/") && !rawReturnTo.startsWith("//")
+			? rawReturnTo
+			: "/listing/properties";
 	const user = useUserStore((s) => s.user);
 	const data = useListPropertyStore((s) => s.data);
 	const replaceAll = useListPropertyStore((s) => s.replaceAll);

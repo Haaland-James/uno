@@ -25,6 +25,7 @@ const bodySchema = z.discriminatedUnion("action", [
 	z.object({ action: z.literal("unverify"), reason: z.string().max(500).optional() }),
 	z.object({ action: z.literal("pause") }),
 	z.object({ action: z.literal("reactivate") }),
+	z.object({ action: z.literal("reassign"), landlordId: z.string().min(1) }),
 ]);
 
 export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
@@ -116,6 +117,25 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 				where: { id: property.id },
 				data: { status: "ACTIVE", goesLiveAt: now, ...(deriveStatusFields("ACTIVE", property.availableFrom) ?? {}) },
 				select: { id: true, status: true },
+			});
+			return ok(updated);
+		}
+		case "reassign": {
+			// Move the listing to another user (e.g. when an agent leaves). Sets
+			// listedByAgent based on whether the new owner is a verified in-house
+			// agent; off-platform owner fields are left intact (hidden when the
+			// listing is no longer agent-attributed).
+			const newOwner = await db.user.findUnique({
+				where: { id: action.landlordId },
+				select: { id: true, agentStatus: true, agentEmployment: true },
+			});
+			if (!newOwner) return err("not_found", "Target user not found", 404);
+			const isInHouseAgent =
+				newOwner.agentStatus === "VERIFIED" && newOwner.agentEmployment === "IN_HOUSE";
+			const updated = await db.property.update({
+				where: { id: property.id },
+				data: { landlordId: newOwner.id, listedByAgent: isInHouseAgent },
+				select: { id: true },
 			});
 			return ok(updated);
 		}

@@ -30,7 +30,7 @@ export default async function AgentDashboardPage() {
 			_count: { _all: true },
 		}),
 		db.property.findMany({
-			where: { landlordId: agentId, deletedAt: null },
+			where: { landlordId: agentId, deletedAt: null, offPlatformOwnerPhone: { not: null } },
 			select: { offPlatformOwnerPhone: true },
 			distinct: ["offPlatformOwnerPhone"],
 		}),
@@ -74,7 +74,7 @@ export default async function AgentDashboardPage() {
 		(sum, r) => sum + r._count._all,
 		0
 	);
-	const uniqueOwners = ownersCount.filter((o) => o.offPlatformOwnerPhone).length;
+	const uniqueOwners = ownersCount.length;
 	const totalViews = viewsAgg._sum.views ?? 0;
 
 	return (

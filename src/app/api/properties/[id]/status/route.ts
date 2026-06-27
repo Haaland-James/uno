@@ -68,10 +68,14 @@ export async function PATCH(
 			rentedAt: new Date(),
 		};
 	} else {
-		// mark_available — clear the rented state, keep published
+		// mark_available — clear the rented state, keep published. Only show
+		// "available from" when availableFrom is genuinely in the future;
+		// a stale past date means it's available now.
+		const availableLater =
+			!!property.availableFrom && property.availableFrom.getTime() > Date.now();
 		updateData = {
 			isRented: false,
-			availabilityStatus: property.availableFrom ? "AVAILABLE_FROM" : "AVAILABLE_NOW",
+			availabilityStatus: availableLater ? "AVAILABLE_FROM" : "AVAILABLE_NOW",
 			rentedAt: null,
 		};
 	}

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Search, ShieldCheck, ShieldOff } from "lucide-react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Search, ShieldCheck, ShieldOff, UserCog, UserMinus } from "lucide-react";
+import Link from "next/link";
 import { adminClient, type AdminUserRow } from "@/lib/clients/admin";
 import { toast } from "@/stores/toastStore";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -10,13 +12,8 @@ import { AdminRow } from "@/components/admin/AdminRow";
 import { AdminBtn } from "@/components/admin/AdminBtn";
 import { StatusPill, roleTone } from "@/components/admin/StatusPill";
 import { getInitials } from "@/lib/utils";
+import { AGENT_SPECIALIZATION_LABELS as SPECIALIZATION_LABELS } from "@/../config/constants";
 import type { Role } from "@prisma/client";
-
-const SPECIALIZATION_LABELS: Record<string, string> = {
-	RENTALS: "Rentals",
-	SALES: "Sales",
-	COMMERCIAL: "Commercial",
-};
 
 type RoleFilter = "ALL" | Role;
 
@@ -29,7 +26,19 @@ const TABS: AdminTab<RoleFilter>[] = [
 ];
 
 export default function AdminUsersPage() {
-	const [tab, setTab] = useState<RoleFilter>("ALL");
+	return (
+		<Suspense>
+			<UsersPageInner />
+		</Suspense>
+	);
+}
+
+function UsersPageInner() {
+	const searchParams = useSearchParams();
+	const initialRole = (searchParams.get("role") as RoleFilter) || "ALL";
+	const [tab, setTab] = useState<RoleFilter>(
+		TABS.some((t) => t.key === initialRole) ? initialRole : "ALL"
+	);
 	const [q, setQ] = useState("");
 	const [items, setItems] = useState<AdminUserRow[]>([]);
 	const [total, setTotal] = useState(0);
@@ -75,6 +84,29 @@ export default function AdminUsersPage() {
 				prev.map((u) =>
 					u.id === id
 						? { ...u, role: action === "promote" ? "ADMIN" : "RENTER" }
+						: u
+				)
+			);
+		} catch (e) {
+			toast.error(e instanceof Error ? e.message : "Failed");
+		} finally {
+			setBusyId(null);
+		}
+	}
+
+	async function agentAction(id: string, action: "make_agent" | "revoke_agent") {
+		setBusyId(id);
+		try {
+			await adminClient.users.moderate(id, { action });
+			toast.success(action === "make_agent" ? "Now an in-house agent" : "Agent access revoked");
+			setItems((prev) =>
+				prev.map((u) =>
+					u.id === id
+						? {
+								...u,
+								role: action === "make_agent" ? "AGENT" : "RENTER",
+								agentStatus: action === "make_agent" ? "VERIFIED" : "NONE",
+							}
 						: u
 				)
 			);
@@ -134,6 +166,24 @@ export default function AdminUsersPage() {
 									moderate(u.id, "demote");
 								}
 							}}
+							onMakeAgent={() => {
+								if (
+									confirm(
+										`Make ${u.name} (${u.email}) an in-house UNO agent? They get access to the agent console.`
+									)
+								) {
+									agentAction(u.id, "make_agent");
+								}
+							}}
+							onRevokeAgent={() => {
+								if (
+									confirm(
+										`Revoke agent access for ${u.name}? Their listings stay assigned to them.`
+									)
+								) {
+									agentAction(u.id, "revoke_agent");
+								}
+							}}
 						/>
 					))}
 				</div>
@@ -147,13 +197,18 @@ function UserRow({
 	busy,
 	onPromote,
 	onDemote,
+	onMakeAgent,
+	onRevokeAgent,
 }: {
 	u: AdminUserRow;
 	busy: boolean;
 	onPromote: () => void;
 	onDemote: () => void;
+	onMakeAgent: () => void;
+	onRevokeAgent: () => void;
 }) {
 	const isAdmin = u.role === "ADMIN";
+	const isAgent = u.agentStatus !== "NONE";
 	return (
 		<AdminRow
 			thumbnail={
@@ -218,6 +273,35 @@ function UserRow({
 						>
 							Demote
 						</AdminBtn>
+					)}
+					{!isAdmin && !isAgent && (
+						<AdminBtn
+							onClick={onMakeAgent}
+							disabled={busy}
+							tone="gray"
+							icon={<UserCog className="h-4 w-4" />}
+						>
+							Make agent
+						</AdminBtn>
+					)}
+					{isAgent && (
+						<>
+							<Link
+								href={`/admin/agents/${u.id}`}
+								className="inline-flex items-center gap-1.5 rounded-md border border-black/10 bg-white px-3 py-1.5 text-sm font-medium text-content-secondary hover:bg-black/5"
+							>
+								<UserCog className="h-4 w-4" />
+								Manage agent
+							</Link>
+							<AdminBtn
+								onClick={onRevokeAgent}
+								disabled={busy}
+								tone="gray"
+								icon={<UserMinus className="h-4 w-4" />}
+							>
+								Revoke agent
+							</AdminBtn>
+						</>
 					)}
 					{u._count.properties > 0 && (
 						<a

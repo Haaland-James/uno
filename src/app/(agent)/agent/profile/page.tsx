@@ -6,13 +6,10 @@ import Image from "next/image";
 import { ExternalLink, Plus, X } from "lucide-react";
 import { toast } from "@/stores/toastStore";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-
-const SPEC_LABELS: Record<string, string> = {
-	RENTALS: "Rentals",
-	SALES: "Sales",
-	COMMERCIAL: "Commercial",
-};
-const ALL_SPECS = ["RENTALS", "SALES", "COMMERCIAL"] as const;
+import {
+	AGENT_SPECIALIZATION_LABELS as SPEC_LABELS,
+	AGENT_SPECIALIZATIONS as ALL_SPECS,
+} from "@/../config/constants";
 
 interface Profile {
 	name: string;

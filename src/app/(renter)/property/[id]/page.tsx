@@ -27,6 +27,7 @@ import { Footer } from "@/components/layout/Footer";
 import { toast } from "@/stores/toastStore";
 import type { PropertyDetailData, PropertyCardData } from "@/types/property";
 import { PropertyCard } from "@/components/property/PropertyCard";
+import { ReportListingButton } from "@/components/property/ReportListingButton";
 import { useSession } from "next-auth/react";
 import { useFavourites } from "@/hooks/useFavourites";
 import { useContact } from "@/hooks/useContact";
@@ -1075,6 +1076,10 @@ export default function PropertyDetailPage() {
             </div>
           </section>
         )}
+
+        <div className="mt-6 flex justify-center border-t border-black/5 pt-6">
+          <ReportListingButton propertyId={property.id} />
+        </div>
 
         <div className="h-[40px] md:h-[60px]" />
       </main>

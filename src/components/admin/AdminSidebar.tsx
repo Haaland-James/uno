@@ -7,6 +7,7 @@ import {
 	LayoutDashboard,
 	Home,
 	Users,
+	UserCog,
 	Flag,
 	LogOut,
 	ExternalLink,
@@ -26,6 +27,7 @@ const NAV: NavItem[] = [
 	{ href: "/admin", label: "Dashboard", icon: LayoutDashboard },
 	{ href: "/admin/listings", label: "Listings", icon: Home },
 	{ href: "/admin/users", label: "Users", icon: Users },
+	{ href: "/admin/agents", label: "Agents", icon: UserCog },
 	{ href: "/admin/reports", label: "Reports", icon: Flag },
 ];
 

@@ -3,13 +3,19 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { requireAdmin } from "@/lib/admin";
+import { uniqueAgentSlug } from "@/lib/agent-slug";
 
 /**
  * PATCH /api/admin/users/[id] — admin user actions.
  *
  * Body:
- *   { action: "promote" }   → role = ADMIN
- *   { action: "demote" }    → role = RENTER (refuses if it would leave zero admins)
+ *   { action: "promote" }       → role = ADMIN
+ *   { action: "demote" }        → role = RENTER (refuses if it would leave zero admins)
+ *   { action: "make_agent" }    → in-house UNO agent (role=AGENT, agentStatus=VERIFIED,
+ *                                  agentEmployment=IN_HOUSE, unique agentSlug). Replaces
+ *                                  the make-agent.ts script.
+ *   { action: "revoke_agent" }  → strips agent access (agentStatus=NONE, role=RENTER).
+ *                                  Profile fields + slug are kept for easy re-promotion.
  *
  * Safety rails:
  *   - Admins cannot demote themselves (avoids accidental lock-out).
@@ -21,6 +27,8 @@ import { requireAdmin } from "@/lib/admin";
 const bodySchema = z.discriminatedUnion("action", [
 	z.object({ action: z.literal("promote") }),
 	z.object({ action: z.literal("demote") }),
+	z.object({ action: z.literal("make_agent") }),
+	z.object({ action: z.literal("revoke_agent") }),
 ]);
 
 export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
@@ -29,7 +37,14 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 
 	const target = await db.user.findUnique({
 		where: { id: ctx.params.id },
-		select: { id: true, role: true, name: true, email: true },
+		select: {
+			id: true,
+			role: true,
+			name: true,
+			email: true,
+			agentStatus: true,
+			agentSlug: true,
+		},
 	});
 	if (!target) return err("not_found", "User not found", 404);
 
@@ -77,6 +92,44 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 				where: { id: target.id },
 				data: { role: "RENTER" },
 				select: { id: true, role: true },
+			});
+			return ok(updated);
+		}
+		case "make_agent": {
+			if (target.agentStatus === "VERIFIED") {
+				return err("conflict", "User is already a verified agent", 409);
+			}
+			if (target.role === "ADMIN") {
+				return err("conflict", "Admins can't also be agents. Demote first.", 409);
+			}
+			// Reuse an existing slug if the user was an agent before; otherwise mint one.
+			const slug = target.agentSlug ?? (await uniqueAgentSlug(target.name, target.id));
+			const updated = await db.user.update({
+				where: { id: target.id },
+				data: {
+					role: "AGENT",
+					agentStatus: "VERIFIED",
+					agentEmployment: "IN_HOUSE",
+					agentSlug: slug,
+					agentVerifiedAt: new Date(),
+					agentVerifiedBy: admin.user.id,
+				},
+				select: { id: true, role: true, agentStatus: true, agentSlug: true },
+			});
+			return ok(updated);
+		}
+		case "revoke_agent": {
+			if (target.agentStatus === "NONE") {
+				return err("conflict", "User is not an agent", 409);
+			}
+			const updated = await db.user.update({
+				where: { id: target.id },
+				data: {
+					agentStatus: "NONE",
+					agentEmployment: null,
+					...(target.role === "AGENT" && { role: "RENTER" }),
+				},
+				select: { id: true, role: true, agentStatus: true },
 			});
 			return ok(updated);
 		}

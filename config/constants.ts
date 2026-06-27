@@ -403,3 +403,13 @@ export const LANDLORD_NAV_ITEMS = [
 	{ href: "/contacts", label: "Messages", icon: "MessageSquare" },
 	{ href: "/analytics", label: "Analytics", icon: "BarChart3" },
 ] as const;
+
+// Agent specializations — shared label map + ordered list. Single source of
+// truth for the human-readable names used across the agent + admin consoles.
+export const AGENT_SPECIALIZATIONS = ["RENTALS", "SALES", "COMMERCIAL"] as const;
+
+export const AGENT_SPECIALIZATION_LABELS: Record<string, string> = {
+	RENTALS: "Rentals",
+	SALES: "Sales",
+	COMMERCIAL: "Commercial",
+};
