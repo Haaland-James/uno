@@ -266,16 +266,17 @@ export function PhotosStep() {
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 		if (!over || active.id === over.id) return;
-		const oldIdx = tiles.findIndex((t) => t.key === active.id);
-		const newIdx = tiles.findIndex((t) => t.key === over.id);
-		const reordered = arrayMove(tiles, oldIdx, newIdx);
-		setTiles(reordered);
-		// Keep mainPhotoIndex pointing at the same tile after reorder
-		const mainKey = tiles[data.mainPhotoIndex]?.key;
-		const newMainIdx = mainKey ? reordered.findIndex((t) => t.key === mainKey) : 0;
-		if (newMainIdx !== data.mainPhotoIndex) {
-			updateData({ mainPhotoIndex: Math.max(0, newMainIdx) });
-		}
+		setTiles((prev) => {
+			const oldIdx = prev.findIndex((t) => t.key === active.id);
+			const newIdx = prev.findIndex((t) => t.key === over.id);
+			const reordered = arrayMove(prev, oldIdx, newIdx);
+			const mainKey = prev[data.mainPhotoIndex]?.key;
+			const newMainIdx = mainKey ? reordered.findIndex((t) => t.key === mainKey) : 0;
+			if (newMainIdx !== data.mainPhotoIndex) {
+				updateData({ mainPhotoIndex: Math.max(0, newMainIdx) });
+			}
+			return reordered;
+		});
 	};
 
 	const doneCount = tiles.filter((t) => t.status === "done").length;
