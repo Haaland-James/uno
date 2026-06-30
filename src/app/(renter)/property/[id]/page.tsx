@@ -592,7 +592,7 @@ export default function PropertyDetailPage() {
   const photos = property.photos.filter((p) => p.url);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white w-full max-w-full overflow-x-hidden">
       {/* ── PHOTO MODALS ── */}
       {showPhotoGrid && (
         <PhotoGridModal
@@ -707,10 +707,10 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="flex-1 md:px-[42px] md:max-w-[1440px] md:mx-auto md:w-full md:pb-[60px]">
-        <div className="flex gap-[42px] justify-center md:mt-[30px]">
+      <main className="flex-1 px-0 md:px-[42px] md:max-w-[1440px] md:mx-auto md:w-full md:pb-[60px]">
+        <div className="flex flex-col md:flex-row gap-0 md:gap-[42px] justify-center md:mt-[30px]">
           {/* ─── LEFT COLUMN ─── */}
-          <div className="flex flex-col gap-[15px] w-full md:max-w-[680px] px-[16px] md:px-0 pt-[20px] md:pt-0">
+          <div className="flex flex-col gap-[15px] w-full md:max-w-[680px] px-[16px] md:px-0 pt-[16px] md:pt-0">
             {/* Property header */}
             <div className="flex items-end justify-between">
               <div className="flex flex-col gap-[8px] p-0 md:p-[10px]">
@@ -787,7 +787,7 @@ export default function PropertyDetailPage() {
               lng={property.longitude}
               address={property.streetAddress}
               title={property.title}
-              className="md:hidden w-full h-[373px]"
+              className="md:hidden w-full h-[200px]"
               pinSize={40}
             />
 
@@ -1090,7 +1090,7 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* ── MOBILE STICKY BOTTOM BAR ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#fafafa] border-t border-black/26 rounded-t-[15px] shadow-[0px_0px_24px_0px_rgba(0,0,0,0.3)] px-[15px] pb-[15px] pt-[12px]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[55] bg-[#fafafa] border-t border-black/26 rounded-t-[15px] shadow-[0px_0px_24px_0px_rgba(0,0,0,0.3)] px-[15px] pb-[15px] pt-[12px]">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-[8px]">
             <div className="flex items-center gap-[7px]">

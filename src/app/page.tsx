@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { GuestHeader } from "@/components/layout/GuestHeader";
 import { Footer } from "@/components/layout/Footer";
+import { MobileNav } from "@/components/layout/MobileNav";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { HeroSearch } from "@/components/search/HeroSearch";
 import { SeeAllCard } from "@/components/property/SeeAllCard";
@@ -153,7 +154,7 @@ export default function HomePage() {
           </div>
 
           {/* HeroSearch — unified for desktop and mobile */}
-          <div className="relative z-10 mx-auto mt-[-76px] max-w-[560px] px-[16px] md:px-0">
+          <div className="relative z-10 mx-auto mt-[-56px] md:mt-[-76px] max-w-[560px] px-[16px] md:px-0">
             <HeroSearch />
           </div>
         </section>
@@ -323,6 +324,7 @@ export default function HomePage() {
         <div className="h-[40px] md:h-[80px]" />
       </main>
       <Footer />
+      <MobileNav />
     </>
   );
 }
