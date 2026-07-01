@@ -62,7 +62,11 @@ export async function GET(req: NextRequest) {
   if (f.q) {
     const like = `%${f.q}%`;
     where.push(
-      Prisma.sql`(p.title ILIKE ${like} OR p.description ILIKE ${like} OR p.area ILIKE ${like} OR p.city ILIKE ${like})`
+      Prisma.sql`(
+        p."search_vector" @@ plainto_tsquery('english', ${f.q})
+        OR p.area ILIKE ${like}
+        OR p.city ILIKE ${like}
+      )`
     );
   }
 

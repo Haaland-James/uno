@@ -53,15 +53,59 @@ export async function GET(req: NextRequest) {
       }),
     ...(f.verifiedOnly && { verificationStatus: "VERIFIED" }),
     ...(f.availableNow && { availabilityStatus: "AVAILABLE_NOW" }),
-    ...(f.q && {
-      OR: [
-        { title: { contains: f.q, mode: "insensitive" } },
-        { description: { contains: f.q, mode: "insensitive" } },
-        { area: { contains: f.q, mode: "insensitive" } },
-        { city: { contains: f.q, mode: "insensitive" } },
-      ],
-    }),
   };
+
+  // ── Full-text search path ──────────────────────────────────────────
+  // When `q` is present, query the GIN-indexed search_vector column for
+  // ranked results, then feed those IDs back into Prisma for the remaining
+  // filters. Falls back to ILIKE on area/city for location-only queries.
+  let ftsIds: string[] | null = null;
+  let ftsRankMap: Map<string, number> | null = null;
+
+  if (f.q) {
+    const ftsRows = await db.$queryRaw<{ id: string; rank: number }[]>(
+      Prisma.sql`
+        SELECT id, ts_rank("search_vector", plainto_tsquery('english', ${f.q})) AS rank
+        FROM "Property"
+        WHERE "search_vector" @@ plainto_tsquery('english', ${f.q})
+          AND status = 'ACTIVE'
+          AND "deletedAt" IS NULL
+        ORDER BY rank DESC
+        LIMIT 500
+      `
+    );
+
+    if (ftsRows.length === 0) {
+      const likeTerm = `%${f.q}%`;
+      const fallbackRows = await db.$queryRaw<{ id: string }[]>(
+        Prisma.sql`
+          SELECT id FROM "Property"
+          WHERE (area ILIKE ${likeTerm} OR city ILIKE ${likeTerm})
+            AND status = 'ACTIVE'
+            AND "deletedAt" IS NULL
+          LIMIT 500
+        `
+      );
+      ftsIds = fallbackRows.map((r) => r.id);
+    } else {
+      ftsIds = ftsRows.map((r) => r.id);
+      ftsRankMap = new Map(ftsRows.map((r) => [r.id, r.rank]));
+    }
+
+    if (ftsIds.length === 0) {
+      const skip = (f.page - 1) * f.pageSize;
+      const mockSlice = mockProperties.slice(skip, skip + f.pageSize);
+      return ok({
+        items: mockSlice,
+        page: f.page,
+        pageSize: f.pageSize,
+        total: mockProperties.length,
+        hasMore: skip + mockSlice.length < mockProperties.length,
+      });
+    }
+
+    where.id = { in: ftsIds };
+  }
 
   const orderBy: Prisma.PropertyOrderByWithRelationInput =
     f.sort === "price_asc"
@@ -77,7 +121,7 @@ export async function GET(req: NextRequest) {
   const [items, total, session] = await Promise.all([
     db.property.findMany({
       where,
-      orderBy,
+      ...((ftsRankMap && !f.sort) ? {} : { orderBy }),
       skip,
       take: f.pageSize,
       include: { photos: { orderBy: { order: "asc" } } },
@@ -99,8 +143,12 @@ export async function GET(req: NextRequest) {
   }
 
   if (items.length > 0) {
+    const sorted = (ftsRankMap && !f.sort)
+      ? [...items].sort((a, b) => (ftsRankMap.get(b.id) ?? 0) - (ftsRankMap.get(a.id) ?? 0))
+      : items;
+
     return ok({
-      items: items.map((p) => toCardDto(p, favIds.has(p.id))),
+      items: sorted.map((p) => toCardDto(p, favIds.has(p.id))),
       page: f.page,
       pageSize: f.pageSize,
       total,

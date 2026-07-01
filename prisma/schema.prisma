@@ -230,6 +230,9 @@ model Property {
   // Prisma treats it as Unsupported (read-only) — never set it from app code.
   geom                Unsupported("geography(Point,4326)")?
   geocodeAccuracy     String?
+  // Full-text search vector — generated column populated by migration.
+  // Prisma treats it as Unsupported (read-only) — query via raw SQL only.
+  searchVector        Unsupported("tsvector")?
   fullAddressVisible  Boolean            @default(false)
   rent                Int
   rentPeriod          RentPeriod         @default(YEAR)
@@ -281,7 +284,7 @@ model Property {
   reports             Report[]
 
   @@index([deletedAt])
-  @@index([status, city, propertyType])
+  @@index([status, city, area, propertyType, bedrooms, rent])
   @@index([state])
   @@index([landlordId])
   @@index([rent])
@@ -414,6 +417,7 @@ model Favourite {
   createdAt  DateTime @default(now())
 
   @@unique([userId, propertyId])
+  @@index([userId])
   @@index([propertyId])
 }
 
@@ -451,7 +455,7 @@ model ContactRequest {
   source        String?
   createdAt     DateTime      @default(now())
 
-  @@index([propertyId])
+  @@index([propertyId, status])
   @@index([tenantId])
 }
 
