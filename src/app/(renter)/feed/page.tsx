@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ChevronDown, CheckCircle2 } from "lucide-react";
+import { Search, ChevronDown, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
 import { useFavourites } from "@/hooks/useFavourites";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useHeaderStore } from "@/stores/headerStore";
 import { propertiesClient } from "@/lib/clients/properties";
 import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
@@ -43,6 +44,35 @@ export default function FeedPage() {
 
 	const sentinelRef = useRef<HTMLDivElement>(null);
 	const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+	// Recently Viewed — actual properties this user has opened (localStorage MVP).
+	// Server persistence deferred; hook re-orders results to match localStorage order.
+	const { items: recentlyViewed, isLoading: recentlyViewedLoading } = useRecentlyViewed(10);
+	const showRecentlyViewed = recentlyViewedLoading || recentlyViewed.length > 0;
+
+	// Inline carousel — matches the homepage's useCarousel pattern.
+	// Chevrons disable at scroll boundaries; touch-scroll works without them on mobile.
+	const recentCarouselRef = useRef<HTMLDivElement>(null);
+	const [recentCanPrev, setRecentCanPrev] = useState(false);
+	const [recentCanNext, setRecentCanNext] = useState(true);
+	useEffect(() => {
+		const el = recentCarouselRef.current;
+		if (!el) return;
+		const update = () => {
+			setRecentCanPrev(el.scrollLeft > 5);
+			setRecentCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 5);
+		};
+		update();
+		el.addEventListener("scroll", update, { passive: true });
+		window.addEventListener("resize", update);
+		return () => {
+			el.removeEventListener("scroll", update);
+			window.removeEventListener("resize", update);
+		};
+	}, [recentlyViewed.length]);
+	const scrollRecent = (dir: "left" | "right") => {
+		recentCarouselRef.current?.scrollBy({ left: dir === "left" ? -400 : 400, behavior: "smooth" });
+	};
 
 	// Hide the header's search while this page's own search is visible;
 	// show it once the user scrolls past it.
@@ -188,6 +218,63 @@ export default function FeedPage() {
 
 				{/* Sentinel — once this scrolls above the header, the header reveals its search */}
 				<div ref={sentinelRef} className="h-px w-full" />
+
+				{/* Recently Viewed — hidden once we know the list is empty */}
+				{showRecentlyViewed && (
+					<div className="mb-8 md:mb-10">
+						<div className="mb-4 md:mb-5 flex items-center justify-between gap-3">
+							<h2 className="text-[20px] md:text-[24px] font-semibold text-[#161515] leading-none">
+								Recently viewed
+							</h2>
+							<div className="hidden md:flex items-center gap-[14px]">
+								<button
+									type="button"
+									onClick={() => scrollRecent("left")}
+									disabled={!recentCanPrev}
+									className={cn(
+										"flex h-[36px] w-[36px] items-center justify-center rounded-full transition-opacity",
+										recentCanPrev ? "bg-[#af2525] hover:opacity-80" : "bg-[rgba(175,37,37,0.35)]"
+									)}
+									aria-label="Previous recently viewed"
+								>
+									<ChevronLeft className="h-[20px] w-[20px] text-white" />
+								</button>
+								<button
+									type="button"
+									onClick={() => scrollRecent("right")}
+									disabled={!recentCanNext}
+									className={cn(
+										"flex h-[36px] w-[36px] items-center justify-center rounded-full transition-opacity",
+										recentCanNext ? "bg-[#af2525] hover:opacity-90" : "bg-[rgba(175,37,37,0.35)]"
+									)}
+									aria-label="Next recently viewed"
+								>
+									<ChevronRight className="h-[20px] w-[20px] text-white" />
+								</button>
+							</div>
+						</div>
+
+						<div
+							ref={recentCarouselRef}
+							className="flex items-stretch gap-[11px] overflow-x-auto scroll-smooth pb-2 no-scrollbar md:gap-5"
+							style={{ scrollbarWidth: "none" }}
+						>
+							{recentlyViewedLoading
+								? Array.from({ length: 4 }).map((_, i) => (
+										<PropertyCardSkeleton key={i} className="shrink-0" />
+								  ))
+								: recentlyViewed.map((p) => (
+										<PropertyCard
+											key={p.id}
+											data={p}
+											isFavourited={isFavourited(p.id)}
+											onToggleFavourite={toggleFavourite}
+											className="shrink-0"
+										/>
+								  ))}
+						</div>
+					</div>
+				)}
 
 				{/* Filter pills row */}
 				<div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 pb-1 mb-6 md:mb-8">
