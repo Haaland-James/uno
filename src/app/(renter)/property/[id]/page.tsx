@@ -1131,9 +1131,9 @@ export default function PropertyDetailPage() {
                   }
                   disabled={contactPending === "PHONE"}
                   aria-label="Call lister"
-                  className="bg-[#af2525] rounded-full w-[32px] h-[33px] flex items-center justify-center disabled:opacity-60"
+                  className="bg-[#af2525] rounded-full w-[48px] h-[48px] flex items-center justify-center disabled:opacity-60"
                 >
-                  <Phone size={14} className="text-white" />
+                  <Phone size={18} className="text-white" />
                 </button>
               )}
               {property.contact.hasWhatsApp && (
@@ -1148,9 +1148,9 @@ export default function PropertyDetailPage() {
                   }
                   disabled={contactPending === "WHATSAPP"}
                   aria-label="Message on WhatsApp"
-                  className="bg-[#25D366] rounded-full w-[33px] h-[33px] flex items-center justify-center disabled:opacity-60"
+                  className="bg-[#25D366] rounded-full w-[48px] h-[48px] flex items-center justify-center disabled:opacity-60"
                 >
-                  <WhatsAppIcon size={18} className="text-white" />
+                  <WhatsAppIcon size={22} className="text-white" />
                 </button>
               )}
             </div>

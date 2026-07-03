@@ -104,13 +104,13 @@ export function AuthModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-4 py-10 sm:items-center sm:py-4"
       onClick={close}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-[440px] rounded-[20px] bg-white p-6 shadow-2xl md:p-8 max-h-[92vh] overflow-y-auto"
+        className="relative w-full max-w-[440px] rounded-[20px] bg-white p-6 shadow-2xl md:p-8 sm:max-h-[92vh] sm:overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button
