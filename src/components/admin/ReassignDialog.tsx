@@ -68,8 +68,8 @@ export function ReassignDialog({
 	}
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-			<button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/50" />
+		<div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 py-10 sm:items-center sm:py-4" role="dialog" aria-modal="true">
+			<button type="button" aria-label="Close" onClick={onClose} className="fixed inset-0 bg-black/50" />
 			<div className="relative z-10 w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
 				<div className="mb-1 flex items-start justify-between gap-2">
 					<h3 className="text-base font-semibold text-content-primary">Reassign listing</h3>

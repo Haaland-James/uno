@@ -112,11 +112,11 @@ function SortableTile({
 				)
 			)}
 
-			{/* Drag handle — only shown for done tiles */}
+			{/* Drag handle — only shown for done tiles; always visible so touch works */}
 			{tile.status === "done" && (
 				<button
 					type="button"
-					className="absolute bottom-2 left-2 flex h-6 w-6 cursor-grab items-center justify-center rounded-full bg-white/90 text-black active:cursor-grabbing sm:opacity-0 sm:group-hover:opacity-100"
+					className="absolute bottom-2 left-2 flex h-6 w-6 cursor-grab items-center justify-center rounded-full bg-white/90 text-black active:cursor-grabbing opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
 					aria-label="Drag to reorder"
 					{...attributes}
 					{...listeners}
