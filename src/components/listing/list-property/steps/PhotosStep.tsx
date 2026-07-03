@@ -145,6 +145,15 @@ export function PhotosStep() {
 	const updateData = useListPropertyStore((s) => s.updateData);
 	const inputRef = useRef<HTMLInputElement>(null);
 
+	// Live mirror of mainPhotoIndex — handleDragEnd runs inside a setTiles
+	// updater, so a plain `data.mainPhotoIndex` closes over the last-rendered
+	// value and misidentifies the main tile when the store was written between
+	// renders. Reading via ref returns the current value at drop-time.
+	const mainPhotoIndexRef = useRef(data.mainPhotoIndex);
+	useEffect(() => {
+		mainPhotoIndexRef.current = data.mainPhotoIndex;
+	}, [data.mainPhotoIndex]);
+
 	const [tiles, setTiles] = useState<Tile[]>(() =>
 		data.photoUrls.map((url, i) => ({
 			key: `persisted-${i}-${url}`,
@@ -270,9 +279,10 @@ export function PhotosStep() {
 			const oldIdx = prev.findIndex((t) => t.key === active.id);
 			const newIdx = prev.findIndex((t) => t.key === over.id);
 			const reordered = arrayMove(prev, oldIdx, newIdx);
-			const mainKey = prev[data.mainPhotoIndex]?.key;
+			const currentMainIdx = mainPhotoIndexRef.current;
+			const mainKey = prev[currentMainIdx]?.key;
 			const newMainIdx = mainKey ? reordered.findIndex((t) => t.key === mainKey) : 0;
-			if (newMainIdx !== data.mainPhotoIndex) {
+			if (newMainIdx !== currentMainIdx) {
 				updateData({ mainPhotoIndex: Math.max(0, newMainIdx) });
 			}
 			return reordered;
