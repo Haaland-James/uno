@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { requireAgent } from "@/lib/agent";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
+import { StatusPill, propertyStatusTone } from "@/components/admin/StatusPill";
+import type { PropertyStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +23,8 @@ export default async function AgentDashboardPage() {
 		ownersCount,
 		newListings7d,
 		contacts7d,
-		viewsAgg,
+		totalContacts,
+		savesAndViewsAgg,
 		recentListings,
 	] = await Promise.all([
 		db.property.groupBy({
@@ -47,9 +50,12 @@ export default async function AgentDashboardPage() {
 				createdAt: { gte: weekAgo },
 			},
 		}),
+		db.contactRequest.count({
+			where: { property: { landlordId: agentId } },
+		}),
 		db.property.aggregate({
 			where: { landlordId: agentId, deletedAt: null },
-			_sum: { views: true },
+			_sum: { views: true, savedCount: true },
 		}),
 		db.property.findMany({
 			where: { landlordId: agentId, deletedAt: null },
@@ -75,7 +81,8 @@ export default async function AgentDashboardPage() {
 		0
 	);
 	const uniqueOwners = ownersCount.length;
-	const totalViews = viewsAgg._sum.views ?? 0;
+	const totalViews = savesAndViewsAgg._sum.views ?? 0;
+	const totalSaves = savesAndViewsAgg._sum.savedCount ?? 0;
 
 	return (
 		<div className="page-container py-4 md:py-6">
@@ -124,11 +131,17 @@ export default async function AgentDashboardPage() {
 				<AdminStatCard
 					label="Renter contacts (7d)"
 					value={contacts7d}
+					delta={`${totalContacts} total`}
 					icon={<MessageSquare className="h-4 w-4" />}
 				/>
 				<AdminStatCard
 					label="Total views"
 					value={totalViews}
+					icon={<Eye className="h-4 w-4" />}
+				/>
+				<AdminStatCard
+					label="Total saves"
+					value={totalSaves}
 					icon={<Eye className="h-4 w-4" />}
 				/>
 				<AdminStatCard
@@ -183,9 +196,14 @@ export default async function AgentDashboardPage() {
 								>
 									{p.title}
 								</Link>
-								<span className="text-xs text-content-secondary whitespace-nowrap">
-									{p.offPlatformOwnerName ?? "—"} · {p.area || p.city}
-								</span>
+								<div className="flex items-center gap-2 shrink-0">
+									<span className="text-xs text-content-secondary whitespace-nowrap hidden sm:inline">
+										{p.offPlatformOwnerName ?? "—"} · {p.area || p.city}
+									</span>
+									<StatusPill tone={propertyStatusTone(p.status as PropertyStatus)}>
+										{p.status}
+									</StatusPill>
+								</div>
 							</li>
 						))}
 					</ul>

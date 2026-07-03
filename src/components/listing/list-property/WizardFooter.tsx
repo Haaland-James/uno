@@ -27,7 +27,7 @@ export function WizardFooter({
 					onClick={onBack}
 					disabled={!canBack || hideBack}
 					className={cn(
-						"inline-flex h-[41px] min-w-[120px] items-center justify-center rounded-[50px] border border-black/15 bg-white px-6 text-[15px] font-semibold text-black transition-colors hover:bg-black/5 disabled:opacity-40",
+						"inline-flex h-[48px] flex-1 items-center justify-center rounded-[50px] border border-black/15 bg-white px-4 text-[14px] font-semibold text-black transition-colors hover:bg-black/5 disabled:opacity-40 md:h-[41px] md:flex-none md:min-w-[120px] md:px-6 md:text-[15px]",
 						hideBack && "invisible"
 					)}
 				>
@@ -38,7 +38,7 @@ export function WizardFooter({
 					onClick={onNext}
 					disabled={!canNext}
 					className={cn(
-						"inline-flex h-[41px] min-w-[120px] items-center justify-center rounded-[50px] bg-[#af2525] px-6 text-[15px] font-semibold text-white transition-colors hover:bg-[#93191d] disabled:bg-[rgba(175,37,37,0.5)]"
+						"inline-flex h-[48px] flex-1 items-center justify-center rounded-[50px] bg-[#af2525] px-4 text-[14px] font-semibold text-white transition-colors hover:bg-[#93191d] disabled:bg-[rgba(175,37,37,0.5)] md:h-[41px] md:flex-none md:min-w-[120px] md:px-6 md:text-[15px]"
 					)}
 				>
 					{nextLabel}

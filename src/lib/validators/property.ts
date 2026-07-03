@@ -20,7 +20,7 @@ export const propertyCreateSchema = z.object({
 	bathrooms: z.number().min(0).max(20),
 	description: z.string().max(2000).optional(),
 	size: z.number().positive().optional(),
-	yearBuilt: z.number().min(1950).max(new Date().getFullYear()).optional(),
+	yearBuilt: z.number().min(1950).refine((v) => v <= new Date().getFullYear(), { message: "Year cannot be in the future" }).optional(),
 	furnishing: z.enum(["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"]).optional(),
 	condition: z.string().max(100).optional(),
 	floorNumber: z.string().max(20).optional(),
@@ -113,7 +113,7 @@ export const propertyWizardSubmitSchema = z.object({
 
 	// Description
 	size: z.number().positive().nullable().optional(),
-	yearBuilt: z.number().min(1900).max(new Date().getFullYear()).nullable().optional(),
+	yearBuilt: z.number().min(1900).refine((v) => v <= new Date().getFullYear(), { message: "Year cannot be in the future" }).nullable().optional(),
 	furnishing: z.string().optional().default(""),
 	floorNumber: z.string().optional().default(""),
 	condition: z.string().optional().default(""),
@@ -226,6 +226,16 @@ export const propertyUpdateSchema = propertyCreateSchema
 	serviceCharge: z.number().min(0).nullable().optional(),
 
 	availableFrom: z.string().nullable().optional(),
+
+	// These fields come from the base create schema as `.optional()` (not nullable),
+	// but the edit page clears them by sending `null`. Override to accept null here.
+	description: z.string().max(2000).nullish(),
+	size: z.number().positive().nullable().optional(),
+	yearBuilt: z.number().min(1900).refine((v) => v <= new Date().getFullYear(), { message: "Year cannot be in the future" }).nullable().optional(),
+	condition: z.string().max(100).nullish(),
+	floorNumber: z.string().max(20).nullish(),
+	streetAddress: z.string().max(200).nullish(),
+	minimumLease: z.string().max(50).nullish(),
 
 	photos: z
 		.array(

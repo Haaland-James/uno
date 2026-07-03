@@ -22,8 +22,8 @@ export default function RenterLayout({
 				<main
 					className={
 						isPropertyDetail
-							? "flex-1"
-							: "flex-1 overflow-y-auto pb-16 md:pb-0"
+							? "flex-1 min-w-0"
+							: "flex-1 min-w-0 overflow-y-auto pb-16 md:pb-0"
 					}
 				>
 					{children}
