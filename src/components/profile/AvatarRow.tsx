@@ -11,6 +11,12 @@ interface AvatarRowProps {
 }
 
 async function uploadToCloudinary(file: File): Promise<string> {
+	if (!file.type.startsWith("image/")) {
+		throw new Error("Please choose an image file");
+	}
+	if (file.size > 5 * 1024 * 1024) {
+		throw new Error("Photo must be under 5 MB");
+	}
 	const res = await fetch("/api/uploads/sign", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -25,6 +31,8 @@ async function uploadToCloudinary(file: File): Promise<string> {
 	form.append("timestamp", String(data.timestamp));
 	form.append("signature", data.signature);
 	form.append("folder", data.folder);
+	// Signed param — must match the signature or Cloudinary rejects the upload
+	form.append("allowed_formats", data.allowedFormats);
 
 	const upload = await fetch(
 		`https://api.cloudinary.com/v1_1/${data.cloudName}/image/upload`,

@@ -65,6 +65,7 @@ export const listingsClient = {
 			apiKey: string;
 			cloudName: string;
 			folder: string;
+			allowedFormats: string;
 		}>("/api/uploads/sign", { method: "POST" }),
 };
 

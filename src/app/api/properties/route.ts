@@ -12,6 +12,7 @@ import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { computeGateSignals } from "@/lib/gate";
+import { listingCreateLimiter } from "@/lib/ratelimit";
 import { deriveStatusFields, notDeleted } from "@/lib/property-status";
 import { mockProperties } from "@/lib/mock-data";
 
@@ -127,6 +128,13 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return err("unauthorized", "Sign in to publish a listing", 401);
+  }
+
+  // Listings go live immediately (approval flow on hold), so this cap is the
+  // only ceiling on spam listings per account.
+  const rl = await listingCreateLimiter.limit(session.user.id);
+  if (!rl.success) {
+    return err("rate_limited", "You've published a lot of listings recently — try again later.", 429);
   }
 
   let body: unknown;

@@ -3,6 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { ok, err } from "@/lib/api";
+import { uploadSignLimiter } from "@/lib/ratelimit";
+
+// Signed into the upload params — Cloudinary rejects any file that doesn't
+// decode as one of these formats, regardless of extension or Content-Type.
+// Must be sent verbatim by the client alongside the signature.
+const ALLOWED_FORMATS = "jpg,jpeg,png,webp,avif,heic";
 
 /**
  * Returns Cloudinary signed-upload params so the browser can upload directly to Cloudinary
@@ -14,6 +20,11 @@ export async function POST(req: NextRequest) {
 	const session = await getServerSession(authOptions);
 	if (!session?.user?.id) {
 		return err("unauthorized", "Sign in to upload photos", 401);
+	}
+
+	const rl = await uploadSignLimiter.limit(session.user.id);
+	if (!rl.success) {
+		return err("rate_limited", "You've uploaded a lot of photos recently — try again later.", 429);
 	}
 
 	const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -30,9 +41,16 @@ export async function POST(req: NextRequest) {
 	const folder = `uno/${type}/${session.user.id}`;
 
 	const signature = cloudinary.utils.api_sign_request(
-		{ timestamp, folder },
+		{ timestamp, folder, allowed_formats: ALLOWED_FORMATS },
 		apiSecret
 	);
 
-	return ok({ signature, timestamp, apiKey, cloudName, folder });
+	return ok({
+		signature,
+		timestamp,
+		apiKey,
+		cloudName,
+		folder,
+		allowedFormats: ALLOWED_FORMATS,
+	});
 }

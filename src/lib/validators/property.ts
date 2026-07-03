@@ -1,5 +1,36 @@
 import { z } from "zod";
 
+// Photo URLs must point at hosts we actually serve images from (mirrors
+// next.config.mjs remotePatterns). Without this, /api/properties accepts any
+// URL and the whole Cloudinary upload validation is bypassable. When the
+// cloud name env is set, Cloudinary URLs must also belong to OUR cloud —
+// not just any Cloudinary account.
+const ALLOWED_PHOTO_HOSTS = ["res.cloudinary.com", "images.unsplash.com"];
+
+const photoUrlSchema = z
+	.string()
+	.max(500)
+	.refine((raw) => {
+		let url: URL;
+		try {
+			url = new URL(raw);
+		} catch {
+			return false;
+		}
+		if (url.protocol !== "https:") return false;
+		if (!ALLOWED_PHOTO_HOSTS.includes(url.hostname)) return false;
+		const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+		if (url.hostname === "res.cloudinary.com" && cloud) {
+			return url.pathname.startsWith(`/${cloud}/`);
+		}
+		return true;
+	}, "Photo URL must be an UNO-hosted image");
+
+const photoSchema = z.object({
+	url: photoUrlSchema,
+	isMain: z.boolean().optional(),
+});
+
 const feeValueSchema = z.object({
 	mode: z.enum(["FIXED", "PERCENT"]).default("FIXED"),
 	value: z.number().min(0).nullable(),
@@ -24,10 +55,10 @@ export const propertyCreateSchema = z.object({
 	furnishing: z.enum(["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"]).optional(),
 	condition: z.string().max(100).optional(),
 	floorNumber: z.string().max(20).optional(),
-	amenities: z.array(z.string()).default([]),
+	amenities: z.array(z.string().max(60)).max(60).default([]),
 	customAmenities: z.array(z.string().max(50)).max(10).default([]),
-	city: z.string().min(1, "City is required"),
-	area: z.string().min(1, "Area is required"),
+	city: z.string().min(1, "City is required").max(120),
+	area: z.string().min(1, "Area is required").max(120),
 	streetAddress: z.string().max(200).optional(),
 	landmark: z.string().max(200).optional(),
 	latitude: z.number().min(-90).max(90).optional(),
@@ -92,21 +123,21 @@ export const propertyWizardSubmitSchema = z.object({
 	propertyKind: z.enum(["RESIDENTIAL", "COMMERCIAL", "LAND"]).optional(),
 
 	// Location
-	state: z.string().min(1, "State is required"),
-	zipCode: z.string().optional().default(""),
-	streetAddress: z.string().optional().default(""),
-	unit: z.string().optional().default(""),
-	city: z.string().min(1, "City is required"),
-	area: z.string().min(1, "Area is required"),
-	lga: z.string().optional().default(""),
+	state: z.string().min(1, "State is required").max(120),
+	zipCode: z.string().max(20).optional().default(""),
+	streetAddress: z.string().max(200).optional().default(""),
+	unit: z.string().max(40).optional().default(""),
+	city: z.string().min(1, "City is required").max(120),
+	area: z.string().min(1, "Area is required").max(120),
+	lga: z.string().max(120).optional().default(""),
 	latitude: z.number().min(-90).max(90).nullable().optional(),
 	longitude: z.number().min(-180).max(180).nullable().optional(),
-	geocodeAccuracy: z.string().optional().default(""),
+	geocodeAccuracy: z.string().max(40).optional().default(""),
 	fullAddressVisible: z.boolean().optional().default(false),
 
 	// Property info
 	title: z.string().min(5, "Title must be at least 5 characters").max(120),
-	propertyType: z.string().min(1, "Property type is required"),
+	propertyType: z.string().min(1, "Property type is required").max(40),
 	bedrooms: z.number().min(0).max(20).nullable(),
 	bathrooms: z.number().min(0).max(20).nullable(),
 	briefDescription: z.string().max(2000).optional().default(""),
@@ -114,70 +145,66 @@ export const propertyWizardSubmitSchema = z.object({
 	// Description
 	size: z.number().positive().nullable().optional(),
 	yearBuilt: z.number().min(1900).refine((v) => v <= new Date().getFullYear(), { message: "Year cannot be in the future" }).nullable().optional(),
-	furnishing: z.string().optional().default(""),
-	floorNumber: z.string().optional().default(""),
-	condition: z.string().optional().default(""),
-	ownershipType: z.string().optional().default(""),
+	furnishing: z.string().max(40).optional().default(""),
+	floorNumber: z.string().max(20).optional().default(""),
+	condition: z.string().max(100).optional().default(""),
+	ownershipType: z.string().max(60).optional().default(""),
 
 	// Amenities
-	amenities: z.array(z.string()).default([]),
+	amenities: z.array(z.string().max(60)).max(60).default([]),
 	customAmenities: z.array(z.string().max(50)).max(10).default([]),
 
 	// Structured facts
 	parkingSpaces: z.number().int().min(0).nullable().optional(),
-	powerBackup: z.string().optional().default(""),
-	waterSource: z.string().optional().default(""),
+	powerBackup: z.string().max(60).optional().default(""),
+	waterSource: z.string().max(60).optional().default(""),
 	internetReady: z.boolean().optional().default(false),
 
 	// Commercial-specific
 	floorAreaSqm: z.number().int().positive().nullable().optional(),
-	floorLevel: z.string().optional().default(""),
+	floorLevel: z.string().max(40).optional().default(""),
 	units: z.number().int().positive().nullable().optional(),
-	fitOutState: z.string().optional().default(""),
+	fitOutState: z.string().max(60).optional().default(""),
 
 	// Land-specific
 	plotSizeSqm: z.number().int().positive().nullable().optional(),
-	titleDocType: z.string().optional().default(""),
+	titleDocType: z.string().max(60).optional().default(""),
 	surveyAvailable: z.boolean().optional().default(false),
-	topography: z.string().optional().default(""),
-	accessRoad: z.string().optional().default(""),
+	topography: z.string().max(60).optional().default(""),
+	accessRoad: z.string().max(60).optional().default(""),
 	fencing: z.boolean().optional().default(false),
 
 	// Photos — Cloudinary URLs already uploaded from the browser
 	photos: z
-		.array(
-			z.object({
-				url: z.string().url(),
-				isMain: z.boolean().optional(),
-			})
-		)
-		.min(1, "Add at least one photo"),
+		.array(photoSchema)
+		.min(1, "Add at least one photo")
+		.max(30, "Maximum 30 photos"),
 
 	// Pricing — rent/lease
 	rent: z.number().positive().nullable().optional(),
 	rentPeriod: z.enum(["MONTH", "YEAR"]).default("YEAR"),
-	minimumLease: z.string().optional().default(""),
+	minimumLease: z.string().max(50).optional().default(""),
 	agencyFee: feeValueSchema.optional(),
 	legalFee: feeValueSchema.optional(),
 	cautionDeposit: z.number().min(0).nullable().optional(),
 	serviceCharge: z.number().min(0).nullable().optional(),
-	serviceChargeIncludes: z.string().optional().default(""),
+	serviceChargeIncludes: z.string().max(500).optional().default(""),
 	availability: z.enum(["AVAILABLE_NOW", "AVAILABLE_FROM"]).default("AVAILABLE_NOW"),
-	availableFrom: z.string().optional().default(""),
+	availableFrom: z.string().max(40).optional().default(""),
 
 	// Pricing — sell
 	salePrice: z.number().positive().nullable().optional(),
 	negotiable: z.boolean().default(false),
-	titleDocuments: z.string().optional().default(""),
+	titleDocuments: z.string().max(500).optional().default(""),
 
 	// Lease terms
-	leaseTerms: z.string().optional().default(""),
+	leaseTerms: z.string().max(2000).optional().default(""),
 
 	// Contact
-	contactFirstName: z.string().optional().default(""),
-	contactLastName: z.string().optional().default(""),
+	contactFirstName: z.string().max(60).optional().default(""),
+	contactLastName: z.string().max(60).optional().default(""),
 	contactEmail: z.string().email().optional().or(z.literal("")).default(""),
-	contactPhone: z.string().optional().default(""),
+	contactPhone: z.string().max(40).optional().default(""),
 
 	// Off-platform owner (in-house agents only). Optional in the schema —
 	// the route handler enforces presence when the submitter is an
@@ -238,13 +265,9 @@ export const propertyUpdateSchema = propertyCreateSchema
 	minimumLease: z.string().max(50).nullish(),
 
 	photos: z
-		.array(
-			z.object({
-				url: z.string().url(),
-				isMain: z.boolean().optional(),
-			})
-		)
+		.array(photoSchema)
 		.min(1, "Add at least one photo")
+		.max(30, "Maximum 30 photos")
 		.optional(),
 });
 

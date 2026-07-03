@@ -20,6 +20,10 @@ export function zodErr(error: ZodError) {
   return err("validation_error", "Invalid request", 400, error.flatten());
 }
 
+// Trusts x-forwarded-for, which is safe on Vercel (the platform overwrites it)
+// but NOT behind a self-managed proxy. When we move to the VPS, the reverse
+// proxy (nginx/caddy) MUST strip and re-set this header, or every IP-based
+// rate limit in src/lib/ratelimit.ts becomes spoofable.
 export function getClientIp(req: Request): string {
   const xff = req.headers.get("x-forwarded-for");
   if (xff) return xff.split(",")[0].trim();

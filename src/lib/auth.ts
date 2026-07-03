@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { verifyOtp } from "./otp";
 import { normalizePhone } from "./phone";
+import { otpVerifyLimiter } from "./ratelimit";
 
 const googleEnabled =
   !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
@@ -31,6 +32,12 @@ export const authOptions: NextAuthOptions = {
         if (!creds?.email || !creds?.code || !creds?.purpose) return null;
         const email = creds.email.toLowerCase().trim();
         const purpose = creds.purpose as "SIGNUP" | "LOGIN";
+
+        // Upstash shield on top of the per-code DB attempts counter in
+        // verifyOtp — this one survives code rotation, so an attacker can't
+        // reset their budget by re-requesting codes.
+        const rl = await otpVerifyLimiter.limit(email);
+        if (!rl.success) return null;
 
         const result = await verifyOtp({ email, purpose, code: creds.code });
         if (!result.ok) return null;

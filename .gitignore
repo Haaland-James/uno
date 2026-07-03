@@ -4,6 +4,9 @@
 *.pdf
 *.md
 *.md.pdf
+# project docs are versioned (the blanket *.md above is for scratch notes)
+!docs/**/*.md
+!CLAUDE.md
 /.vscode
 
 # dependencies

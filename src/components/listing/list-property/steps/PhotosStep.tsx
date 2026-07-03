@@ -190,6 +190,9 @@ export function PhotosStep() {
 	const uploadOne = useCallback(async (tileKey: string, file: File) => {
 		try {
 			const compressed = await compressImage(file).catch(() => file);
+			if (compressed.size > 5 * 1024 * 1024) {
+				throw new Error(`${file.name} is over 5 MB after compression — try a smaller photo.`);
+			}
 			const sign = await listingsClient.signUpload();
 			const form = new FormData();
 			form.append("file", compressed);
@@ -197,6 +200,8 @@ export function PhotosStep() {
 			form.append("timestamp", String(sign.timestamp));
 			form.append("signature", sign.signature);
 			form.append("folder", sign.folder);
+			// Signed param — must match the signature or Cloudinary rejects the upload
+			form.append("allowed_formats", sign.allowedFormats);
 
 			const res = await fetch(
 				`https://api.cloudinary.com/v1_1/${sign.cloudName}/image/upload`,
@@ -228,6 +233,10 @@ export function PhotosStep() {
 		if (!files || files.length === 0) return;
 		const newTiles: Tile[] = [];
 		for (const file of Array.from(files)) {
+			if (!file.type.startsWith("image/")) {
+				toast.error(`${file.name} isn't an image file.`);
+				continue;
+			}
 			if (file.size > MAX_BYTES) {
 				toast.error(`${file.name} is over 25 MB — please choose a smaller photo.`);
 				continue;

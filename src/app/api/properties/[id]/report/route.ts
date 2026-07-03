@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { ok, err, zodErr } from "@/lib/api";
+import { ok, err, zodErr, getClientIp } from "@/lib/api";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { reportLimiter } from "@/lib/ratelimit";
 
 /**
  * POST /api/properties/[id]/report — submit a report against a listing.
@@ -18,6 +19,13 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest, ctx: { params: { id: string } }) {
+	// Per-IP because guests can report — the signed-in dedup below doesn't
+	// protect against anonymous queue flooding.
+	const rl = await reportLimiter.limit(getClientIp(req));
+	if (!rl.success) {
+		return err("rate_limited", "You've reported several listings recently — try again later.", 429);
+	}
+
 	const property = await db.property.findUnique({
 		where: { id: ctx.params.id },
 		select: { id: true, deletedAt: true },
