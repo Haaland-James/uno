@@ -88,6 +88,7 @@ export default function AgentOwnersPage() {
 				</div>
 			) : (
 				<div className="rounded-lg border border-black/10 bg-white overflow-hidden">
+					<div className="overflow-x-auto">
 					<table className="w-full text-sm">
 						<thead className="bg-black/[0.02] text-left text-xs uppercase tracking-wide text-content-secondary">
 							<tr>
@@ -144,6 +145,7 @@ export default function AgentOwnersPage() {
 							))}
 						</tbody>
 					</table>
+					</div>
 				</div>
 			)}
 
