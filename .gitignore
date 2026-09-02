@@ -6,6 +6,10 @@
 *.md.pdf
 /.vscode
 
+# keep project docs tracked despite *.md ignore above
+!docs/
+!docs/**/*.md
+
 # dependencies
 /node_modules
 /.pnp
