@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Logo } from "@/components/shared/Logo";
 import {
   Search,
-  Home,
   ChevronDown,
   ChevronLeft,
   Menu,
@@ -98,15 +98,7 @@ export function Header({ className }: { className?: string }) {
               isPropertyDetail ? "hidden md:flex" : "flex"
             )}
           >
-            <div className="flex h-[29px] w-[29px] items-center justify-center rounded-full bg-[#f5d0d0] md:h-[38px] md:w-[38px]">
-              <Home
-                className="h-[14px] w-[14px] text-[#af2525] md:h-[18px] md:w-[18px]"
-                strokeWidth={2.5}
-              />
-            </div>
-            <span className="text-[22px] font-normal leading-none text-[#af2525] md:text-[28px]">
-              uno
-            </span>
+            <Logo className="h-6 w-auto md:h-8" />
           </Link>
         </div>
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/shared/Logo";
 
 const findUsLinks = [
   { label: "Contact us", href: "/contact" },
@@ -101,14 +102,7 @@ export function Footer() {
             </div>
 
             {/* Logo row */}
-            <div className="flex items-center gap-[6px]">
-              <div className="flex items-center justify-center w-[38px] h-[38px] rounded-full bg-[#f5d0d0]">
-                <Home size={18} className="text-[#af2525]" />
-              </div>
-              <span className="text-[28px] font-normal text-[#af2525] leading-none">
-                uno
-              </span>
-            </div>
+            <Logo className="h-8 w-auto" />
           </div>
 
           {/* Divider + copyright */}
@@ -154,14 +148,7 @@ export function Footer() {
         </div>
 
         {/* Logo row */}
-        <div className="flex items-center gap-[6px] mb-[20px]">
-          <div className="flex items-center justify-center w-[38px] h-[38px] rounded-full bg-[#f5d0d0]">
-            <Home size={18} className="text-[#af2525]" />
-          </div>
-          <span className="text-[28px] font-normal text-[#af2525] leading-none">
-            uno
-          </span>
-        </div>
+        <Logo className="mb-[20px] h-8 w-auto" />
 
         {/* Divider + copyright */}
         <hr className="border-t border-[rgba(0,0,0,0.1)] mb-[14px]" />

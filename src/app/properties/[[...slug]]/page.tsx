@@ -4,9 +4,9 @@ import { signOutAndToast } from "@/lib/auth-actions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Logo } from "@/components/shared/Logo";
 import { useSession } from "next-auth/react";
 import {
-  Home,
   Search,
   X,
   ChevronsUpDown,
@@ -295,11 +295,8 @@ export default function PropertiesSearchPage() {
       <header className="z-50 hidden flex-shrink-0 border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] md:block">
         <div className="flex items-center justify-between px-[41px] py-[6px]">
           <div className="flex items-center gap-[50px]">
-            <Link href="/" className="flex items-center gap-[6px]">
-              <div className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#f5d0d0]">
-                <Home className="h-[18px] w-[18px] text-[#af2525]" strokeWidth={2.5} />
-              </div>
-              <span className="text-[28px] font-normal leading-none text-[#af2525]">uno</span>
+            <Link href="/" className="flex items-center">
+              <Logo className="h-8 w-auto" />
             </Link>
 
             {/* Pre-filled location chip — click to open autocomplete */}
@@ -379,10 +376,8 @@ export default function PropertiesSearchPage() {
          ═══════════════════════════════════════════════════ */}
       <header className="z-50 flex h-[64px] flex-shrink-0 items-center justify-between border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] px-[15px] md:hidden">
         <div className="flex flex-1 items-center gap-[10px]">
-          <Link href="/" className="flex items-center gap-1.5">
-            <div className="flex h-[29px] w-[29px] items-center justify-center rounded-full bg-[#f5d0d0]">
-              <Home className="h-[14px] w-[14px] text-[#af2525]" strokeWidth={2.5} />
-            </div>
+          <Link href="/" className="flex items-center">
+            <Logo className="h-6 w-auto" />
           </Link>
           <div className="flex-1">
             {!showSearchInline && currentLocation ? (
