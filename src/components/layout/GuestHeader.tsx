@@ -4,8 +4,9 @@ import { signOutAndToast } from "@/lib/auth-actions";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Home, Menu, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/shared/Logo";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { GuestMobileDrawer } from "@/components/layout/GuestMobileDrawer";
 
@@ -55,16 +56,8 @@ export function GuestHeader({ className }: { className?: string }) {
     >
       <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 md:px-10">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-1.5">
-          <div className="flex h-[29px] w-[29px] items-center justify-center rounded-full bg-[#f5d0d0] md:h-[38px] md:w-[38px]">
-            <Home
-              className="h-[14px] w-[14px] text-[#af2525] md:h-[18px] md:w-[18px]"
-              strokeWidth={2.5}
-            />
-          </div>
-          <span className="text-[22px] font-normal leading-none text-[#af2525] md:text-[28px]">
-            uno
-          </span>
+        <Link href="/" className="flex items-center">
+          <Logo className="h-6 w-auto md:h-8" />
         </Link>
 
         {/* Centre nav — desktop only */}

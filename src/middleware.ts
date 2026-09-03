@@ -158,7 +158,11 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
 	matcher: [
-		// Match everything except static files, API, and Next internals
-		"/((?!_next/static|_next/image|favicon.ico|public|api).*)",
+		// Match everything except static files, API, and Next internals.
+		// Files under /public are served at the root (e.g. /logo.svg), not
+		// under a "/public" prefix, so they're excluded by the trailing
+		// "\\..*" clause (any path segment containing a dot) rather than by
+		// name — this also future-proofs any new file dropped into /public.
+		"/((?!_next/static|_next/image|favicon.ico|api|.*\\..*).*)",
 	],
 };
