@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { contactCreateSchema, contactListQuerySchema } from "@/lib/validators/contact";
 import { contactRequestLimiter } from "@/lib/ratelimit";
-import { sendContactLeadEmail } from "@/lib/email";
+import { sendBestEffort, sendContactLeadEmail } from "@/lib/email";
 
 const IDEMPOTENCY_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -206,23 +206,20 @@ export async function POST(req: NextRequest) {
 		return row;
 	});
 
-	try {
-		await sendContactLeadEmail({
-			to: landlord.email,
-			tenantName: tenant.name,
-			tenantPhone: tenant.phone ?? "",
-			tenantEmail: tenant.email,
-			message: message ?? null,
-			contactMethod,
-			propertyTitle: property.title,
-			propertyLocation: `${property.area}, ${property.city}`,
-			inboxUrl: `${process.env.NEXTAUTH_URL}/listing/contacts`,
-		});
-	} catch (error) {
-		// The ContactRequest row is already the source of truth — a failed
-		// notification email shouldn't fail the renter's contact action.
-		console.error("Failed to send contact lead email", error);
-	}
+	await sendBestEffort(
+		() =>
+			sendContactLeadEmail({
+				to: landlord.email,
+				tenantName: tenant.name,
+				tenantPhone: tenant.phone ?? "",
+				tenantEmail: tenant.email,
+				message: message ?? null,
+				contactMethod,
+				propertyTitle: property.title,
+				propertyLocation: `${property.area}, ${property.city}`,
+			}),
+		"contact-lead"
+	);
 
 	return ok({ id: created.id, deduped: false, contactTarget: target }, { status: 201 });
 }
