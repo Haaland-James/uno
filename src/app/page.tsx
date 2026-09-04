@@ -160,7 +160,9 @@ export default function HomePage() {
         </section>
 
         {/* ── Latest Market Listings ─────────────────────────── */}
-        <section className="mt-[32px] md:mt-[32px]">
+        {/* Hidden outright when empty — a heading over an empty rail reads as
+            broken, and there are no filters here to relax. */}
+        <section className={`mt-[32px] md:mt-[32px] ${!latestLoading && latest.length === 0 ? "hidden" : ""}`}>
           <div className="mx-auto max-w-[1440px] px-[16px] md:px-[40px]">
             <div className="mb-[16px] flex items-center justify-between md:mb-[21px]">
               <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
@@ -250,12 +252,17 @@ export default function HomePage() {
               {!topLoading && topListings.length > 0 && (
                 <SeeAllCard href={seeAllTop} images={topListings.slice(0, 3).map((p) => p.photos[0]?.url)} className="shrink-0" />
               )}
+              {!topLoading && topListings.length === 0 && (
+                <p className="py-[32px] text-[14px] text-black/50">
+                  No listings in {activeTab} yet. Try another neighbourhood.
+                </p>
+              )}
             </div>
           </div>
         </section>
 
         {/* ── Hot Properties ─────────────────────────────────── */}
-        <section className="mt-[36px] md:mt-[60px]">
+        <section className={`mt-[36px] md:mt-[60px] ${!hotLoading && hot.length === 0 ? "hidden" : ""}`}>
           <div className="mx-auto max-w-[1440px] px-[16px] md:px-[40px]">
             <div className="mb-[16px] flex items-center justify-between md:mb-[21px]">
               <h2 className="text-[20px] font-semibold text-[#161515] md:text-[30px] md:font-medium">
