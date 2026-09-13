@@ -42,6 +42,9 @@ echo "==> ${ENVIRONMENT}: ${PREV_TAG:-<none>} -> ${NEW_TAG}"
 set_tag "$NEW_TAG"
 docker compose pull "$SERVICE"
 
+# First deploy (or after a reboot race): make sure Postgres is up before migrating.
+docker compose up -d --wait db
+
 echo "==> Running migrations"
 if ! docker compose run --rm --no-deps "$SERVICE" prisma migrate deploy; then
   echo "!! Migration failed — keeping ${PREV_TAG:-previous} running" >&2
