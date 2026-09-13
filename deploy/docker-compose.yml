@@ -1,0 +1,85 @@
+# UNO production + staging stack on the Hostinger VPS (/opt/uno).
+#
+# Public traffic never reaches these containers directly: Hestia's nginx owns
+# ports 80/443, terminates TLS, and proxies to the 127.0.0.1 ports below.
+# Binding to 127.0.0.1 matters on this server — Docker's iptables rules bypass
+# Hestia's firewall, so a 0.0.0.0 publish would be internet-exposed.
+#
+# Interpolation values (DB passwords, image tags) come from /opt/uno/.env.
+# App secrets come from app.production.env / app.staging.env. See env.example.
+
+name: uno
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      UNO_PROD_DB_PASSWORD: ${UNO_PROD_DB_PASSWORD:?set in .env}
+      UNO_STAGING_DB_PASSWORD: ${UNO_STAGING_DB_PASSWORD:?set in .env}
+    # Tuned for a shared 8 GB box that is already swapping — keep it lean.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - max_connections=60
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./initdb/20-uno-databases.sh:/docker-entrypoint-initdb.d/20-uno-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 1g
+    networks: [uno]
+    logging: *logging
+
+  app:
+    image: ghcr.io/haaland-james/uno:${PROD_TAG:-unset}
+    restart: unless-stopped
+    env_file: app.production.env
+    environment:
+      NODE_OPTIONS: --max-old-space-size=512
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 768m
+    networks: [uno]
+    logging: *logging
+
+  app-staging:
+    image: ghcr.io/haaland-james/uno:${STAGING_TAG:-unset}
+    restart: unless-stopped
+    env_file: app.staging.env
+    environment:
+      NODE_OPTIONS: --max-old-space-size=384
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 512m
+    networks: [uno]
+    logging: *logging
+
+volumes:
+  db-data:
+
+networks:
+  uno:

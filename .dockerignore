@@ -16,3 +16,4 @@ logos
 emailt-templat.html
 Dockerfile
 docker-compose*.yml
+deploy
