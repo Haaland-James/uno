@@ -4,7 +4,7 @@ name: Deploy
 # main → production (https://uno.srv602517.hstgr.cloud)
 #
 # Both branches only change via reviewed PRs where CI must pass, so this workflow
-# doesn't re-run lint/type-check. The "production" GitHub Environment should have
+# doesn't re-run lint/type-check. The "vps-production" GitHub Environment should have
 # a required reviewer, so a merge to main waits for a click before it ships.
 
 on:
@@ -71,7 +71,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: ${{ needs.build.outputs.environment }}
+      # Prefixed so it never collides with the Production/Preview environments
+      # Vercel's GitHub integration creates (environment names are case-insensitive).
+      name: vps-${{ needs.build.outputs.environment }}
       url: ${{ needs.build.outputs.environment == 'production' && 'https://uno.srv602517.hstgr.cloud' || 'https://staging-uno.srv602517.hstgr.cloud' }}
     steps:
       - uses: actions/checkout@v4
