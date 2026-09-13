@@ -1,6 +1,13 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Created on first send, not at import: `new Resend()` throws without a key, and
+// `next build` imports route modules while collecting page data — so a
+// module-level client breaks any build that (correctly) has no runtime secrets.
+let resend: Resend | null = null;
+function getResend(): Resend {
+  resend ??= new Resend(process.env.RESEND_API_KEY);
+  return resend;
+}
 
 const FROM = process.env.EMAIL_FROM || "UNO <onboarding@resend.dev>";
 
@@ -69,7 +76,7 @@ export async function sendOtpEmail({ to, code, purpose, name }: SendOtpParams) {
 
   const text = `${greeting}\n\nYour UNO verification code is: ${code}\n\nIt expires in 10 minutes.\n\nIf you didn't request this, ignore this email.`;
 
-  const result = await resend.emails.send({
+  const result = await getResend().emails.send({
     from: FROM,
     to,
     subject,
