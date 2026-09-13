@@ -141,6 +141,7 @@ export default async function AgentListingsPage({ searchParams }: PageProps) {
 					<div className="px-4 py-2 text-xs text-content-secondary border-b border-black/5">
 						Showing {listings.length} of {allListings.length} listing{allListings.length === 1 ? "" : "s"}
 					</div>
+					<div className="overflow-x-auto">
 					<table className="w-full text-sm">
 						<thead className="bg-black/[0.02] text-left text-xs uppercase tracking-wide text-content-secondary">
 							<tr>
@@ -202,6 +203,7 @@ export default async function AgentListingsPage({ searchParams }: PageProps) {
 							))}
 						</tbody>
 					</table>
+					</div>
 				</div>
 			)}
 		</div>

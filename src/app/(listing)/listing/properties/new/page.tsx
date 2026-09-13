@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { Logo } from "@/components/shared/Logo";
 import { useListPropertyStore, type ListPropertyData } from "@/stores/listPropertyStore";
 import { useUserStore } from "@/stores/userStore";
 import { getInitials } from "@/lib/utils";
@@ -315,11 +316,8 @@ function NewPropertyPage() {
 		<div className="fixed inset-0 z-[80] flex flex-col bg-bg-page">
 			{/* Top bar */}
 			<header className="flex h-16 shrink-0 items-center justify-between border-b border-black/10 bg-white px-4 md:px-8">
-				<Link href={exitDestination} className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">
-					<span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#af2525] text-[12px] leading-none text-white">
-						◆
-					</span>
-					<span className="text-black">uno</span>
+				<Link href={exitDestination} className="flex items-center">
+					<Logo className="h-7 w-auto" />
 				</Link>
 				<div className="flex items-center gap-2">
 					<span className="hidden text-[15px] text-black sm:inline">{firstName}</span>

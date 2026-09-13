@@ -286,7 +286,7 @@ export default function FindPage() {
 					</h2>
 
 					{recentlyViewedLoading ? (
-						<div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
 							{Array.from({ length: 6 }).map((_, i) => (
 								<PropertyCardSkeleton key={i} className="w-full md:w-full" />
 							))}
@@ -312,7 +312,7 @@ export default function FindPage() {
 							/>
 						</div>
 					) : (
-						<div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
 							{recentlyViewed.map((property) => (
 								<Link
 									key={property.id}

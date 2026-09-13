@@ -4,9 +4,9 @@ import { signOutAndToast } from "@/lib/auth-actions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Logo } from "@/components/shared/Logo";
 import { useSession } from "next-auth/react";
 import {
-  Home,
   Search,
   X,
   ChevronsUpDown,
@@ -25,6 +25,7 @@ import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
 import { SaveSearchPopover } from "@/components/search/SaveSearchPopover";
 import { searchStateToCriteria, summarizeCriteria } from "@/lib/saved-search-mapper";
 import { GuestMobileDrawer } from "@/components/layout/GuestMobileDrawer";
+import { MobileNav } from "@/components/layout/MobileNav";
 import { MobileDrawer } from "@/components/layout/MobileDrawer";
 import { SearchPageFooter } from "@/components/layout/SearchPageFooter";
 import { propertiesClient } from "@/lib/clients/properties";
@@ -294,11 +295,8 @@ export default function PropertiesSearchPage() {
       <header className="z-50 hidden flex-shrink-0 border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] md:block">
         <div className="flex items-center justify-between px-[41px] py-[6px]">
           <div className="flex items-center gap-[50px]">
-            <Link href="/" className="flex items-center gap-[6px]">
-              <div className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#f5d0d0]">
-                <Home className="h-[18px] w-[18px] text-[#af2525]" strokeWidth={2.5} />
-              </div>
-              <span className="text-[28px] font-normal leading-none text-[#af2525]">uno</span>
+            <Link href="/" className="flex items-center">
+              <Logo className="h-8 w-auto" />
             </Link>
 
             {/* Pre-filled location chip — click to open autocomplete */}
@@ -378,10 +376,8 @@ export default function PropertiesSearchPage() {
          ═══════════════════════════════════════════════════ */}
       <header className="z-50 flex h-[64px] flex-shrink-0 items-center justify-between border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] px-[15px] md:hidden">
         <div className="flex flex-1 items-center gap-[10px]">
-          <Link href="/" className="flex items-center gap-1.5">
-            <div className="flex h-[29px] w-[29px] items-center justify-center rounded-full bg-[#f5d0d0]">
-              <Home className="h-[14px] w-[14px] text-[#af2525]" strokeWidth={2.5} />
-            </div>
+          <Link href="/" className="flex items-center">
+            <Logo className="h-6 w-auto" />
           </Link>
           <div className="flex-1">
             {!showSearchInline && currentLocation ? (
@@ -637,7 +633,7 @@ export default function PropertiesSearchPage() {
           {/* Scrollable card grid */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-[24px] py-[24px]">
             {loading ? (
-              <div className="grid grid-cols-2 gap-[20px]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px] md:gap-[20px]">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <PropertyCardSkeleton key={i} className="w-full md:w-full" />
                 ))}
@@ -653,7 +649,7 @@ export default function PropertiesSearchPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-[20px]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px] md:gap-[20px]">
                 {items.map((p) => (
                   <div
                     key={p.id}
@@ -890,7 +886,7 @@ export default function PropertiesSearchPage() {
             </div>
             <div className="flex-1 overflow-y-auto px-3 py-3">
               {loading ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <PropertyCardSkeleton key={i} className="w-full md:w-full" />
                   ))}
@@ -898,7 +894,7 @@ export default function PropertiesSearchPage() {
               ) : items.length === 0 ? (
                 <div className="py-12 text-center text-[14px] text-black/50">No properties match.</div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   {items.map((p) => (
                     <div
                       key={p.id}
@@ -949,7 +945,7 @@ export default function PropertiesSearchPage() {
       <button
         type="button"
         onClick={() => setMobileView((v) => (v === "list" ? "map" : "list"))}
-        className="md:hidden fixed bottom-5 left-1/2 z-[100] flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-black px-5 text-[14px] font-medium text-white shadow-lg"
+        className="md:hidden fixed bottom-[76px] left-1/2 z-[100] flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-black px-5 text-[14px] font-medium text-white shadow-lg"
       >
         {mobileView === "list" ? <><Map size={16} /> Map</> : <><List size={16} /> List</>}
       </button>
@@ -961,6 +957,8 @@ export default function PropertiesSearchPage() {
       ) : (
         <GuestMobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       )}
+
+      <MobileNav />
     </div>
   );
 }

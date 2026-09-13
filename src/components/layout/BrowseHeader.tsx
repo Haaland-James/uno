@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Home, Search, X, Menu } from "lucide-react";
+import { Search, X, Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { Logo } from "@/components/shared/Logo";
 import { cn } from "@/lib/utils";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { resolveTextToUrl } from "@/lib/search-url";
@@ -47,11 +48,8 @@ export function BrowseHeader({
       <header className="sticky top-0 z-50 hidden h-16 w-full flex-shrink-0 border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] md:block">
         <div className="flex h-full items-center justify-between px-[41px]">
           <div className="flex items-center gap-[50px]">
-            <Link href="/" className="flex items-center gap-[6px]">
-              <div className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#f5d0d0]">
-                <Home className="h-[18px] w-[18px] text-[#af2525]" strokeWidth={2.5} />
-              </div>
-              <span className="text-[28px] font-normal leading-none text-[#af2525]">uno</span>
+            <Link href="/" className="flex items-center">
+              <Logo className="h-8 w-auto" />
             </Link>
 
             <form
@@ -114,11 +112,8 @@ export function BrowseHeader({
 
       {/* Mobile */}
       <header className="sticky top-0 z-50 flex h-[64px] flex-shrink-0 items-center justify-between border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] px-[15px] md:hidden">
-        <Link href="/" className="flex items-center gap-1.5">
-          <div className="flex h-[29px] w-[29px] items-center justify-center rounded-full bg-[#f5d0d0]">
-            <Home className="h-[14px] w-[14px] text-[#af2525]" strokeWidth={2.5} />
-          </div>
-          <span className="text-[22px] font-normal leading-none text-[#af2525]">uno</span>
+        <Link href="/" className="flex items-center">
+          <Logo className="h-6 w-auto" />
         </Link>
 
         <form onSubmit={handleSubmit} className="flex flex-1 items-center px-3">

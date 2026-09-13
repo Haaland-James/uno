@@ -188,6 +188,7 @@ export default async function AgentAnalyticsPage() {
 				{topListings.length === 0 ? (
 					<p className="px-4 py-6 text-sm text-content-secondary text-center">No listings yet.</p>
 				) : (
+					<div className="overflow-x-auto">
 					<table className="w-full text-sm">
 						<thead className="bg-black/[0.02] text-left text-xs uppercase tracking-wide text-content-secondary">
 							<tr>
@@ -226,6 +227,7 @@ export default async function AgentAnalyticsPage() {
 							})}
 						</tbody>
 					</table>
+					</div>
 				)}
 			</div>
 		</div>

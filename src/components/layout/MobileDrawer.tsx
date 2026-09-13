@@ -13,7 +13,6 @@ import {
 	Users,
 	HelpCircle,
 	LogOut,
-	MessageSquare,
 	BarChart3,
 	Settings,
 } from "lucide-react";
@@ -73,12 +72,6 @@ const listingNavItems: NavItem[] = [
 		href: "/listing/properties",
 		icon: <Building2 size={18} strokeWidth={2} />,
 		iconBg: "#ffcfcf",
-	},
-	{
-		label: "Messages",
-		href: "/listing/contacts",
-		icon: <MessageSquare size={18} strokeWidth={2} />,
-		iconBg: "#f5b324",
 	},
 	{
 		label: "Analytics",
