@@ -52,15 +52,54 @@ export async function GET(req: NextRequest) {
       }),
     ...(f.verifiedOnly && { verificationStatus: "VERIFIED" }),
     ...(f.availableNow && { availabilityStatus: "AVAILABLE_NOW" }),
-    ...(f.q && {
-      OR: [
-        { title: { contains: f.q, mode: "insensitive" } },
-        { description: { contains: f.q, mode: "insensitive" } },
-        { area: { contains: f.q, mode: "insensitive" } },
-        { city: { contains: f.q, mode: "insensitive" } },
-      ],
-    }),
   };
+
+  // ── Full-text search path ──────────────────────────────────────────
+  // When `q` is present, query the GIN-indexed search_vector column for
+  // ranked matches, then let Prisma apply the remaining filters to those IDs.
+  // Falls back to ILIKE on area/city for location-only queries. No matches
+  // means an empty result — never mock listings.
+  let rankedIds: string[] | null = null;
+
+  if (f.q) {
+    const ftsRows = await db.$queryRaw<{ id: string }[]>(
+      Prisma.sql`
+        SELECT id
+        FROM "Property"
+        WHERE "search_vector" @@ plainto_tsquery('english', ${f.q})
+          AND status = 'ACTIVE'
+          AND "deletedAt" IS NULL
+        ORDER BY ts_rank("search_vector", plainto_tsquery('english', ${f.q})) DESC
+        LIMIT 500
+      `
+    );
+
+    let matchIds: string[];
+    if (ftsRows.length > 0) {
+      matchIds = ftsRows.map((r) => r.id);
+      // Relevance order only applies when the user hasn't picked a sort.
+      if (!f.sort) rankedIds = matchIds;
+    } else {
+      const likeTerm = `%${f.q}%`;
+      const fallbackRows = await db.$queryRaw<{ id: string }[]>(
+        Prisma.sql`
+          SELECT id FROM "Property"
+          WHERE (area ILIKE ${likeTerm} OR city ILIKE ${likeTerm})
+            AND status = 'ACTIVE'
+            AND "deletedAt" IS NULL
+          LIMIT 500
+        `
+      );
+      matchIds = fallbackRows.map((r) => r.id);
+    }
+
+    // Intersect with an explicit `ids` filter rather than overwriting it.
+    if (f.ids?.length) {
+      const requested = new Set(f.ids);
+      matchIds = matchIds.filter((id) => requested.has(id));
+    }
+    where.id = { in: matchIds };
+  }
 
   const orderBy: Prisma.PropertyOrderByWithRelationInput =
     f.sort === "price_asc"
@@ -72,16 +111,30 @@ export async function GET(req: NextRequest) {
       : { createdAt: "desc" };
 
   const skip = (f.page - 1) * f.pageSize;
+  const include = { photos: { orderBy: { order: "asc" as const } } };
 
-  const [items, total, session] = await Promise.all([
-    db.property.findMany({
-      where,
-      orderBy,
-      skip,
-      take: f.pageSize,
-      include: { photos: { orderBy: { order: "asc" } } },
-    }),
-    db.property.count({ where }),
+  const [{ items, total }, session] = await Promise.all([
+    rankedIds
+      ? // Rank lives in rankedIds, not a column, so the database can't ORDER BY it.
+        // Resolve which ranked IDs survive the filters, paginate in rank order,
+        // then fetch only that page — stable pages, relevance across all pages.
+        (async () => {
+          const survivors = new Set(
+            (await db.property.findMany({ where, select: { id: true } })).map((p) => p.id)
+          );
+          const ordered = rankedIds.filter((id) => survivors.has(id));
+          const pageIds = ordered.slice(skip, skip + f.pageSize);
+          const rows = await db.property.findMany({ where: { id: { in: pageIds } }, include });
+          const byId = new Map(rows.map((p) => [p.id, p]));
+          return {
+            items: pageIds.flatMap((id) => byId.get(id) ?? []),
+            total: ordered.length,
+          };
+        })()
+      : Promise.all([
+          db.property.findMany({ where, orderBy, skip, take: f.pageSize, include }),
+          db.property.count({ where }),
+        ]).then(([items, total]) => ({ items, total })),
     getServerSession(authOptions),
   ]);
 
