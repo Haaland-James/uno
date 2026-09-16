@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Building2, Eye, MessageSquare, Heart, TrendingUp, Home as HomeIcon } from "lucide-react";
+import { formatCount } from "@/lib/utils";
+import { statusLabel, statusColor } from "@/lib/property-status";
 
 interface DashboardData {
 	activeListings: number;
@@ -23,33 +25,6 @@ interface DashboardData {
 	}[];
 }
 
-function formatCount(n: number) {
-	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-	if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-	return String(n);
-}
-
-function statusLabel(s: string) {
-	switch (s) {
-		case "ACTIVE": return "Live";
-		case "PAUSED": return "Paused";
-		case "RENTED": return "Rented";
-		case "PENDING": return "Pending";
-		case "REJECTED": return "Rejected";
-		default: return s;
-	}
-}
-
-function statusColor(s: string) {
-	switch (s) {
-		case "ACTIVE": return "bg-[#22c55e] text-white";
-		case "PAUSED": return "bg-[#f5b324] text-white";
-		case "RENTED": return "bg-[#6366f1] text-white";
-		case "PENDING": return "bg-[#f97316] text-white";
-		case "REJECTED": return "bg-[#ef4444] text-white";
-		default: return "bg-black/10 text-black/60";
-	}
-}
 
 function timeAgo(dateStr: string) {
 	const diff = Date.now() - new Date(dateStr).getTime();

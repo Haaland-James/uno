@@ -41,3 +41,31 @@ export function deriveStatusFields(
  *   db.property.findMany({ where: { ...notDeleted, status: "ACTIVE" } })
  */
 export const notDeleted = { deletedAt: null } as const;
+
+/**
+ * Lister-facing label for a lifecycle status. "ACTIVE" reads as "Live" to a
+ * lister — they think in terms of whether renters can see the listing, not in
+ * terms of the enum. Shared by the lister dashboard and analytics pages.
+ */
+export function statusLabel(s: string): string {
+  switch (s) {
+    case "ACTIVE": return "Live";
+    case "PAUSED": return "Paused";
+    case "RENTED": return "Rented";
+    case "PENDING": return "Pending";
+    case "REJECTED": return "Rejected";
+    default: return s;
+  }
+}
+
+/** Badge classes paired with `statusLabel`. */
+export function statusColor(s: string): string {
+  switch (s) {
+    case "ACTIVE": return "bg-[#22c55e] text-white";
+    case "PAUSED": return "bg-[#f5b324] text-white";
+    case "RENTED": return "bg-[#6366f1] text-white";
+    case "PENDING": return "bg-[#f97316] text-white";
+    case "REJECTED": return "bg-[#ef4444] text-white";
+    default: return "bg-black/10 text-black/60";
+  }
+}
