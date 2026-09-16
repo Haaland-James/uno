@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { cloudinary } from "@/lib/cloudinary";
 import { ok, err } from "@/lib/api";
+import { uploadSignLimiter } from "@/lib/ratelimit";
 
 /**
  * Returns Cloudinary signed-upload params so the browser can upload directly to Cloudinary
@@ -14,6 +15,11 @@ export async function POST(req: NextRequest) {
 	const session = await getServerSession(authOptions);
 	if (!session?.user?.id) {
 		return err("unauthorized", "Sign in to upload photos", 401);
+	}
+
+	const rl = await uploadSignLimiter.limit(session.user.id);
+	if (!rl.success) {
+		return err("rate_limited", "You've uploaded a lot of photos recently — try again later.", 429);
 	}
 
 	const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;

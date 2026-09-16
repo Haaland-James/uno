@@ -43,3 +43,23 @@ export const contactRequestLimiter = new Ratelimit({
   prefix: "rl:contact",
   analytics: true,
 });
+
+// Cloudinary upload signatures: 60/hour per user. A listing tops out around
+// 30 photos, so this allows a full listing plus retries without letting a
+// script mint unlimited signatures and burn the (billed) Cloudinary quota.
+export const uploadSignLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "1 h"),
+  prefix: "rl:upload:sign",
+  analytics: true,
+});
+
+// Listing creation: 20/hour per user. Listings go ACTIVE immediately while the
+// approval flow is on hold, so this is the only ceiling on live spam listings
+// per account. Generous enough for an in-house agent's bulk-listing session.
+export const listingCreateLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, "1 h"),
+  prefix: "rl:listing:create",
+  analytics: true,
+});
