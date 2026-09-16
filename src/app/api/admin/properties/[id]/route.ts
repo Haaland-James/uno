@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { requireAdmin } from "@/lib/admin";
 import { deriveStatusFields } from "@/lib/property-status";
+import { sendBestEffort, sendListingApprovedEmail, sendListingRejectedEmail } from "@/lib/email";
 
 /**
  * PATCH /api/admin/properties/[id] — admin moderation actions.
@@ -34,9 +35,18 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 
 	const property = await db.property.findUnique({
 		where: { id: ctx.params.id },
-		select: { id: true, availableFrom: true },
+		select: {
+			id: true,
+			availableFrom: true,
+			title: true,
+			city: true,
+			area: true,
+			landlord: { select: { email: true } },
+		},
 	});
 	if (!property) return err("not_found", "Property not found", 404);
+
+	const propertyLocation = `${property.area}, ${property.city}`;
 
 	let body: unknown;
 	try {
@@ -64,6 +74,16 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 				},
 				select: { id: true, status: true },
 			});
+			await sendBestEffort(
+				() =>
+					sendListingApprovedEmail({
+						to: property.landlord.email,
+						propertyId: property.id,
+						propertyTitle: property.title,
+						propertyLocation,
+					}),
+				"listing-approved"
+			);
 			return ok(updated);
 		}
 		case "reject": {
@@ -75,6 +95,17 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 				},
 				select: { id: true, status: true },
 			});
+			await sendBestEffort(
+				() =>
+					sendListingRejectedEmail({
+						to: property.landlord.email,
+						propertyId: property.id,
+						propertyTitle: property.title,
+						propertyLocation,
+						reason: action.reason,
+					}),
+				"listing-rejected"
+			);
 			return ok(updated);
 		}
 		case "verify": {

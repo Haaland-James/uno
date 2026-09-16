@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { contactCreateSchema, contactListQuerySchema } from "@/lib/validators/contact";
 import { contactRequestLimiter } from "@/lib/ratelimit";
+import { sendBestEffort, sendContactLeadEmail } from "@/lib/email";
 
 const IDEMPOTENCY_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -204,6 +205,21 @@ export async function POST(req: NextRequest) {
 		});
 		return row;
 	});
+
+	await sendBestEffort(
+		() =>
+			sendContactLeadEmail({
+				to: landlord.email,
+				tenantName: tenant.name,
+				tenantPhone: tenant.phone ?? "",
+				tenantEmail: tenant.email,
+				message: message ?? null,
+				contactMethod,
+				propertyTitle: property.title,
+				propertyLocation: `${property.area}, ${property.city}`,
+			}),
+		"contact-lead"
+	);
 
 	return ok({ id: created.id, deduped: false, contactTarget: target }, { status: 201 });
 }
