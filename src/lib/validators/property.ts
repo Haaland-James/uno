@@ -1,5 +1,36 @@
 import { z } from "zod";
 
+// Photo URLs must point at hosts we actually serve images from (mirrors
+// next.config.mjs remotePatterns). Without this, the wizard and edit paths
+// accept any URL and the whole Cloudinary upload pipeline — signing, per-user
+// folders, format restrictions — becomes decoration. When the cloud name env
+// is set, Cloudinary URLs must also belong to OUR cloud, not just any account.
+const ALLOWED_PHOTO_HOSTS = ["res.cloudinary.com", "images.unsplash.com"];
+
+const photoUrlSchema = z
+	.string()
+	.max(500)
+	.refine((raw) => {
+		let url: URL;
+		try {
+			url = new URL(raw);
+		} catch {
+			return false;
+		}
+		if (url.protocol !== "https:") return false;
+		if (!ALLOWED_PHOTO_HOSTS.includes(url.hostname)) return false;
+		const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+		if (url.hostname === "res.cloudinary.com" && cloud) {
+			return url.pathname.startsWith(`/${cloud}/`);
+		}
+		return true;
+	}, "Photo URL must be an UNO-hosted image");
+
+const photoSchema = z.object({
+	url: photoUrlSchema,
+	isMain: z.boolean().optional(),
+});
+
 const feeValueSchema = z.object({
 	mode: z.enum(["FIXED", "PERCENT"]).default("FIXED"),
 	value: z.number().min(0).nullable(),
@@ -145,12 +176,7 @@ export const propertyWizardSubmitSchema = z.object({
 
 	// Photos — Cloudinary URLs already uploaded from the browser
 	photos: z
-		.array(
-			z.object({
-				url: z.string().url(),
-				isMain: z.boolean().optional(),
-			})
-		)
+		.array(photoSchema)
 		.min(1, "Add at least one photo"),
 
 	// Pricing — rent/lease
@@ -238,12 +264,7 @@ export const propertyUpdateSchema = propertyCreateSchema
 	minimumLease: z.string().max(50).nullish(),
 
 	photos: z
-		.array(
-			z.object({
-				url: z.string().url(),
-				isMain: z.boolean().optional(),
-			})
-		)
+		.array(photoSchema)
 		.min(1, "Add at least one photo")
 		.optional(),
 });
