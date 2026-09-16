@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BarChart3, Building2, Eye, Phone, TrendingUp } from "lucide-react";
 import { analyticsClient, type AnalyticsResult } from "@/lib/clients/analytics";
-import { statusLabel, statusColor } from "@/lib/property-status";
+import { statusLabel, statusColor, verificationLabel } from "@/lib/property-status";
 import { toast } from "@/stores/toastStore";
 import { formatCount, cn } from "@/lib/utils";
 
@@ -195,17 +195,29 @@ export default function AnalyticsPage() {
 													>
 														{p.title}
 													</a>
-													<div className="text-xs text-black/50">{p.area || p.city}</div>
+													{/* Same expression My Listings uses, so one listing never
+												    shows two different locations across the two pages. */}
+												<div className="text-xs text-black/50">
+													{p.streetAddress ?? `${p.area}, ${p.city}`}
+												</div>
 												</td>
 												<td className="px-4 py-2">
-													<span
-														className={cn(
-															"inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-															statusColor(p.status)
-														)}
-													>
-														{statusLabel(p.status)}
-													</span>
+													{/* Publication state drives reach; verification state is what
+													    My Listings surfaces. Show both so the two pages never
+													    appear to contradict each other on the same listing. */}
+													<div className="flex flex-col items-start gap-1">
+														<span
+															className={cn(
+																"inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+																statusColor(p.status)
+															)}
+														>
+															{statusLabel(p.status)}
+														</span>
+														<span className="whitespace-nowrap text-[11px] text-black/50">
+															{verificationLabel(p.verificationStatus)}
+														</span>
+													</div>
 												</td>
 												<td className="px-4 py-2 text-right text-black/50">{p.views}</td>
 												<td className="px-4 py-2 text-right text-black/50">

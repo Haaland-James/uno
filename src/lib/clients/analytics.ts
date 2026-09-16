@@ -16,7 +16,10 @@ export type TopListing = {
 	title: string;
 	city: string;
 	area: string;
+	/** Nullable in the schema — fall back to "area, city" exactly as the card does. */
+	streetAddress: string | null;
 	status: string;
+	verificationStatus: string;
 	views: number;
 	contactCount: number;
 };

@@ -69,3 +69,19 @@ export function statusColor(s: string): string {
     default: return "bg-black/10 text-black/60";
   }
 }
+
+/**
+ * Verification-state label. Wording is copied verbatim from
+ * ListingPropertyCard's VERIFICATION_CONFIG so My Listings and Analytics never
+ * describe the same listing differently. IN_PROGRESS is a UI-only state for
+ * wizard drafts — it is not in the Prisma VerificationStatus enum.
+ */
+export function verificationLabel(s: string): string {
+  switch (s) {
+    case "IN_PROGRESS": return "Listing in progress";
+    case "PENDING": return "Verification in progress";
+    case "VERIFIED": return "Verification Complete";
+    case "REJECTED": return "Verification failed";
+    default: return s;
+  }
+}
