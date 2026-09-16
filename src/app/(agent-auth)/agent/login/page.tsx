@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, AlertCircle } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { requestOtp } from "@/lib/authClient";
+import { siteConfig } from "@/../config/site";
 
 function AgentLoginForm() {
 	const router = useRouter();
@@ -35,7 +36,7 @@ function AgentLoginForm() {
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(
 		errorParam === "not_agent"
-			? "That account isn't a UNO agent. Sign in with your staff account."
+			? `That account isn't a ${siteConfig.name} agent. Sign in with your staff account.`
 			: null
 	);
 

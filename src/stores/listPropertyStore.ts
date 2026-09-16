@@ -99,8 +99,8 @@ export interface ListPropertyData {
 	contactEmail: string;
 	contactPhone: string;
 
-	// Off-platform owner (in-house agents only). When the lister is a UNO
-	// agent acting on behalf of a landlord who isn't on UNO, these capture
+	// Off-platform owner (in-house agents only). When the lister is a Hoomefynda
+	// agent acting on behalf of a landlord who isn't on Hoomefynda, these capture
 	// the real owner's contact info for the agent's records. NEVER shown
 	// to renters; populated only on the OwnerStep which is hidden from
 	// regular landlords.

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { siteConfig } from "@/../config/site";
 
 // Photo URLs must point at hosts we actually serve images from (mirrors
 // next.config.mjs remotePatterns). Without this, the wizard and edit paths
@@ -24,7 +25,7 @@ const photoUrlSchema = z
 			return url.pathname.startsWith(`/${cloud}/`);
 		}
 		return true;
-	}, "Photo URL must be an UNO-hosted image");
+	}, `Photo URL must be a ${siteConfig.name}-hosted image`);
 
 const photoSchema = z.object({
 	url: photoUrlSchema,

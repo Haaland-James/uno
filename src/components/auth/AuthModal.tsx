@@ -13,6 +13,7 @@ import { broadcastAuthChange } from "@/lib/auth-sync";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { VerifyForm } from "./VerifyForm";
+import { siteConfig } from "@/../config/site";
 
 export function AuthModal() {
   const router = useRouter();
@@ -88,7 +89,7 @@ export function AuthModal() {
         );
       }
     } else if (wasSignup) {
-      toast.success("Welcome to UNO!");
+      toast.success(`Welcome to ${siteConfig.name}!`);
     } else {
       toast.success("Signed in");
     }

@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./auth";
 
 /**
- * Returns the session if the caller is a verified in-house UNO agent OR
+ * Returns the session if the caller is a verified in-house Hoomefynda agent OR
  * an admin (admins can support agent flows). Returns null otherwise.
  *
  * Pair with `redirect("/agent/login")` in pages and `err("forbidden", ...)`

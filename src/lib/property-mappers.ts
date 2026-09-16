@@ -2,6 +2,7 @@ import type { Property, PropertyPhoto, User, LandlordProfile } from "@prisma/cli
 import type { PropertyCardData, PropertyDetailData } from "@/types/property";
 import { fallbackCoordsFor } from "@/lib/area-coords";
 import { privatize } from "@/lib/privacy";
+import { siteConfig } from "@/../config/site";
 
 type PropertyWithPhotos = Property & {
   photos: PropertyPhoto[];
@@ -142,7 +143,10 @@ export function toDetailDto(
     additionalInfo: buildAdditionalInfo(p),
     features: p.amenities.slice(0, 6),
     listedBy: p.listedByAgent
-      ? { name: "UNO", company: "UNO Verified Listing" }
+      ? {
+          name: siteConfig.name,
+          company: `${siteConfig.name} Verified Listing`,
+        }
       : {
           name: p.landlord.name,
           company: p.landlord.landlordProfile?.bio ?? "",

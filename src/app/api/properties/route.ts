@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
 
     // Detect in-house agents. They get the off-platform-owner fields persisted
     // and the listedByAgent flag flipped — which is the single source of truth
-    // the public UI reads to display "Listed by UNO" instead of the lister's
+    // the public UI reads to display "Listed by Hoomefynda" instead of the lister's
     // name. Regular landlords ignore both fields entirely (defence-in-depth: a
     // malicious payload from a non-agent can't smuggle owner data in).
     const submitter = await db.user.findUnique({

@@ -10,6 +10,13 @@ import {
 	renderText,
 	type DetailRow,
 } from "./render";
+import { siteConfig } from "@/../config/site";
+import { siteUrl } from "@/lib/site";
+
+/** Brand name for email copy. Renaming happens in config/site.ts, not here. */
+const BRAND = siteConfig.name;
+/** Bare host for display-only URLs in copy, e.g. "hoomefynda.com/agents/ada". */
+const BRAND_HOST = siteUrl().replace(/^https?:\/\//, "");
 
 /* -------------------------------------------------------------------------- */
 /* Auth — one-time codes                                                       */
@@ -23,9 +30,9 @@ interface SendOtpParams {
 }
 
 const OTP_SUBJECTS: Record<SendOtpParams["purpose"], string> = {
-	SIGNUP: "Welcome to UNO — verify your email",
-	LOGIN: "Your UNO sign-in code",
-	EMAIL_CHANGE: "Confirm your new email on UNO",
+	SIGNUP: `Welcome to ${BRAND} — verify your email`,
+	LOGIN: `Your ${BRAND} sign-in code`,
+	EMAIL_CHANGE: `Confirm your new email on ${BRAND}`,
 };
 
 const OTP_ACTIONS: Record<SendOtpParams["purpose"], string> = {
@@ -43,7 +50,7 @@ export async function sendOtpEmail({ to, code, purpose, name }: SendOtpParams) {
     </div>`;
 
 	const html = renderShell({
-		preheader: `Your UNO code is ${code}. It expires in 10 minutes.`,
+		preheader: `Your ${BRAND} code is ${code}. It expires in 10 minutes.`,
 		subject,
 		heading: "Your verification code",
 		intro: `${greeting}<br/>Use the code below to ${OTP_ACTIONS[purpose]}. It expires in <strong class="value-text" style="color:#161515;">10 minutes</strong>.`,
@@ -54,7 +61,7 @@ export async function sendOtpEmail({ to, code, purpose, name }: SendOtpParams) {
 	const text = renderText([
 		"Your verification code",
 		"",
-		`Your UNO verification code is: ${code}`,
+		`Your ${BRAND} verification code is: ${code}`,
 		"",
 		"It expires in 10 minutes.",
 		"",
@@ -168,13 +175,13 @@ export async function sendContactLeadEmail({
 			: { href: `tel:${tenantPhone}`, label: `Call ${firstName}` };
 
 	const html = renderShell({
-		preheader: `${tenantName} just reached out about your listing on UNO — ${CONTACT_METHOD_REACH_OUT[contactMethod]}.`,
+		preheader: `${tenantName} just reached out about your listing on ${BRAND} — ${CONTACT_METHOD_REACH_OUT[contactMethod]}.`,
 		subject,
 		heading: `New enquiry on ${escapeHtml(propertyTitle)}`,
 		intro: `<strong class="value-text" style="color:#161515;">${escapeHtml(tenantName)}</strong> just reached out about your listing &mdash; just now.`,
 		body: detailsBox(rows),
 		ctas: ctaButtons(primaryCta, { href: inboxUrl, label: "View full enquiry" }),
-		footnote: "This lead was logged in your UNO dashboard.",
+		footnote: `This lead was logged in your ${BRAND} dashboard.`,
 	});
 
 	const text = renderText([
@@ -194,7 +201,7 @@ export async function sendContactLeadEmail({
 		`${primaryCta.label}: ${primaryCta.href}`,
 		`View full enquiry: ${inboxUrl}`,
 		"",
-		"This lead was logged in your UNO dashboard.",
+		`This lead was logged in your ${BRAND} dashboard.`,
 	]);
 
 	return sendEmail({ to, subject, html, text });
@@ -230,7 +237,7 @@ export async function sendListingApprovedEmail({
 			{ label: "Location", value: escapeHtml(propertyLocation), italic: false },
 		]),
 		ctas: ctaButtons({ href: liveUrl, label: "View live listing" }),
-		footnote: "This update was logged in your UNO dashboard.",
+		footnote: `This update was logged in your ${BRAND} dashboard.`,
 	});
 
 	const text = renderText([
@@ -269,7 +276,7 @@ export async function sendListingRejectedEmail({
 			{ href: editUrl, label: "Edit listing" },
 			{ href: liveUrl, label: "View listing" }
 		),
-		footnote: "This update was logged in your UNO dashboard.",
+		footnote: `This update was logged in your ${BRAND} dashboard.`,
 	});
 
 	const text = renderText([
@@ -302,16 +309,16 @@ export async function sendAgentCreatedEmail({
 	territory,
 }: SendAgentCreatedEmailParams) {
 	const firstName = name.split(" ")[0];
-	const subject = `Welcome to UNO, ${firstName}`;
+	const subject = `Welcome to ${BRAND}, ${firstName}`;
 	const profilePath = `/agents/${agentSlug}`;
 	const consoleUrl = appUrl("/agent");
 	const loginUrl = appUrl("/agent/login");
 
 	const html = renderShell({
-		preheader: `${firstName}, your UNO agent account is ready. Sign in to finish your profile.`,
+		preheader: `${firstName}, your ${BRAND} agent account is ready. Sign in to finish your profile.`,
 		subject,
-		heading: `Welcome to UNO, ${escapeHtml(firstName)}`,
-		intro: `You&rsquo;ve been set up as an in-house UNO agent. Your public profile is live at <strong class="value-text" style="color:#161515;">uno.ng${escapeHtml(profilePath)}</strong>.`,
+		heading: `Welcome to ${BRAND}, ${escapeHtml(firstName)}`,
+		intro: `You&rsquo;ve been set up as an in-house ${BRAND} agent. Your public profile is live at <strong class="value-text" style="color:#161515;">${escapeHtml(BRAND_HOST)}${escapeHtml(profilePath)}</strong>.`,
 		body: detailsBox([
 			{ label: "Sign in with", value: escapeHtml(to) },
 			...(territory.length
@@ -328,8 +335,8 @@ export async function sendAgentCreatedEmail({
 	const text = renderText([
 		subject,
 		"",
-		"You've been set up as an in-house UNO agent.",
-		`Profile: uno.ng${profilePath}`,
+		`You've been set up as an in-house ${BRAND} agent.`,
+		`Profile: ${BRAND_HOST}${profilePath}`,
 		`Sign in with: ${to}`,
 		territory.length ? `Territory: ${territory.join(", ")}` : null,
 		"",
@@ -351,14 +358,14 @@ export async function sendAccountDeactivatedEmail({
 	to: string;
 	deactivatedAt: Date;
 }) {
-	const subject = "Your UNO account has been deactivated";
+	const subject = `Your ${BRAND} account has been deactivated`;
 	const when = formatDate(deactivatedAt);
 	const loginUrl = appUrl("/login");
 
 	const html = renderShell({
-		preheader: "Your UNO account was deactivated. Sign in again anytime to reactivate.",
+		preheader: `Your ${BRAND} account was deactivated. Sign in again anytime to reactivate.`,
 		subject,
-		heading: "Your UNO account has been deactivated",
+		heading: `Your ${BRAND} account has been deactivated`,
 		intro: `This confirms your account (${escapeHtml(to)}) was deactivated on ${escapeHtml(when)}. Your listings and data are kept &mdash; sign in again anytime to reactivate.`,
 		body: detailsBox([
 			{ label: "Account", value: escapeHtml(to) },

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { requestOtp } from "@/lib/authClient";
+import { siteConfig } from "@/../config/site";
 
 interface LoginFormProps {
   /** Called once an OTP is successfully sent. Email + (in dev) the code are passed back. */
@@ -91,7 +92,7 @@ export function LoginForm({ onCodeSent, onSwitchToSignup }: LoginFormProps) {
 
       {onSwitchToSignup && (
         <p className="mt-3 text-center text-[14px] text-[#161515]">
-          New to UNO?{" "}
+          New to {siteConfig.name}?{" "}
           <button
             type="button"
             onClick={onSwitchToSignup}

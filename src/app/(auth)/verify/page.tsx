@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { AuthHeader } from "@/components/layout/AuthHeader";
 import { requestOtp, verifyOtpAndSignIn } from "@/lib/authClient";
+import { siteConfig } from "@/../config/site";
 
 function VerifyForm() {
   const router = useRouter();
@@ -213,9 +214,10 @@ function VerifyForm() {
           </div>
 
           <p className="mt-6 text-center text-[12px] leading-relaxed text-[rgba(10,10,10,0.4)]">
-            By confirming your verification, you agree to Uno&apos;s{" "}
+            By confirming your verification, you agree to {siteConfig.name}
+            &apos;s{" "}
             <Link href="/terms" className="underline">
-              Terms of Use
+              Terms of Service
             </Link>{" "}
             and{" "}
             <Link href="/privacy" className="underline">
