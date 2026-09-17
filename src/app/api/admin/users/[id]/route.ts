@@ -11,7 +11,7 @@ import { uniqueAgentSlug } from "@/lib/agent-slug";
  * Body:
  *   { action: "promote" }       → role = ADMIN
  *   { action: "demote" }        → role = RENTER (refuses if it would leave zero admins)
- *   { action: "make_agent" }    → in-house UNO agent (role=AGENT, agentStatus=VERIFIED,
+ *   { action: "make_agent" }    → in-house Hoomefynda agent (role=AGENT, agentStatus=VERIFIED,
  *                                  agentEmployment=IN_HOUSE, unique agentSlug). Replaces
  *                                  the make-agent.ts script.
  *   { action: "revoke_agent" }  → strips agent access (agentStatus=NONE, role=RENTER).

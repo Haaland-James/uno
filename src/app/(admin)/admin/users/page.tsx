@@ -14,6 +14,7 @@ import { StatusPill, roleTone } from "@/components/admin/StatusPill";
 import { getInitials } from "@/lib/utils";
 import { AGENT_SPECIALIZATION_LABELS as SPECIALIZATION_LABELS } from "@/../config/constants";
 import type { Role } from "@prisma/client";
+import { siteConfig } from "@/../config/site";
 
 type RoleFilter = "ALL" | Role;
 
@@ -169,7 +170,7 @@ function UsersPageInner() {
 							onMakeAgent={() => {
 								if (
 									confirm(
-										`Make ${u.name} (${u.email}) an in-house UNO agent? They get access to the agent console.`
+										`Make ${u.name} (${u.email}) an in-house ${siteConfig.name} agent? They get access to the agent console.`
 									)
 								) {
 									agentAction(u.id, "make_agent");

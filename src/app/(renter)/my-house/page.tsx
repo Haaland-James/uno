@@ -1,6 +1,7 @@
 "use client";
 
 import { Home } from "lucide-react";
+import { siteConfig } from "@/../config/site";
 
 export default function MyHousePage() {
 	return (
@@ -10,7 +11,8 @@ export default function MyHousePage() {
 			</div>
 			<h1 className="mt-4 text-[22px] font-semibold text-black">My House</h1>
 			<p className="mt-2 max-w-sm text-[15px] text-black/60">
-				Once you move in to a home rented through UNO, you&apos;ll find it here.
+				Once you move in to a home rented through {siteConfig.name}, you&apos;ll
+				find it here.
 			</p>
 		</div>
 	);

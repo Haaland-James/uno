@@ -52,7 +52,7 @@
 
 @layer components {
 
-  /* UNO Button Variants */
+  /* Button Variants */
   .btn-primary {
     background-color: var(--action-primary);
     color: var(--text-inverse);

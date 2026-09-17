@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { siteConfig } from "@/../config/site";
 
 // Created on first send, not at import: `new Resend()` throws without a key, and
 // `next build` imports route modules while collecting page data — so a
@@ -9,7 +10,8 @@ function getResend(): Resend {
 	return resend;
 }
 
-const FROM = process.env.EMAIL_FROM || "UNO <onboarding@resend.dev>";
+const FROM =
+	process.env.EMAIL_FROM || `${siteConfig.name} <onboarding@resend.dev>`;
 
 export async function sendEmail(params: {
 	to: string | string[];
@@ -197,7 +199,7 @@ export interface ShellParams {
 }
 
 /**
- * The shared UNO email chrome: card, wordmark, heading, dark-mode palette and
+ * The shared email chrome: card, wordmark, heading, dark-mode palette and
  * footer. Every notification template renders through this so the whole set
  * stays visually identical.
  */
@@ -247,14 +249,14 @@ export function renderShell({
   <tr><td align="center">
     <table width="100%" cellpadding="0" cellspacing="0" role="presentation" class="card" style="max-width:480px;background:#ffffff;border-radius:16px;padding:40px 32px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
       <tr><td>
-        <div style="font-size:24px;font-weight:700;color:#af2525;letter-spacing:-0.02em;">uno</div>
+        <div style="font-size:24px;font-weight:700;color:#af2525;letter-spacing:-0.02em;">${escapeHtml(siteConfig.name.toLowerCase())}</div>
         <h1 class="heading-text" style="margin:32px 0 12px;font-size:22px;font-weight:600;line-height:1.3;color:#161515;">${heading}</h1>
         <p class="muted-65" style="margin:0 0 28px;font-size:15px;line-height:1.6;color:rgba(10,10,10,0.65);">${intro}</p>
         ${body}
         ${ctas}
         <p class="muted-40" style="margin:28px 0 0;font-size:13px;line-height:1.6;color:rgba(10,10,10,0.4);">${escapeHtml(footnote)}</p>
         <hr class="footer-divider" style="border:0;border-top:1px solid rgba(186,186,186,0.4);margin:20px 0 24px;">
-        <p class="muted-40" style="margin:0;font-size:12px;color:rgba(10,10,10,0.4);">UNO &mdash; Find your dream home in Nigeria.</p>
+        <p class="muted-40" style="margin:0;font-size:12px;color:rgba(10,10,10,0.4);">${escapeHtml(siteConfig.name)} &mdash; Find your dream home in Nigeria.</p>
       </td></tr>
     </table>
   </td></tr>
@@ -270,7 +272,10 @@ export function renderShell({
  */
 export function renderText(lines: (string | null | false | undefined)[]): string {
 	const kept = lines.filter((l): l is string => l !== null && l !== undefined && l !== false);
-	return [...kept, "This email was sent by UNO.", "---", "UNO — Find your dream home in Nigeria."].join(
-		"\n"
-	);
+	return [
+		...kept,
+		`This email was sent by ${siteConfig.name}.`,
+		"---",
+		`${siteConfig.name} — Find your dream home in Nigeria.`,
+	].join("\n");
 }

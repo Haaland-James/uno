@@ -1,5 +1,5 @@
 /**
- * UNO geographic coverage — single source of truth for location autocomplete,
+ * Hoomefynda geographic coverage — single source of truth for location autocomplete,
  * URL slug validation, and listing-wizard pickers.
  *
  * Hierarchy: state → city → area

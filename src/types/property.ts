@@ -135,8 +135,8 @@ export interface PropertyCardData {
 	inquiryCount?: number;
 	savedCount?: number;
 	streetAddress?: string;
-	// True when this listing was created by an in-house UNO agent on behalf
-	// of an off-platform owner. Drives the "Listed by UNO" badge on cards.
+	// True when this listing was created by an in-house Hoomefynda agent on behalf
+	// of an off-platform owner. Drives the "Listed by Hoomefynda" badge on cards.
 	listedByAgent?: boolean;
 	// Promoted listing — toggled by admin. Drives the "Featured" badge on cards.
 	isFeatured?: boolean;
@@ -163,9 +163,9 @@ export interface PropertyDetailData extends PropertyCardData {
 	features: string[];
 	listedBy: { name: string; company: string };
 	// When `listedByAgent` is true on the parent, `listedBy.name` is set to
-	// "UNO" institutionally and `agent` carries the field agent's identity
+	// "Hoomefynda" institutionally and `agent` carries the field agent's identity
 	// so the detail page can reveal them (with a link to /agents/[slug])
-	// without losing the UNO-first trust framing.
+	// without losing the Hoomefynda-first trust framing.
 	agent?: {
 		name: string;
 		slug: string | null;

@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { X, Building2, ShoppingBag, FileText, Briefcase, Home, MapPin, LogIn, UserPlus, LogOut, User as UserIcon, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthModalStore } from "@/stores/authModalStore";
+import { COMPACT_LEGAL_LINKS } from "@/lib/nav-links";
 
 interface Props {
   open: boolean;
@@ -22,12 +23,6 @@ const BROWSE_LINKS = [
   { label: "Land", href: "/properties?type=LAND", icon: MapPin },
 ];
 
-const FOOTER_LINKS = [
-  { label: "Privacy", href: "/privacy" },
-  { label: "Terms", href: "/terms" },
-  { label: "Help", href: "/help" },
-  { label: "About", href: "/about" },
-];
 
 export function GuestMobileDrawer({ open, onClose }: Props) {
   const pathname = usePathname();
@@ -168,7 +163,7 @@ export function GuestMobileDrawer({ open, onClose }: Props) {
 
         {/* Footer links */}
         <div className="shrink-0 border-t border-black/10 px-5 py-4 flex flex-wrap gap-x-4 gap-y-1">
-          {FOOTER_LINKS.map((l) => (
+          {COMPACT_LEGAL_LINKS.map((l) => (
             <Link key={l.href} href={l.href} onClick={onClose} className="text-[12px] text-black/50 hover:text-black">
               {l.label}
             </Link>
