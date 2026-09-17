@@ -121,3 +121,20 @@ export function getInitials(name: string): string {
 		.toUpperCase()
 		.slice(0, 2);
 }
+
+/**
+ * Format a count for compact display in stat tiles and property cards.
+ *
+ * Distinct from `formatCompact` above: this keeps a lowercase "k" and an
+ * explicit single decimal ("1.5k", "2.0k"), which is the form the lister
+ * dashboard, listing cards and analytics tiles are designed around.
+ *
+ * @example formatCount(950) => "950"
+ * @example formatCount(1500) => "1.5k"
+ * @example formatCount(2_400_000) => "2.4M"
+ */
+export function formatCount(n: number): string {
+	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+	if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+	return String(n);
+}
