@@ -400,11 +400,16 @@ describe("describeScope", () => {
     expect(describeScope(base({ category: "rent" }))).toBe("All Properties for rent");
   });
 
-  it("stutters when neither a category nor a place is set", () => {
-    // KNOWN BUG, documented rather than asserted-as-correct: with no category
-    // `cat` is already "All Properties", and the no-place branch prefixes
-    // "All Properties " again. See search-url.ts describeScope().
-    expect(describeScope(base())).toBe("All Properties all properties");
+  it("says 'All Properties' once when neither a category nor a place is set", () => {
+    // Regression guard: `cat` already defaults to "All Properties", so the
+    // no-place branch used to render the phrase twice.
+    expect(describeScope(base())).toBe("All Properties");
+  });
+
+  it("names the place without a category", () => {
+    expect(describeScope(base({ state: node("akwa-ibom") }))).toBe(
+      "All Properties in Akwa Ibom"
+    );
   });
 });
 

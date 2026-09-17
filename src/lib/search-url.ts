@@ -224,7 +224,11 @@ export function describeScope(s: SearchState): string {
   const place = s.city
     ? `${s.city.name}, ${s.state?.name ?? ""}`.replace(/, $/, "")
     : s.state?.name;
-  if (!place) return `All Properties ${cat.toLowerCase()}`.replace("for ", "for ");
+  if (!place) {
+    // `cat` already falls back to "All Properties", so only append it when it
+    // actually carries a category — otherwise the phrase renders twice.
+    return s.category ? `All Properties ${cat.toLowerCase()}` : "All Properties";
+  }
   return `${cat} in ${place}`;
 }
 
