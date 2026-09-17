@@ -8,7 +8,7 @@
  * Areas live in query params, never path: `?area=ewet-housing`.
  */
 
-import { findBySlug, findByName, type LocationNode } from "./coverage";
+import { COVERAGE, findBySlug, findByName, type LocationNode } from "./coverage";
 
 /**
  * Listing-type categories — these are the path segments under /properties.
@@ -207,8 +207,6 @@ export function searchStateToApiParams(s: SearchState): import("./clients/proper
 
 /** Returns names of all city nodes whose parent slug matches the given state. */
 function citiesUnderState(stateSlug: string): string[] | undefined {
-  // Lazy import to avoid circular dep at module-init time
-  const { COVERAGE } = require("./coverage") as typeof import("./coverage");
   const cities = COVERAGE
     .filter((n) => n.type === "city" && n.parent === stateSlug)
     .map((n) => n.name);
