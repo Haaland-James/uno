@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import { siteConfig } from "@/../config/site";
 import { siteUrl } from "@/lib/site";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { CookieConsent } from "@/components/legal/CookieConsent";
 
 export const metadata: Metadata = {
 	metadataBase: new URL(siteUrl()),
@@ -54,6 +55,7 @@ export default function RootLayout({
 			</head>
 			<body className="min-h-screen bg-surface-secondary font-sans antialiased">
 				<SessionProvider>{children}</SessionProvider>
+				<CookieConsent />
 			</body>
 		</html>
 	);

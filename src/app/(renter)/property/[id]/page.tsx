@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn, formatNaira } from "@/lib/utils";
 import { siteConfig } from "@/../config/site";
+import { siteUrl } from "@/lib/site";
 import { propertiesClient } from "@/lib/clients/properties";
 import { trackPropertyView } from "@/hooks/useRecentlyViewed";
 import { shareOrCopy } from "@/lib/share";
@@ -461,7 +462,10 @@ export default function PropertyDetailPage() {
   const [notFound, setNotFound] = useState(false);
   async function handleShare() {
     if (!property) return;
-    const url = typeof window !== "undefined" ? window.location.href : `https://uno.ng/property/${propertyId}`;
+    const url =
+      typeof window !== "undefined"
+        ? window.location.href
+        : `${siteUrl()}/property/${propertyId}`;
     const result = await shareOrCopy({
       title: property.title,
       text: `Check out ${property.title} on ${siteConfig.name}`,

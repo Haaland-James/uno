@@ -249,7 +249,7 @@ export function renderShell({
   <tr><td align="center">
     <table width="100%" cellpadding="0" cellspacing="0" role="presentation" class="card" style="max-width:480px;background:#ffffff;border-radius:16px;padding:40px 32px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
       <tr><td>
-        <div style="font-size:24px;font-weight:700;color:#af2525;letter-spacing:-0.02em;">uno</div>
+        <div style="font-size:24px;font-weight:700;color:#af2525;letter-spacing:-0.02em;">${escapeHtml(siteConfig.name.toLowerCase())}</div>
         <h1 class="heading-text" style="margin:32px 0 12px;font-size:22px;font-weight:600;line-height:1.3;color:#161515;">${heading}</h1>
         <p class="muted-65" style="margin:0 0 28px;font-size:15px;line-height:1.6;color:rgba(10,10,10,0.65);">${intro}</p>
         ${body}

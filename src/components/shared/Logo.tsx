@@ -22,9 +22,9 @@ interface LogoProps {
  * Replaces the old inline "pink circle + Home icon + 'uno' text" lockup that
  * had been copy-pasted across headers, footers, and auth pages.
  *
- * NOTE: the SVG still carries the retired UNO wordmark as drawn vector paths —
- * no code change can rename it. Replacing /public/logo.svg and logo-alt.svg
- * with a Hoomefynda lockup is a design task, tracked separately.
+ * The SVG is the current Hoomefynda lockup (identical to /logos/logo x2.svg);
+ * logo-alt.svg matches /logos/logo x1.svg. Update both together if the brand
+ * lockup changes.
  */
 export function Logo({ className, href, alt = siteConfig.name }: LogoProps) {
 	const img = (
