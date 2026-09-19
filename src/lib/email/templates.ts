@@ -9,6 +9,7 @@ import {
 	renderShell,
 	renderText,
 	type DetailRow,
+	type Cta,
 } from "./render";
 import { siteConfig } from "@/../config/site";
 import { siteUrl } from "@/lib/site";
@@ -162,17 +163,18 @@ export async function sendContactLeadEmail({
 		},
 	];
 
-	// tenantPhone can be "" (renter has none on file) — fall back to email,
-	// which is always populated since it comes from the tenant's account, so
-	// the lister always has one working way to respond.
-	const primaryCta =
+	// Contact details are optional; the inbox remains available when both are absent.
+	const primaryCta: Cta | null =
 		contactMethod === "WHATSAPP" && tenantPhone
 			? { href: waLink(tenantPhone), label: "Message on WhatsApp" }
 			: contactMethod === "PHONE" && tenantPhone
 			? { href: `tel:${tenantPhone}`, label: `Call ${firstName}` }
 			: tenantEmail
 			? { href: `mailto:${tenantEmail}`, label: `Email ${firstName}` }
-			: { href: `tel:${tenantPhone}`, label: `Call ${firstName}` };
+			: tenantPhone
+			? { href: `tel:${tenantPhone}`, label: `Call ${firstName}` }
+			: null;
+	const inboxCta: Cta = { href: inboxUrl, label: "View full enquiry" };
 
 	const html = renderShell({
 		preheader: `${tenantName} just reached out about your listing on ${BRAND} — ${CONTACT_METHOD_REACH_OUT[contactMethod]}.`,
@@ -180,7 +182,7 @@ export async function sendContactLeadEmail({
 		heading: `New enquiry on ${escapeHtml(propertyTitle)}`,
 		intro: `<strong class="value-text" style="color:#161515;">${escapeHtml(tenantName)}</strong> just reached out about your listing &mdash; just now.`,
 		body: detailsBox(rows),
-		ctas: ctaButtons(primaryCta, { href: inboxUrl, label: "View full enquiry" }),
+		ctas: ctaButtons(primaryCta ?? inboxCta, primaryCta ? inboxCta : undefined),
 		footnote: `This lead was logged in your ${BRAND} dashboard.`,
 	});
 
@@ -198,7 +200,7 @@ export async function sendContactLeadEmail({
 		`Listing: ${propertyTitle}`,
 		propertyLocation,
 		"",
-		`${primaryCta.label}: ${primaryCta.href}`,
+		primaryCta && `${primaryCta.label}: ${primaryCta.href}`,
 		`View full enquiry: ${inboxUrl}`,
 		"",
 		`This lead was logged in your ${BRAND} dashboard.`,

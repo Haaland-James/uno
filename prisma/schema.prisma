@@ -232,7 +232,7 @@ model Property {
   geocodeAccuracy     String?
   // Full-text search vector — generated column populated by migration.
   // Prisma treats it as Unsupported (read-only) — query via raw SQL only.
-  searchVector        Unsupported("tsvector")?
+  searchVector        Unsupported("tsvector")? @map("search_vector")
   fullAddressVisible  Boolean            @default(false)
   rent                Int
   rentPeriod          RentPeriod         @default(YEAR)
@@ -283,8 +283,11 @@ model Property {
   contactRequests     ContactRequest[]
   reports             Report[]
 
+  // DB-only indexes on unsupported columns, maintained by SQL migrations:
+  // Property_geom_idx (GIST), Property_search_vector_idx (GIN).
+  // Prisma cannot express these here; preserve them when reviewing schema diffs.
   @@index([deletedAt])
-  @@index([status, city, area, propertyType, bedrooms, rent])
+  @@index([status, city, area, propertyType, bedrooms, rent], map: "Property_status_city_area_type_beds_rent_idx")
   @@index([state])
   @@index([landlordId])
   @@index([rent])
