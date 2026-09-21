@@ -22,6 +22,10 @@ export function zodErr(error: ZodError) {
 
 export function getClientIp(req: Request): string {
   const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0].trim();
+  if (xff) {
+    const hops = xff.split(",").map((hop) => hop.trim()).filter(Boolean);
+    const lastHop = hops.at(-1);
+    if (lastHop) return lastHop;
+  }
   return req.headers.get("x-real-ip") || "unknown";
 }
