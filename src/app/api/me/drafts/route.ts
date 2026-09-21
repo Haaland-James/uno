@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { generateDraftTitle } from "@/lib/listing-title";
 import { db } from "@/lib/db";
 import { ok, err } from "@/lib/api";
 import type { Prisma } from "@prisma/client";
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 	}
 
 	const data = body.data as Record<string, unknown>;
-	const titleHint = pickStr(data.title);
+	const titleHint = generateDraftTitle(data);
 	const addressHint = buildAddress(data);
 	const mainPhotoUrl = pickMainPhoto(data);
 

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { generateListingTitle } from "@/lib/listing-title";
 import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { toDetailDto } from "@/lib/property-mappers";
@@ -107,10 +108,22 @@ export async function PATCH(
       : null;
 
   const updated = await db.$transaction(async (tx) => {
+    let title: string | undefined;
+    if (data.propertyType !== undefined || data.listingType !== undefined || data.bedrooms !== undefined || data.area !== undefined || data.city !== undefined) {
+      // Serialize title-affecting edits before reading facts: the authorization
+      // snapshot above may predate another PATCH. Hold the lock through commit.
+      await tx.$queryRaw`SELECT "id" FROM "Property" WHERE "id" = ${id} FOR UPDATE`;
+      const current = await tx.property.findUniqueOrThrow({
+        where: { id },
+        select: { propertyKind: true, propertyType: true, listingType: true, bedrooms: true, area: true, city: true },
+      });
+      title = generateListingTitle({ ...current, ...data });
+    }
     const propertyData = {
-      ...(data.title !== undefined && { title: data.title }),
+      ...(title !== undefined && { title }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.propertyType !== undefined && { propertyType: data.propertyType }),
+      ...(data.listingType !== undefined && { listingType: data.listingType }),
       ...(data.bedrooms !== undefined && { bedrooms: data.bedrooms }),
       ...(data.bathrooms !== undefined && { bathrooms: data.bathrooms }),
       ...(data.size !== undefined && { size: data.size }),

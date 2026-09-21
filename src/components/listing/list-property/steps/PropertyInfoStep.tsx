@@ -30,26 +30,6 @@ export function PropertyInfoStep() {
 				{isCommercial ? "Tell us about the space" : "Tell us the basics about your property"}
 			</h1>
 			<div className="flex flex-col gap-5">
-				<LabeledField
-					label="Property Title"
-					required
-					helper={`${data.title.length}/100 characters`}
-				>
-					{({ id }) => (
-						<Input
-							id={id}
-							placeholder={
-								isCommercial
-									? "e.g. Modern Office Suite at Victoria Island"
-									: "e.g. Spacious 2 Bedroom Flat in Lekki"
-							}
-							maxLength={100}
-							value={data.title}
-							onChange={(e) => updateData({ title: e.target.value })}
-						/>
-					)}
-				</LabeledField>
-
 				{isCommercial ? (
 					<>
 						<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">

@@ -1,6 +1,5 @@
 "use client";
 
-import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Textarea } from "@/components/ui/Textarea";
@@ -44,22 +43,6 @@ export function LandDetailsStep() {
 			</p>
 
 			<div className="flex flex-col gap-5">
-				<LabeledField
-					label="Listing Title"
-					required
-					helper={`${data.title.length}/100 characters`}
-				>
-					{({ id }) => (
-						<Input
-							id={id}
-							placeholder="e.g. 2 Plots of Dry Land in Lekki Phase 2"
-							maxLength={100}
-							value={data.title}
-							onChange={(e) => updateData({ title: e.target.value })}
-						/>
-					)}
-				</LabeledField>
-
 				<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
 					<LabeledField label="Plot Size" required helper="In square metres">
 						{({ id }) => (

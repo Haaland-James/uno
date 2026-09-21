@@ -185,10 +185,9 @@ describe("propertyWizardSubmitSchema", () => {
     expect(parsed.availability).toBe("AVAILABLE_NOW");
   });
 
-  it("allows a shorter title than the API create schema does", () => {
-    // The wizard validates as the user types, so it is deliberately looser.
-    expect(propertyWizardSubmitSchema.safeParse({ ...valid, title: "Flat!" }).success).toBe(true);
-    expect(propertyCreateSchema.safeParse({ ...validCreate, title: "Flat!" }).success).toBe(false);
+  it("accepts submissions without a title and strips stale or forged titles", () => {
+    expect(propertyWizardSubmitSchema.safeParse({ ...valid, title: undefined }).success).toBe(true);
+    expect(propertyWizardSubmitSchema.parse({ ...valid, title: "Client marketing" })).not.toHaveProperty("title");
   });
 
   it("accepts null bedrooms for land and commercial listings", () => {
@@ -235,7 +234,7 @@ describe("propertyUpdateSchema", () => {
 
   it("still enforces the create schema's bounds on the fields it does carry", () => {
     expect(propertyUpdateSchema.safeParse({ rent: 500 }).success).toBe(false);
-    expect(propertyUpdateSchema.safeParse({ title: "short" }).success).toBe(false);
+    expect(propertyUpdateSchema.parse({ title: "Client marketing" })).not.toHaveProperty("title");
   });
 
   it("lets the edit page clear a field by sending null", () => {
