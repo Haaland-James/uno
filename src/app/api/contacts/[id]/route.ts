@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { refreshResponseMetrics } from "@/lib/response-metrics";
 import { ok, err, zodErr } from "@/lib/api";
 import { contactStatusSchema } from "@/lib/validators/contact";
 
@@ -56,5 +57,8 @@ export async function PATCH(
 		select: { id: true, status: true, readAt: true, respondedAt: true },
 	});
 
+	if (status === "RESPONDED" || status === "UNREAD") {
+		await refreshResponseMetrics(contact.property.landlordId);
+	}
 	return ok(updated);
 }

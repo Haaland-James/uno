@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { generateListingTitle } from "@/lib/listing-title";
 import { db } from "@/lib/db";
+import { calculateResponseMetrics, refreshResponseMetrics } from "@/lib/response-metrics";
 import { ok, err, zodErr } from "@/lib/api";
 import { toDetailDto } from "@/lib/property-mappers";
 import { propertyUpdateSchema } from "@/lib/validators/property";
@@ -56,7 +57,18 @@ export async function GET(
     .update({ where: { id }, data: { views: { increment: 1 } } })
     .catch((e) => console.error("[property:view] increment failed", e));
 
-  return ok(toDetailDto(property, isFavourited, { revealAddress: isOwner || isAdmin }));
+  // Derive all public metrics (including the threshold) from one source snapshot.
+  // Historical profiles may still contain defaults/seed values or a failed refresh.
+  const responseMetrics = property.listedByAgent ? undefined : calculateResponseMetrics(
+    await db.contactRequest.findMany({
+      where: { property: { landlordId: property.landlordId, deletedAt: null } },
+      select: { createdAt: true, respondedAt: true },
+    })
+  );
+  return ok(toDetailDto(property, isFavourited, {
+    revealAddress: isOwner || isAdmin,
+    responseMetrics,
+  }));
 }
 
 /**
@@ -234,5 +246,6 @@ export async function DELETE(
     where: { id },
     data: { deletedAt: new Date(), status: "PAUSED" },
   });
+  await refreshResponseMetrics(property.landlordId);
   return ok({ ok: true });
 }

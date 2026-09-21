@@ -2,6 +2,7 @@ import type { Property, PropertyPhoto, User, LandlordProfile } from "@prisma/cli
 import type { PropertyCardData, PropertyDetailData } from "@/types/property";
 import { fallbackCoordsFor } from "@/lib/area-coords";
 import { privatize } from "@/lib/privacy";
+import type { calculateResponseMetrics } from "@/lib/response-metrics";
 import { siteConfig } from "@/../config/site";
 
 type PropertyWithPhotos = Property & {
@@ -85,10 +86,14 @@ function hashString(s: string): number {
 export function toDetailDto(
   p: PropertyWithLandlord,
   isFavourited = false,
-  opts: { revealAddress?: boolean } = {}
+  opts: { revealAddress?: boolean; responseMetrics?: ReturnType<typeof calculateResponseMetrics> } = {}
 ): PropertyDetailData {
   const card = toCardDto(p, isFavourited, opts);
   const showFullAddress = opts.revealAddress || p.fullAddressVisible;
+  // Threshold and values must come from the same source query, never a cached
+  // profile plus a newer count (or the denormalized contactCount).
+  const metrics = (opts.responseMetrics?.sampleSize ?? 0) >= 3
+    ? opts.responseMetrics : null;
 
   const daysOnUno = Math.max(
     0,
@@ -146,10 +151,14 @@ export function toDetailDto(
       ? {
           name: siteConfig.name,
           company: `${siteConfig.name} Verified Listing`,
+          responseRate: null,
+          avgResponseTime: null,
         }
       : {
           name: p.landlord.name,
           company: p.landlord.landlordProfile?.bio ?? "",
+          responseRate: metrics?.responseRate ?? null,
+          avgResponseTime: metrics?.avgResponseTime ?? null,
         },
     agent: p.listedByAgent
       ? {
