@@ -161,7 +161,7 @@ export interface PropertyDetailData extends PropertyCardData {
 	};
 	additionalInfo: { label: string; value: string }[];
 	features: string[];
-	listedBy: { name: string; company: string };
+	listedBy: { name: string; company: string; responseRate: number | null; avgResponseTime: number | null };
 	// When `listedByAgent` is true on the parent, `listedBy.name` is set to
 	// "Hoomefynda" institutionally and `agent` carries the field agent's identity
 	// so the detail page can reveal them (with a link to /agents/[slug])
