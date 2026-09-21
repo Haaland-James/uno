@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { generateDraftTitle } from "@/lib/listing-title";
 import { db } from "@/lib/db";
 import { ok, err } from "@/lib/api";
 import type { Prisma } from "@prisma/client";
@@ -53,7 +54,7 @@ export async function PATCH(req: NextRequest, ctx: { params: { id: string } }) {
 			data: data as Prisma.InputJsonValue,
 			currentStep: typeof body.currentStep === "number" ? body.currentStep : draft.currentStep,
 			completedSteps: Array.isArray(body.completedSteps) ? body.completedSteps : draft.completedSteps,
-			titleHint: pickStr(data.title),
+			titleHint: generateDraftTitle(data),
 			addressHint: buildAddress(data),
 			mainPhotoUrl: pickMainPhoto(data),
 		},

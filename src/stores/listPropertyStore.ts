@@ -27,7 +27,6 @@ export interface ListPropertyData {
 	fullAddressVisible: boolean;
 
 	// Property Info
-	title: string;
 	propertyType: string;
 	bedrooms: number | null;
 	bathrooms: number | null;
@@ -123,7 +122,6 @@ const initialData: ListPropertyData = {
 	longitude: null,
 	geocodeAccuracy: "",
 	fullAddressVisible: false,
-	title: "",
 	propertyType: "",
 	bedrooms: null,
 	bathrooms: null,

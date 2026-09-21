@@ -137,7 +137,6 @@ export const propertyWizardSubmitSchema = z.object({
 	fullAddressVisible: z.boolean().optional().default(false),
 
 	// Property info
-	title: z.string().min(5, "Title must be at least 5 characters").max(120),
 	propertyType: z.string().min(1, "Property type is required"),
 	bedrooms: z.number().min(0).max(20).nullable(),
 	bathrooms: z.number().min(0).max(20).nullable(),
@@ -220,9 +219,10 @@ export const propertyWizardSubmitSchema = z.object({
  * sent get persisted.
  */
 export const propertyUpdateSchema = propertyCreateSchema
-	.omit({ availabilityStatus: true })
+	.omit({ availabilityStatus: true, title: true })
 	.partial()
 	.extend({
+	listingType: z.enum(["RENT", "LEASE", "SALE"]).optional(),
 	state: z.string().max(120).optional(),
 	lga: z.string().max(120).optional(),
 	ownershipType: z.string().max(60).optional(),

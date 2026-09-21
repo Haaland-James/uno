@@ -149,7 +149,7 @@ function EditPropertyPage({ id }: { id: string }) {
 						objective,
 						role: null,
 						propertyKind: (p.propertyKind as "RESIDENTIAL" | "COMMERCIAL" | "LAND" | "") ?? "RESIDENTIAL",
-						title: p.title, propertyType: p.propertyType ?? "",
+						propertyType: p.propertyType ?? "",
 						bedrooms: p.bedrooms, bathrooms: p.bathrooms,
 						briefDescription: p.description ?? "",
 						size: p.size, yearBuilt: p.yearBuilt ?? null,
@@ -202,7 +202,6 @@ function EditPropertyPage({ id }: { id: string }) {
 		try {
 			const photos = data.photoUrls.map((url, i) => ({ url, isMain: i === data.mainPhotoIndex }));
 			await listingsClient.update(id, {
-				title: data.title,
 				description: data.briefDescription || null,
 				propertyType: data.propertyType || undefined,
 				bedrooms: data.bedrooms ?? undefined,

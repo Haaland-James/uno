@@ -11,6 +11,7 @@ import {
 import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { generateListingTitle } from "@/lib/listing-title";
 import { computeGateSignals } from "@/lib/gate";
 import { listingCreateLimiter } from "@/lib/ratelimit";
 import { deriveStatusFields, notDeleted } from "@/lib/property-status";
@@ -263,6 +264,8 @@ export async function POST(req: NextRequest) {
       (w.propertyKind as PropertyKind | undefined) ??
       ((getKindForPropertyType(w.propertyType) ?? "RESIDENTIAL") as PropertyKind);
 
+    const title = generateListingTitle({ ...w, propertyKind, propertyType, listingType, bedrooms: w.bedrooms ?? 0 });
+
     const agencyFeeAmount = w.agencyFee?.value ?? null;
     const agencyFeeMode: FeeMode = (w.agencyFee?.mode ?? "FIXED") as FeeMode;
     const legalFeeAmount = w.legalFee?.value ?? null;
@@ -274,7 +277,7 @@ export async function POST(req: NextRequest) {
     // `initialStatus` on `gate.autoPublish` (see git history of this file).
     const gate = await computeGateSignals({
       listerUserId: session.user.id,
-      title: w.title,
+      title,
       description: description || null,
       photoCount: w.photos.length,
       latitude: w.latitude ?? null,
@@ -289,7 +292,7 @@ export async function POST(req: NextRequest) {
     const created = await db.property.create({
       data: {
         landlordId: session.user.id,
-        title: w.title,
+        title,
         propertyKind,
         propertyType,
         listingType,

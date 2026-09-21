@@ -108,7 +108,6 @@ export function ReviewStep({ onEdit }: ReviewStepProps) {
 
 				{isLand ? (
 					<Section title="Land Details" stepIndex={stepIdx("land-details")} onEdit={onEdit}>
-						<Row label="Title" value={data.title} />
 						<Row label="Plot Size" value={data.plotSizeSqm ? `${data.plotSizeSqm} sqm` : null} />
 						<Row label="Title Document" value={data.titleDocType} />
 						<Row label="Topography" value={data.topography} />
@@ -119,7 +118,6 @@ export function ReviewStep({ onEdit }: ReviewStepProps) {
 				) : (
 					<>
 						<Section title="Property Info" stepIndex={stepIdx("property-info")} onEdit={onEdit}>
-							<Row label="Title" value={data.title} />
 							{isCommercial ? (
 								<>
 									<Row label="Floor Area" value={data.floorAreaSqm ? `${data.floorAreaSqm} sqm` : null} />
