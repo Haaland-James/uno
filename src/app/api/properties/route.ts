@@ -11,8 +11,11 @@ import {
 import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { generateListingTitle } from "@/lib/listing-title";
 import { computeGateSignals } from "@/lib/gate";
+import { listingCreateLimiter } from "@/lib/ratelimit";
 import { deriveStatusFields, notDeleted } from "@/lib/property-status";
+import { pageRankedIds, reorderByIds } from "@/lib/search-ranking";
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -52,38 +55,113 @@ export async function GET(req: NextRequest) {
       }),
     ...(f.verifiedOnly && { verificationStatus: "VERIFIED" }),
     ...(f.availableNow && { availabilityStatus: "AVAILABLE_NOW" }),
-    ...(f.q && {
-      OR: [
-        { title: { contains: f.q, mode: "insensitive" } },
-        { description: { contains: f.q, mode: "insensitive" } },
-        { area: { contains: f.q, mode: "insensitive" } },
-        { city: { contains: f.q, mode: "insensitive" } },
-      ],
-    }),
   };
 
-  const orderBy: Prisma.PropertyOrderByWithRelationInput =
+  // ── Full-text search path ──────────────────────────────────────────
+  // When `q` is present, query the GIN-indexed search_vector column for
+  // ranked results, then feed those IDs back into Prisma for the remaining
+  // filters. Falls back to ILIKE on area/city for location-only queries.
+  let ftsIds: string[] | null = null;
+  let ftsRanked = false;
+
+  if (f.q) {
+    const ftsRows = await db.$queryRaw<{ id: string; rank: number }[]>(
+      Prisma.sql`
+        SELECT id, ts_rank("search_vector", plainto_tsquery('english', ${f.q})) AS rank
+        FROM "Property"
+        WHERE "search_vector" @@ plainto_tsquery('english', ${f.q})
+          AND status = 'ACTIVE'
+          AND "deletedAt" IS NULL
+        ORDER BY rank DESC, id ASC
+        LIMIT 500
+      `
+    );
+
+    if (ftsRows.length === 0) {
+      const likeTerm = `%${f.q}%`;
+      const fallbackRows = await db.$queryRaw<{ id: string }[]>(
+        Prisma.sql`
+          SELECT id FROM "Property"
+          WHERE (area ILIKE ${likeTerm} OR city ILIKE ${likeTerm})
+            AND status = 'ACTIVE'
+            AND "deletedAt" IS NULL
+          ORDER BY id ASC
+          LIMIT 500
+        `
+      );
+      ftsIds = fallbackRows.map((r) => r.id);
+    } else {
+      ftsIds = ftsRows.map((r) => r.id);
+      ftsRanked = true;
+    }
+
+    if (f.ids?.length) {
+      const requestedIds = new Set(f.ids);
+      ftsIds = ftsIds.filter((id) => requestedIds.has(id));
+    }
+
+    // No full-text match and no ILIKE match either — a genuinely empty result.
+    // The UI renders its empty state from this; it must not fall back to
+    // seed/mock listings, which would show a searcher properties that don't
+    // match what they typed.
+    if (ftsIds.length === 0) {
+      return ok({
+        items: [],
+        page: f.page,
+        pageSize: f.pageSize,
+        total: 0,
+        hasMore: false,
+      });
+    }
+
+    where.id = { in: ftsIds };
+  }
+
+  const orderBy: Prisma.PropertyOrderByWithRelationInput[] = [
     f.sort === "price_asc"
       ? { rent: "asc" }
       : f.sort === "price_desc"
       ? { rent: "desc" }
       : f.sort === "most_viewed"
       ? { views: "desc" }
-      : { createdAt: "desc" };
+      : { createdAt: "desc" },
+    { id: "asc" },
+  ];
 
   const skip = (f.page - 1) * f.pageSize;
+  const usesRank = ftsRanked && !f.sort;
 
-  const [items, total, session] = await Promise.all([
-    db.property.findMany({
-      where,
-      orderBy,
-      skip,
-      take: f.pageSize,
-      include: { photos: { orderBy: { order: "asc" } } },
-    }),
-    db.property.count({ where }),
-    getServerSession(authOptions),
-  ]);
+  const [items, total, session] = await (async () => {
+    if (usesRank) {
+      const [matchingRows, session] = await Promise.all([
+        db.property.findMany({ where, select: { id: true } }),
+        getServerSession(authOptions),
+      ]);
+      // The pre-existing FTS LIMIT 500 caps ranked search totals at 500 matches.
+      const { pageIds, total } = pageRankedIds(
+        ftsIds!, matchingRows.map((row) => row.id), skip, f.pageSize,
+      );
+      // Re-apply the full `where`, not just the IDs: a listing deactivated or
+      // soft-deleted between the two queries must not slip into a public page.
+      const rows = await db.property.findMany({
+        where: { ...where, id: { in: pageIds } },
+        include: { photos: { orderBy: { order: "asc" } } },
+      });
+      return [reorderByIds(rows, pageIds), total, session] as const;
+    }
+
+    return Promise.all([
+      db.property.findMany({
+        where,
+        orderBy,
+        skip,
+        take: f.pageSize,
+        include: { photos: { orderBy: { order: "asc" } } },
+      }),
+      db.property.count({ where }),
+      getServerSession(authOptions),
+    ]);
+  })();
 
   let favIds = new Set<string>();
   if (session?.user?.id && items.length) {
@@ -117,6 +195,13 @@ export async function POST(req: NextRequest) {
     return err("unauthorized", "Sign in to publish a listing", 401);
   }
 
+  // Listings go live immediately while the approval flow is on hold, so this
+  // cap is the only ceiling on spam listings per account.
+  const rl = await listingCreateLimiter.limit(session.user.id);
+  if (!rl.success) {
+    return err("rate_limited", "You've published a lot of listings recently — try again later.", 429);
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -138,7 +223,7 @@ export async function POST(req: NextRequest) {
 
     // Detect in-house agents. They get the off-platform-owner fields persisted
     // and the listedByAgent flag flipped — which is the single source of truth
-    // the public UI reads to display "Listed by UNO" instead of the lister's
+    // the public UI reads to display "Listed by Hoomefynda" instead of the lister's
     // name. Regular landlords ignore both fields entirely (defence-in-depth: a
     // malicious payload from a non-agent can't smuggle owner data in).
     const submitter = await db.user.findUnique({
@@ -184,6 +269,8 @@ export async function POST(req: NextRequest) {
       (w.propertyKind as PropertyKind | undefined) ??
       ((getKindForPropertyType(w.propertyType) ?? "RESIDENTIAL") as PropertyKind);
 
+    const title = generateListingTitle({ ...w, propertyKind, propertyType, listingType, bedrooms: w.bedrooms ?? 0 });
+
     const agencyFeeAmount = w.agencyFee?.value ?? null;
     const agencyFeeMode: FeeMode = (w.agencyFee?.mode ?? "FIXED") as FeeMode;
     const legalFeeAmount = w.legalFee?.value ?? null;
@@ -195,7 +282,7 @@ export async function POST(req: NextRequest) {
     // `initialStatus` on `gate.autoPublish` (see git history of this file).
     const gate = await computeGateSignals({
       listerUserId: session.user.id,
-      title: w.title,
+      title,
       description: description || null,
       photoCount: w.photos.length,
       latitude: w.latitude ?? null,
@@ -210,7 +297,7 @@ export async function POST(req: NextRequest) {
     const created = await db.property.create({
       data: {
         landlordId: session.user.id,
-        title: w.title,
+        title,
         propertyKind,
         propertyType,
         listingType,

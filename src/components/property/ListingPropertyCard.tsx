@@ -15,7 +15,7 @@ import {
 	Trash2,
 	ListPlus,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import type { PropertyStatus, VerificationStatus } from "@/types/property";
 
@@ -100,10 +100,6 @@ function formatPriceMain(n: number) {
 	return new Intl.NumberFormat("en-NG").format(n);
 }
 
-function formatCount(n: number) {
-	if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-	return String(n);
-}
 
 export function ListingPropertyCard({
 	id,

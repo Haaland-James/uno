@@ -159,6 +159,12 @@ export const FURNISHING_OPTIONS = [
 	{ value: "FULLY_FURNISHED", label: "Fully Furnished" },
 ] as const;
 
+export const LISTING_TYPE_LABELS = {
+	RENT: "for Rent",
+	LEASE: "for Lease",
+	SALE: "for Sale",
+} as const;
+
 // Rent Periods
 export const RENT_PERIODS = [
 	{ value: "YEAR", label: "per year" },

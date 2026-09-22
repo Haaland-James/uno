@@ -10,13 +10,13 @@ import {
 	Heart,
 	BookmarkCheck,
 	Building2,
-	Users,
 	HelpCircle,
 	LogOut,
 	BarChart3,
 	Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { COMPACT_LEGAL_LINKS } from "@/lib/nav-links";
 import { signOutAndToast } from "@/lib/auth-actions";
 import { useUserStore } from "@/stores/userStore";
 import { useHasListings } from "@/hooks/useHasListings";
@@ -83,15 +83,7 @@ const listingNavItems: NavItem[] = [
 
 const accountItems = [
 	{ label: "List Properties", href: "/listing/properties/new", icon: Building2 },
-	{ label: "Referrals", href: "/referrals", icon: Users },
-	{ label: "Help & Support", href: "/help", icon: HelpCircle },
-];
-
-const footerLinks = [
-	{ label: "Privacy", href: "/privacy" },
-	{ label: "Terms", href: "/terms" },
-	{ label: "Help", href: "/help" },
-	{ label: "About", href: "/about" },
+	{ label: "Contact us", href: "/contact", icon: HelpCircle },
 ];
 
 function getInitials(name: string): string {
@@ -288,7 +280,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
 				{/* Footer */}
 				<div className="shrink-0 border-t border-black/10 px-5 py-4">
 					<div className="flex flex-wrap gap-x-3 gap-y-1">
-						{footerLinks.map((link, index) => (
+						{COMPACT_LEGAL_LINKS.map((link, index) => (
 							<span key={link.href} className="flex items-center">
 								<Link
 									href={link.href}
@@ -297,7 +289,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
 								>
 									{link.label}
 								</Link>
-								{index < footerLinks.length - 1 && (
+								{index < COMPACT_LEGAL_LINKS.length - 1 && (
 									<span className="ml-3 text-[13px] text-black/30">·</span>
 								)}
 							</span>

@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { ChevronDown } from "lucide-react";
 import { AuthHeader } from "@/components/layout/AuthHeader";
 import { requestOtp } from "@/lib/authClient";
+import { siteConfig } from "@/../config/site";
 
 const COUNTRY_CODES = [
   { code: "+234", country: "NG", flag: "🇳🇬" },
@@ -208,9 +209,9 @@ export default function SignupPage() {
           </p>
 
           <p className="mt-6 text-center text-[12px] leading-relaxed text-[rgba(10,10,10,0.4)]">
-            By signing up, you agree to Uno&apos;s{" "}
+            By signing up, you agree to {siteConfig.name}&apos;s{" "}
             <Link href="/terms" className="underline">
-              Terms of Use
+              Terms of Service
             </Link>{" "}
             and{" "}
             <Link href="/privacy" className="underline">

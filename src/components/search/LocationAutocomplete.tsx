@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MapPin, Search, Building2, Home } from "lucide-react";
 import { searchCoverage, type LocationNode } from "@/lib/coverage";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/../config/site";
 
 interface LocationAutocompleteProps {
   /** Display value of currently picked node, if any */
@@ -168,7 +169,7 @@ export function LocationAutocomplete({
                     We don&apos;t cover {result.name} yet
                   </div>
                   <div className="mt-1 text-[13px] text-black/60">
-                    UNO is rolling out state by state.
+                    {siteConfig.name} is rolling out state by state.
                     {onWaitlistRequest && " Get notified when we launch in your area."}
                   </div>
                   {onWaitlistRequest && (
@@ -190,7 +191,8 @@ export function LocationAutocomplete({
 
           {result.kind === "no_match" && (
             <div className="px-4 py-3 text-[14px] text-black/60">
-              No matches. UNO currently operates in <span className="font-medium text-black">Akwa Ibom</span> with more states coming soon.
+              No matches. {siteConfig.name} currently operates in{" "}
+              <span className="font-medium text-black">Akwa Ibom</span> with more states coming soon.
             </div>
           )}
         </div>

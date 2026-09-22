@@ -5,18 +5,19 @@ import { db } from "@/lib/db";
 import { toCardDto } from "@/lib/property-mappers";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import type { Metadata } from "next";
+import { siteConfig } from "@/../config/site";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Public agent profile page. Indexable (no auth gate via middleware
- * `/agents` allowlist). Phase 1 only renders in-house UNO agents — but
+ * `/agents` allowlist). Phase 1 only renders in-house agents — but
  * the query allows EXTERNAL too so the surface is ready for Phase 2.
  *
- * The framing is intentional: this profile sits *under* the UNO brand,
- * not as the agent's personal portfolio. Renters who land here are
- * meant to trust UNO first and the named agent second. That's why the
- * "UNO Verified Agent" badge is prominent and there is no agent-owned
+ * The framing is intentional: this profile sits *under* the platform
+ * brand, not as the agent's personal portfolio. Renters who land here are
+ * meant to trust the platform first and the named agent second. That's why
+ * the "Verified Agent" badge is prominent and there is no agent-owned
  * branding (custom colours, logos) — Phase 2 may relax this for
  * external agencies.
  */
@@ -46,13 +47,13 @@ async function getAgent(slug: string) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
 	const agent = await getAgent(params.slug);
-	if (!agent) return { title: "Agent not found · UNO" };
+	if (!agent) return { title: "Agent not found" };
 	const territory = agent.agentTerritory.join(", ");
 	const desc = agent.agentBio
 		? agent.agentBio.slice(0, 160)
-		: `UNO Verified Agent${territory ? ` serving ${territory}` : ""}.`;
+		: `${siteConfig.name} Verified Agent${territory ? ` serving ${territory}` : ""}.`;
 	return {
-		title: `${agent.name} — UNO Verified Agent`,
+		title: `${agent.name} — ${siteConfig.name} Verified Agent`,
 		description: desc,
 	};
 }
@@ -98,7 +99,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
 					<div className="min-w-0 flex-1">
 						<div className="inline-flex items-center gap-1.5 rounded-full bg-uno-red/10 px-2.5 py-0.5 text-xs font-semibold text-uno-red">
 							<ShieldCheck className="h-3.5 w-3.5" />
-							UNO Verified Agent
+							{siteConfig.name} Verified Agent
 						</div>
 						<h1 className="mt-2 text-2xl font-semibold text-[#161515] md:text-3xl">
 							{agent.name}

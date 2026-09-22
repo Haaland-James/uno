@@ -59,7 +59,7 @@ function AdminLoginForm() {
 						type="email"
 						required
 						autoComplete="email"
-						placeholder="you@uno.com"
+						placeholder="you@hoomefynda.com"
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 						disabled={submitting}

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { AuthHeader } from "@/components/layout/AuthHeader";
 import { requestOtp } from "@/lib/authClient";
+import { siteConfig } from "@/../config/site";
 
 type LoginMode = "otp" | "password";
 
@@ -182,7 +183,7 @@ function LoginContent() {
           </button>
 
           <p className="mt-5 text-[14px] text-[#161515]">
-            New to UNO?{" "}
+            New to {siteConfig.name}?{" "}
             <Link
               href="/signup"
               className="font-semibold text-[#af2525] hover:underline"
@@ -192,9 +193,9 @@ function LoginContent() {
           </p>
 
           <p className="mt-6 text-center text-[12px] leading-relaxed text-[rgba(10,10,10,0.4)]">
-            By signing in you agree to Uno&apos;s{" "}
+            By signing in you agree to {siteConfig.name}&apos;s{" "}
             <Link href="/terms" className="underline">
-              Terms of Use
+              Terms of Service
             </Link>{" "}
             and{" "}
             <Link href="/privacy" className="underline">

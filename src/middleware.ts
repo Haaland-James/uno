@@ -17,6 +17,8 @@ const publicRoutes = [
 	"/verify",
 	"/terms",
 	"/privacy",
+	"/cookies",
+	"/contact",
 	// Admin auth surfaces. Note: order matters relative to the /admin role
 	// check below — /admin/login and /admin/verify must be reachable to non-admins.
 	"/admin/login",

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/../config/site";
 
 interface LogoProps {
 	/** Sizing utility classes. Defaults to a header-appropriate height. */
@@ -15,13 +16,17 @@ interface LogoProps {
 }
 
 /**
- * The UNO brand logo. Single source of truth — renders the official SVG
- * lockup from /public/logo.svg. Size it via `className` (e.g. "h-9 w-auto").
+ * The brand logo. Single source of truth — renders the official SVG lockup
+ * from /public/logo.svg. Size it via `className` (e.g. "h-9 w-auto").
  *
  * Replaces the old inline "pink circle + Home icon + 'uno' text" lockup that
  * had been copy-pasted across headers, footers, and auth pages.
+ *
+ * The SVG is the current Hoomefynda lockup (identical to /logos/logo x2.svg);
+ * logo-alt.svg matches /logos/logo x1.svg. Update both together if the brand
+ * lockup changes.
  */
-export function Logo({ className, href, alt = "UNO" }: LogoProps) {
+export function Logo({ className, href, alt = siteConfig.name }: LogoProps) {
 	const img = (
 		// eslint-disable-next-line @next/next/no-img-element -- static local SVG; next/image adds no value for a tiny inline asset
 		<img

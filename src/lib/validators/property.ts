@@ -1,4 +1,36 @@
 import { z } from "zod";
+import { siteConfig } from "@/../config/site";
+
+// Photo URLs must point at hosts we actually serve images from (mirrors
+// next.config.mjs remotePatterns). Without this, the wizard and edit paths
+// accept any URL and the whole Cloudinary upload pipeline — signing, per-user
+// folders, format restrictions — becomes decoration. When the cloud name env
+// is set, Cloudinary URLs must also belong to OUR cloud, not just any account.
+const ALLOWED_PHOTO_HOSTS = ["res.cloudinary.com", "images.unsplash.com"];
+
+const photoUrlSchema = z
+	.string()
+	.max(500)
+	.refine((raw) => {
+		let url: URL;
+		try {
+			url = new URL(raw);
+		} catch {
+			return false;
+		}
+		if (url.protocol !== "https:") return false;
+		if (!ALLOWED_PHOTO_HOSTS.includes(url.hostname)) return false;
+		const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+		if (url.hostname === "res.cloudinary.com" && cloud) {
+			return url.pathname.startsWith(`/${cloud}/`);
+		}
+		return true;
+	}, `Photo URL must be a ${siteConfig.name}-hosted image`);
+
+const photoSchema = z.object({
+	url: photoUrlSchema,
+	isMain: z.boolean().optional(),
+});
 
 const feeValueSchema = z.object({
 	mode: z.enum(["FIXED", "PERCENT"]).default("FIXED"),
@@ -105,7 +137,6 @@ export const propertyWizardSubmitSchema = z.object({
 	fullAddressVisible: z.boolean().optional().default(false),
 
 	// Property info
-	title: z.string().min(5, "Title must be at least 5 characters").max(120),
 	propertyType: z.string().min(1, "Property type is required"),
 	bedrooms: z.number().min(0).max(20).nullable(),
 	bathrooms: z.number().min(0).max(20).nullable(),
@@ -145,12 +176,7 @@ export const propertyWizardSubmitSchema = z.object({
 
 	// Photos — Cloudinary URLs already uploaded from the browser
 	photos: z
-		.array(
-			z.object({
-				url: z.string().url(),
-				isMain: z.boolean().optional(),
-			})
-		)
+		.array(photoSchema)
 		.min(1, "Add at least one photo"),
 
 	// Pricing — rent/lease
@@ -193,9 +219,10 @@ export const propertyWizardSubmitSchema = z.object({
  * sent get persisted.
  */
 export const propertyUpdateSchema = propertyCreateSchema
-	.omit({ availabilityStatus: true })
+	.omit({ availabilityStatus: true, title: true })
 	.partial()
 	.extend({
+	listingType: z.enum(["RENT", "LEASE", "SALE"]).optional(),
 	state: z.string().max(120).optional(),
 	lga: z.string().max(120).optional(),
 	ownershipType: z.string().max(60).optional(),
@@ -238,12 +265,7 @@ export const propertyUpdateSchema = propertyCreateSchema
 	minimumLease: z.string().max(50).nullish(),
 
 	photos: z
-		.array(
-			z.object({
-				url: z.string().url(),
-				isMain: z.boolean().optional(),
-			})
-		)
+		.array(photoSchema)
 		.min(1, "Add at least one photo")
 		.optional(),
 });

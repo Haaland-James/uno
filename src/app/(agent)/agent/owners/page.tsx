@@ -5,6 +5,7 @@ import { Pencil, X } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/stores/toastStore";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { siteConfig } from "@/../config/site";
 
 interface Owner {
 	name: string | null;
@@ -74,7 +75,7 @@ export default function AgentOwnersPage() {
 		<div className="page-container py-4 md:py-6">
 			<AdminPageHeader
 				title="Property Owners"
-				description="Off-platform owners whose properties you manage on UNO. These contacts are never shown to renters."
+				description={`Off-platform owners whose properties you manage on ${siteConfig.name}. These contacts are never shown to renters.`}
 			/>
 
 			{loading ? (

@@ -10,6 +10,7 @@ import {
 	AGENT_SPECIALIZATION_LABELS as SPEC_LABELS,
 	AGENT_SPECIALIZATIONS as ALL_SPECS,
 } from "@/../config/constants";
+import { siteConfig } from "@/../config/site";
 
 interface Profile {
 	name: string;
@@ -101,7 +102,7 @@ export default function AgentProfilePage() {
 		<div className="page-container py-4 md:py-6">
 			<AdminPageHeader
 				title="My Profile"
-				description="How renters see you on UNO. Listed properties link back here."
+				description={`How renters see you on ${siteConfig.name}. Listed properties link back here.`}
 				actions={
 					profile?.agentSlug ? (
 						<Link
@@ -143,7 +144,7 @@ export default function AgentProfilePage() {
 								<p className="text-sm text-content-secondary">{profile.email}</p>
 								<div className="mt-2 flex flex-wrap items-center gap-1.5">
 									<span className="inline-flex items-center gap-1.5 rounded-full bg-uno-red/10 px-2.5 py-0.5 text-xs font-semibold text-uno-red">
-										UNO Verified Agent
+										{siteConfig.name} Verified Agent
 									</span>
 									{specializations.map((s) => (
 										<span

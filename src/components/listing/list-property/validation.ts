@@ -26,23 +26,17 @@ export function isStepValid(stepKey: string, data: ListPropertyData): boolean {
 		case "property-info":
 			if (isCommercial) {
 				return (
-					data.title.trim().length >= 10 &&
-					data.title.trim().length <= 100 &&
 					typeof data.floorAreaSqm === "number" &&
 					data.floorAreaSqm > 0 &&
 					data.fitOutState.trim().length > 0
 				);
 			}
 			return (
-				data.title.trim().length >= 10 &&
-				data.title.trim().length <= 100 &&
 				data.bedrooms !== null &&
 				data.bathrooms !== null
 			);
 		case "land-details":
 			return (
-				data.title.trim().length >= 10 &&
-				data.title.trim().length <= 100 &&
 				typeof data.plotSizeSqm === "number" &&
 				data.plotSizeSqm > 0 &&
 				data.titleDocType.trim().length > 0

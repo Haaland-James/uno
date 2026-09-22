@@ -12,6 +12,7 @@ import {
 import { cn, formatNaira } from "@/lib/utils";
 import { getTopLeftBadge, isOffMarket } from "@/lib/property-badges";
 import type { PropertyCardData } from "@/types/property";
+import { siteConfig } from "@/../config/site";
 
 const RESIDENTIAL_TYPES = new Set([
   "FLAT", "HOUSE", "DUPLEX", "SELF_CONTAIN", "BUNGALOW",
@@ -288,7 +289,7 @@ export function PropertyCard({
           <div className="mt-auto h-[20px] flex items-center">
             <div className="inline-flex items-center gap-1 rounded-full bg-[#f5f0f0] px-2 py-0.5 text-[10px] font-semibold text-[#161515]">
               <ShieldCheck size={11} className="text-[#af2525]" />
-              Listed by UNO
+              Listed by {siteConfig.name}
             </div>
           </div>
         )}

@@ -8,7 +8,7 @@
  * Areas live in query params, never path: `?area=ewet-housing`.
  */
 
-import { findBySlug, findByName, type LocationNode } from "./coverage";
+import { COVERAGE, findBySlug, findByName, type LocationNode } from "./coverage";
 
 /**
  * Listing-type categories — these are the path segments under /properties.
@@ -207,8 +207,6 @@ export function searchStateToApiParams(s: SearchState): import("./clients/proper
 
 /** Returns names of all city nodes whose parent slug matches the given state. */
 function citiesUnderState(stateSlug: string): string[] | undefined {
-  // Lazy import to avoid circular dep at module-init time
-  const { COVERAGE } = require("./coverage") as typeof import("./coverage");
   const cities = COVERAGE
     .filter((n) => n.type === "city" && n.parent === stateSlug)
     .map((n) => n.name);
@@ -226,7 +224,11 @@ export function describeScope(s: SearchState): string {
   const place = s.city
     ? `${s.city.name}, ${s.state?.name ?? ""}`.replace(/, $/, "")
     : s.state?.name;
-  if (!place) return `All Properties ${cat.toLowerCase()}`.replace("for ", "for ");
+  if (!place) {
+    // `cat` already falls back to "All Properties", so only append it when it
+    // actually carries a category — otherwise the phrase renders twice.
+    return s.category ? `All Properties ${cat.toLowerCase()}` : "All Properties";
+  }
   return `${cat} in ${place}`;
 }
 

@@ -12,6 +12,7 @@ import { AdminBtn } from "@/components/admin/AdminBtn";
 import { StatusPill, type StatusTone } from "@/components/admin/StatusPill";
 import { getInitials } from "@/lib/utils";
 import { AGENT_SPECIALIZATION_LABELS as SPEC_LABELS } from "@/../config/constants";
+import { siteConfig } from "@/../config/site";
 
 type StatusFilter = "ALL" | "VERIFIED" | "SUSPENDED" | "PENDING";
 
@@ -91,7 +92,7 @@ export default function AdminAgentsPage() {
 		<div className="page-container py-4 md:py-6">
 			<AdminPageHeader
 				title="Agents"
-				description="Manage in-house UNO field agents — their profiles, listings, and access. Promote a user to agent from the Users tab."
+				description={`Manage in-house ${siteConfig.name} field agents — their profiles, listings, and access. Promote a user to agent from the Users tab.`}
 				actions={
 					<Link
 						href="/admin/users?role=RENTER"

@@ -20,6 +20,8 @@ import {
   X,
 } from "lucide-react";
 import { cn, formatNaira } from "@/lib/utils";
+import { siteConfig } from "@/../config/site";
+import { siteUrl } from "@/lib/site";
 import { propertiesClient } from "@/lib/clients/properties";
 import { trackPropertyView } from "@/hooks/useRecentlyViewed";
 import { shareOrCopy } from "@/lib/share";
@@ -27,6 +29,7 @@ import { Footer } from "@/components/layout/Footer";
 import { toast } from "@/stores/toastStore";
 import type { PropertyDetailData, PropertyCardData } from "@/types/property";
 import { PropertyCard } from "@/components/property/PropertyCard";
+import { ListerResponseMetrics } from "@/components/property/ListerResponseMetrics";
 import { ReportListingButton } from "@/components/property/ReportListingButton";
 import { useSession } from "next-auth/react";
 import { useFavourites } from "@/hooks/useFavourites";
@@ -460,10 +463,13 @@ export default function PropertyDetailPage() {
   const [notFound, setNotFound] = useState(false);
   async function handleShare() {
     if (!property) return;
-    const url = typeof window !== "undefined" ? window.location.href : `https://uno.ng/property/${propertyId}`;
+    const url =
+      typeof window !== "undefined"
+        ? window.location.href
+        : `${siteUrl()}/property/${propertyId}`;
     const result = await shareOrCopy({
       title: property.title,
-      text: `Check out ${property.title} on UNO`,
+      text: `Check out ${property.title} on ${siteConfig.name}`,
       url,
     });
     if (result.kind === "copied") toast.success("Link copied to clipboard");
@@ -724,7 +730,7 @@ export default function PropertyDetailPage() {
 
                 {/* Stats line */}
                 <p className="text-[12px] md:text-[13px] font-semibold text-[#93191d] leading-[16px]">
-                  {property.daysOnUno} days on UNO &bull;{" "}
+                  {property.daysOnUno} days on {siteConfig.name} &bull;{" "}
                   {property.views.toLocaleString()} views &bull;{" "}
                   {property.favourites} favorites
                 </p>
@@ -913,12 +919,15 @@ export default function PropertyDetailPage() {
                 {property.listedBy.company}
               </p>
               <p>Listing updated: {property.listingUpdated}</p>
-              <p>Uno checked: {property.unoChecked}</p>
+              <ListerResponseMetrics listedBy={property.listedBy} listedByAgent={property.listedByAgent} placement="mobile" />
+              <p>
+                {siteConfig.name} checked: {property.unoChecked}
+              </p>
             </div>
 
-            {/* Agent reveal — when a UNO agent listed this property on
+            {/* Agent reveal — when an in-house agent listed this property on
                 behalf of an off-platform owner. The card and "Listed by"
-                line stay UNO-first (institutional trust); this block
+                line stay brand-first (institutional trust); this block
                 reveals the agent as a friendly human face below. */}
             {property.agent && (
               <div className="mt-6 rounded-[15px] border border-black/10 bg-white p-4">
@@ -938,7 +947,9 @@ export default function PropertyDetailPage() {
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] text-black/60">Your UNO agent</div>
+                    <div className="text-[13px] text-black/60">
+                      Your {siteConfig.name} agent
+                    </div>
                     <div className="truncate text-[15px] font-semibold text-[#161515]">
                       {property.agent.name}
                     </div>
@@ -986,6 +997,7 @@ export default function PropertyDetailPage() {
                     Listed by {property.listedBy.name}
                   </div>
                 )}
+                <ListerResponseMetrics listedBy={property.listedBy} listedByAgent={property.listedByAgent} placement="desktop" />
                 <div className="flex flex-col gap-[15px] w-[301px]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-[22px] font-semibold text-[#161515]">
@@ -1015,7 +1027,7 @@ export default function PropertyDetailPage() {
                               propertyId,
                               method: "WHATSAPP",
                               source: "detail-desktop",
-                              whatsappMessage: `Hi, I'm interested in your listing "${property.title}" on UNO.`,
+                              whatsappMessage: `Hi, I'm interested in your listing "${property.title}" on ${siteConfig.name}.`,
                             })
                           }
                           disabled={contactPending === "WHATSAPP"}
@@ -1143,7 +1155,7 @@ export default function PropertyDetailPage() {
                       propertyId,
                       method: "WHATSAPP",
                       source: "detail-mobile",
-                      whatsappMessage: `Hi, I'm interested in your listing "${property.title}" on UNO.`,
+                      whatsappMessage: `Hi, I'm interested in your listing "${property.title}" on ${siteConfig.name}.`,
                     })
                   }
                   disabled={contactPending === "WHATSAPP"}

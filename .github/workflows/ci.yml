@@ -24,6 +24,7 @@ jobs:
       - run: npx prisma generate
       - run: npx next lint
       - run: npx tsc --noEmit
+      - run: npx vitest run
 
   docker-smoke:
     name: Docker build & smoke test

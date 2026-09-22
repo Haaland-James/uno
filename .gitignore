@@ -2,9 +2,14 @@
 
 #root
 *.pdf
-*.md
 *.md.pdf
 /.vscode
+
+# Planning / vision docs stay local. Scoped to these directories rather than a
+# blanket *.md so that README.md — or any markdown genuinely meant for the
+# repo — isn't silently untracked.
+/vision/**/*.md
+/docs/**/*.md
 
 # dependencies
 /node_modules

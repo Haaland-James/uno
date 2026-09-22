@@ -1,13 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/shared/Logo";
-
-const LEGAL_LINKS = [
-  { label: "Terms", href: "/terms" },
-  { label: "Privacy", href: "/privacy" },
-  { label: "Contact", href: "/contact" },
-  { label: "Help", href: "/help" },
-  { label: "About", href: "/about" },
-];
+import { siteConfig } from "@/../config/site";
+import { COMPACT_LEGAL_LINKS } from "@/lib/nav-links";
 
 /**
  * Compact footer for the in-column position on the search page.
@@ -20,10 +14,12 @@ export function SearchPageFooter() {
         <Link href="/" className="flex items-center">
           <Logo className="h-6 w-auto" />
         </Link>
-        <span className="text-[12px] text-black/40">© 2026 UNO Nigeria</span>
+        <span className="text-[12px] text-black/40">
+          © {new Date().getFullYear()} {siteConfig.name} Nigeria
+        </span>
       </div>
       <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-        {LEGAL_LINKS.map((l) => (
+        {COMPACT_LEGAL_LINKS.map((l) => (
           <Link
             key={l.href}
             href={l.href}

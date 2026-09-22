@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   Menu,
   Building2,
-  Users,
   HelpCircle,
   LogOut,
 } from "lucide-react";
@@ -33,8 +32,7 @@ function getInitials(name: string): string {
 
 const dropdownItems = [
   { label: "List Properties", href: "/listing/properties/new", icon: Building2 },
-  { label: "Referrals", href: "/referrals", icon: Users },
-  { label: "Help & Support", href: "/help", icon: HelpCircle },
+  { label: "Contact us", href: "/contact", icon: HelpCircle },
 ];
 
 export function Header({ className }: { className?: string }) {

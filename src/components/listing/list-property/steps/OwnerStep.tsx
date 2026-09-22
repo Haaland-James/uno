@@ -3,15 +3,16 @@
 import { Input } from "@/components/ui/Input";
 import { LabeledField } from "@/components/ui/LabeledField";
 import { useListPropertyStore } from "@/stores/listPropertyStore";
+import { siteConfig } from "@/../config/site";
 
 /**
- * Off-platform owner step. Only shown to in-house UNO agents — the wizard
+ * Off-platform owner step. Only shown to in-house agents — the wizard
  * injects it after the LocationStep when getSteps() is called with
  * isInHouseAgent=true.
  *
  * The values here are private metadata: they're stored on the Property row
  * for the agent's records but never rendered on any public surface. Renters
- * see "Listed by UNO" + the agent's profile — they never see the real owner.
+ * see the "Listed by" badge + the agent's profile — never the real owner.
  */
 export function OwnerStep() {
 	const data = useListPropertyStore((s) => s.data);
@@ -24,7 +25,8 @@ export function OwnerStep() {
 			</h1>
 			<p className="mb-6 text-[14px] text-black/60">
 				Capture the landlord&apos;s contact details for your records. These are
-				private to you — renters only see &ldquo;Listed by UNO&rdquo; and your agent profile.
+				private to you — renters only see &ldquo;Listed by {siteConfig.name}
+				&rdquo; and your agent profile.
 			</p>
 
 			<div className="flex flex-col gap-5">
@@ -61,8 +63,8 @@ export function OwnerStep() {
 
 			<div className="mt-6 rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-[13px] text-amber-800">
 				<strong>Reminder:</strong> only list properties you&apos;ve personally
-				inspected and have the owner&apos;s consent to publish. UNO&apos;s reputation
-				is tied to your listings.
+				inspected and have the owner&apos;s consent to publish.{" "}
+				{siteConfig.name}&apos;s reputation is tied to your listings.
 			</div>
 		</div>
 	);

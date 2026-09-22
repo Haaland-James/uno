@@ -5,6 +5,7 @@ import { sendOtpEmail } from "@/lib/email";
 import { requestOtpSchema } from "@/lib/validators/auth";
 import { err, ok, zodErr, getClientIp } from "@/lib/api";
 import { otpRequestLimiter, authIpLimiter } from "@/lib/ratelimit";
+import { siteConfig } from "@/../config/site";
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (!isAgent) {
       return err(
         "not_agent",
-        "That account isn't a UNO staff account. Use the main sign-in page.",
+        `That account isn't a ${siteConfig.name} staff account. Use the main sign-in page.`,
         403
       );
     }

@@ -53,6 +53,7 @@ export async function computeGateSignals(input: GateInput): Promise<GateResult> 
 				? "pass"
 				: "fail",
 		hasPhone: "unknown",
+		// Server-derived titles no longer discriminate listings; retain this generator guard.
 		titleLengthOk: input.title.trim().length >= TITLE_MIN ? "pass" : "fail",
 		descriptionOk:
 			(input.description ?? "").trim().length >= DESC_MIN ? "pass" : "fail",

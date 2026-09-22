@@ -10,7 +10,7 @@ export interface StepDef {
 const OVERVIEW: StepDef = { key: "overview", label: "Overview", counted: false };
 const KIND: StepDef = { key: "kind", label: "Property Kind", counted: false };
 const LOCATION: StepDef = { key: "location", label: "Location", counted: true };
-// Off-platform owner step. Injected only for in-house UNO agents. Captures
+// Off-platform owner step. Injected only for in-house Hoomefynda agents. Captures
 // the real owner's name + phone for the agent's records — never shown to renters.
 const OWNER: StepDef = { key: "owner", label: "Property Owner", counted: true };
 const PROPERTY_INFO: StepDef = { key: "property-info", label: "Property Info", counted: true };

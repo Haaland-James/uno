@@ -12,6 +12,7 @@
  * to a later pass. Once that ships, retire this script.
  */
 import { PrismaClient } from "@prisma/client";
+import { sendAgentCreatedEmail, sendBestEffort } from "../src/lib/email";
 
 const db = new PrismaClient();
 
@@ -61,6 +62,7 @@ async function main() {
 			agentStatus: true,
 			agentEmployment: true,
 			agentSlug: true,
+			agentTerritory: true,
 		},
 	});
 
@@ -68,6 +70,17 @@ async function main() {
 	console.log(updated);
 	console.log(`\nPublic profile will appear at: /agents/${updated.agentSlug}`);
 	console.log(`Sign-in URL: /agent/login\n`);
+
+	await sendBestEffort(
+		() => sendAgentCreatedEmail({
+			to: updated.email,
+			name: updated.name,
+			agentSlug: updated.agentSlug!,
+			territory: updated.agentTerritory,
+		}),
+		"agent-created"
+	);
+	console.log(`Welcome email attempted for ${updated.email}; any failure is logged above.\n`);
 }
 
 main()
