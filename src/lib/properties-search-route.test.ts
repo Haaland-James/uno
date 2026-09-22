@@ -48,3 +48,28 @@ it("narrows ranked-search candidate filtering to the FTS result IDs", async () =
   }));
   expect(mocks.count).not.toHaveBeenCalled();
 });
+
+it("intersects an explicit ids filter with FTS results instead of replacing it", async () => {
+  mocks.queryRaw.mockResolvedValueOnce([
+    { id: "requested-a", rank: 0.9 },
+    { id: "outside-request", rank: 0.8 },
+  ]);
+  mocks.findMany
+    .mockResolvedValueOnce([{ id: "requested-a" }])
+    .mockResolvedValueOnce([]);
+
+  const response = await GET(new NextRequest("http://localhost/api/properties?q=flat&ids=requested-a,requested-b"));
+
+  expect(response.status).toBe(200);
+  expect(mocks.findMany).toHaveBeenNthCalledWith(1, {
+    where: expect.objectContaining({
+      status: "ACTIVE",
+      deletedAt: null,
+      id: { in: ["requested-a"] },
+    }),
+    select: { id: true },
+  });
+  expect(mocks.findMany).toHaveBeenNthCalledWith(2, expect.objectContaining({
+    where: expect.objectContaining({ id: { in: ["requested-a"] } }),
+  }));
+});

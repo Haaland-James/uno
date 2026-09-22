@@ -95,6 +95,11 @@ export async function GET(req: NextRequest) {
       ftsRanked = true;
     }
 
+    if (f.ids?.length) {
+      const requestedIds = new Set(f.ids);
+      ftsIds = ftsIds.filter((id) => requestedIds.has(id));
+    }
+
     // No full-text match and no ILIKE match either — a genuinely empty result.
     // The UI renders its empty state from this; it must not fall back to
     // seed/mock listings, which would show a searcher properties that don't
