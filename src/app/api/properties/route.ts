@@ -11,9 +11,11 @@ import {
 import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { generateListingTitle } from "@/lib/listing-title";
 import { computeGateSignals } from "@/lib/gate";
 import { listingCreateLimiter } from "@/lib/ratelimit";
 import { deriveStatusFields, notDeleted } from "@/lib/property-status";
+import { pageRankedIds, reorderByIds } from "@/lib/search-ranking";
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -60,7 +62,7 @@ export async function GET(req: NextRequest) {
   // ranked results, then feed those IDs back into Prisma for the remaining
   // filters. Falls back to ILIKE on area/city for location-only queries.
   let ftsIds: string[] | null = null;
-  let ftsRankMap: Map<string, number> | null = null;
+  let ftsRanked = false;
 
   if (f.q) {
     const ftsRows = await db.$queryRaw<{ id: string; rank: number }[]>(
@@ -70,7 +72,7 @@ export async function GET(req: NextRequest) {
         WHERE "search_vector" @@ plainto_tsquery('english', ${f.q})
           AND status = 'ACTIVE'
           AND "deletedAt" IS NULL
-        ORDER BY rank DESC
+        ORDER BY rank DESC, id ASC
         LIMIT 500
       `
     );
@@ -83,13 +85,14 @@ export async function GET(req: NextRequest) {
           WHERE (area ILIKE ${likeTerm} OR city ILIKE ${likeTerm})
             AND status = 'ACTIVE'
             AND "deletedAt" IS NULL
+          ORDER BY id ASC
           LIMIT 500
         `
       );
       ftsIds = fallbackRows.map((r) => r.id);
     } else {
       ftsIds = ftsRows.map((r) => r.id);
-      ftsRankMap = new Map(ftsRows.map((r) => [r.id, r.rank]));
+      ftsRanked = true;
     }
 
     // No full-text match and no ILIKE match either — a genuinely empty result.
@@ -109,28 +112,51 @@ export async function GET(req: NextRequest) {
     where.id = { in: ftsIds };
   }
 
-  const orderBy: Prisma.PropertyOrderByWithRelationInput =
+  const orderBy: Prisma.PropertyOrderByWithRelationInput[] = [
     f.sort === "price_asc"
       ? { rent: "asc" }
       : f.sort === "price_desc"
       ? { rent: "desc" }
       : f.sort === "most_viewed"
       ? { views: "desc" }
-      : { createdAt: "desc" };
+      : { createdAt: "desc" },
+    { id: "asc" },
+  ];
 
   const skip = (f.page - 1) * f.pageSize;
+  const usesRank = ftsRanked && !f.sort;
 
-  const [items, total, session] = await Promise.all([
-    db.property.findMany({
-      where,
-      ...((ftsRankMap && !f.sort) ? {} : { orderBy }),
-      skip,
-      take: f.pageSize,
-      include: { photos: { orderBy: { order: "asc" } } },
-    }),
-    db.property.count({ where }),
-    getServerSession(authOptions),
-  ]);
+  const [items, total, session] = await (async () => {
+    if (usesRank) {
+      const [matchingRows, session] = await Promise.all([
+        db.property.findMany({ where, select: { id: true } }),
+        getServerSession(authOptions),
+      ]);
+      // The pre-existing FTS LIMIT 500 caps ranked search totals at 500 matches.
+      const { pageIds, total } = pageRankedIds(
+        ftsIds!, matchingRows.map((row) => row.id), skip, f.pageSize,
+      );
+      // Re-apply the full `where`, not just the IDs: a listing deactivated or
+      // soft-deleted between the two queries must not slip into a public page.
+      const rows = await db.property.findMany({
+        where: { ...where, id: { in: pageIds } },
+        include: { photos: { orderBy: { order: "asc" } } },
+      });
+      return [reorderByIds(rows, pageIds), total, session] as const;
+    }
+
+    return Promise.all([
+      db.property.findMany({
+        where,
+        orderBy,
+        skip,
+        take: f.pageSize,
+        include: { photos: { orderBy: { order: "asc" } } },
+      }),
+      db.property.count({ where }),
+      getServerSession(authOptions),
+    ]);
+  })();
 
   let favIds = new Set<string>();
   if (session?.user?.id && items.length) {
@@ -144,15 +170,8 @@ export async function GET(req: NextRequest) {
     favIds = new Set(favs.map((f) => f.propertyId));
   }
 
-  // findMany can't preserve the ts_rank ordering from the raw ID query above,
-  // so when FTS drove the result set and the user hasn't picked an explicit
-  // sort, reapply the rank here.
-  const sorted = (ftsRankMap && !f.sort)
-    ? [...items].sort((a, b) => (ftsRankMap.get(b.id) ?? 0) - (ftsRankMap.get(a.id) ?? 0))
-    : items;
-
   return ok({
-    items: sorted.map((p) => toCardDto(p, favIds.has(p.id))),
+    items: items.map((p) => toCardDto(p, favIds.has(p.id))),
     page: f.page,
     pageSize: f.pageSize,
     total,
@@ -245,6 +264,8 @@ export async function POST(req: NextRequest) {
       (w.propertyKind as PropertyKind | undefined) ??
       ((getKindForPropertyType(w.propertyType) ?? "RESIDENTIAL") as PropertyKind);
 
+    const title = generateListingTitle({ ...w, propertyKind, propertyType, listingType, bedrooms: w.bedrooms ?? 0 });
+
     const agencyFeeAmount = w.agencyFee?.value ?? null;
     const agencyFeeMode: FeeMode = (w.agencyFee?.mode ?? "FIXED") as FeeMode;
     const legalFeeAmount = w.legalFee?.value ?? null;
@@ -256,7 +277,7 @@ export async function POST(req: NextRequest) {
     // `initialStatus` on `gate.autoPublish` (see git history of this file).
     const gate = await computeGateSignals({
       listerUserId: session.user.id,
-      title: w.title,
+      title,
       description: description || null,
       photoCount: w.photos.length,
       latitude: w.latitude ?? null,
@@ -271,7 +292,7 @@ export async function POST(req: NextRequest) {
     const created = await db.property.create({
       data: {
         landlordId: session.user.id,
-        title: w.title,
+        title,
         propertyKind,
         propertyType,
         listingType,

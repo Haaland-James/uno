@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
+import { generateListingTitle } from "@/lib/listing-title";
 import { db } from "@/lib/db";
+import { calculateResponseMetrics, refreshResponseMetrics } from "@/lib/response-metrics";
 import { ok, err, zodErr } from "@/lib/api";
 import { toDetailDto } from "@/lib/property-mappers";
 import { propertyUpdateSchema } from "@/lib/validators/property";
@@ -55,7 +57,18 @@ export async function GET(
     .update({ where: { id }, data: { views: { increment: 1 } } })
     .catch((e) => console.error("[property:view] increment failed", e));
 
-  return ok(toDetailDto(property, isFavourited, { revealAddress: isOwner || isAdmin }));
+  // Derive all public metrics (including the threshold) from one source snapshot.
+  // Historical profiles may still contain defaults/seed values or a failed refresh.
+  const responseMetrics = property.listedByAgent ? undefined : calculateResponseMetrics(
+    await db.contactRequest.findMany({
+      where: { property: { landlordId: property.landlordId, deletedAt: null } },
+      select: { createdAt: true, respondedAt: true },
+    })
+  );
+  return ok(toDetailDto(property, isFavourited, {
+    revealAddress: isOwner || isAdmin,
+    responseMetrics,
+  }));
 }
 
 /**
@@ -107,10 +120,22 @@ export async function PATCH(
       : null;
 
   const updated = await db.$transaction(async (tx) => {
+    let title: string | undefined;
+    if (data.propertyType !== undefined || data.listingType !== undefined || data.bedrooms !== undefined || data.area !== undefined || data.city !== undefined) {
+      // Serialize title-affecting edits before reading facts: the authorization
+      // snapshot above may predate another PATCH. Hold the lock through commit.
+      await tx.$queryRaw`SELECT "id" FROM "Property" WHERE "id" = ${id} FOR UPDATE`;
+      const current = await tx.property.findUniqueOrThrow({
+        where: { id },
+        select: { propertyKind: true, propertyType: true, listingType: true, bedrooms: true, area: true, city: true },
+      });
+      title = generateListingTitle({ ...current, ...data });
+    }
     const propertyData = {
-      ...(data.title !== undefined && { title: data.title }),
+      ...(title !== undefined && { title }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.propertyType !== undefined && { propertyType: data.propertyType }),
+      ...(data.listingType !== undefined && { listingType: data.listingType }),
       ...(data.bedrooms !== undefined && { bedrooms: data.bedrooms }),
       ...(data.bathrooms !== undefined && { bathrooms: data.bathrooms }),
       ...(data.size !== undefined && { size: data.size }),
@@ -221,5 +246,6 @@ export async function DELETE(
     where: { id },
     data: { deletedAt: new Date(), status: "PAUSED" },
   });
+  await refreshResponseMetrics(property.landlordId);
   return ok({ ok: true });
 }

@@ -29,6 +29,7 @@ import { Footer } from "@/components/layout/Footer";
 import { toast } from "@/stores/toastStore";
 import type { PropertyDetailData, PropertyCardData } from "@/types/property";
 import { PropertyCard } from "@/components/property/PropertyCard";
+import { ListerResponseMetrics } from "@/components/property/ListerResponseMetrics";
 import { ReportListingButton } from "@/components/property/ReportListingButton";
 import { useSession } from "next-auth/react";
 import { useFavourites } from "@/hooks/useFavourites";
@@ -918,6 +919,7 @@ export default function PropertyDetailPage() {
                 {property.listedBy.company}
               </p>
               <p>Listing updated: {property.listingUpdated}</p>
+              <ListerResponseMetrics listedBy={property.listedBy} listedByAgent={property.listedByAgent} placement="mobile" />
               <p>
                 {siteConfig.name} checked: {property.unoChecked}
               </p>
@@ -995,6 +997,7 @@ export default function PropertyDetailPage() {
                     Listed by {property.listedBy.name}
                   </div>
                 )}
+                <ListerResponseMetrics listedBy={property.listedBy} listedByAgent={property.listedByAgent} placement="desktop" />
                 <div className="flex flex-col gap-[15px] w-[301px]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-[22px] font-semibold text-[#161515]">

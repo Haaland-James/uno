@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { refreshResponseMetrics } from "@/lib/response-metrics";
 import { ok, err, zodErr } from "@/lib/api";
 import { contactCreateSchema, contactListQuerySchema } from "@/lib/validators/contact";
 import { contactRequestLimiter } from "@/lib/ratelimit";
@@ -206,6 +207,7 @@ export async function POST(req: NextRequest) {
 		return row;
 	});
 
+	await refreshResponseMetrics(property.landlordId);
 	await sendBestEffort(
 		() =>
 			sendContactLeadEmail({
