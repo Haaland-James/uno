@@ -64,6 +64,12 @@ export const propertiesClient = {
   detail: (id: string) =>
     getJson<PropertyDetailData>(`/api/properties/${encodeURIComponent(id)}`),
 
+  /** Fire-and-forget view count. Server de-dupes; always 204, never throws. */
+  recordView: (id: string) => {
+    fetch(`/api/properties/${encodeURIComponent(id)}/view`, { method: "POST", keepalive: true })
+      .catch(() => {});
+  },
+
   similar: (id: string, limit = 6) =>
     getJson<{ items: PropertyCardData[] }>(
       `/api/properties/${encodeURIComponent(id)}/similar?limit=${limit}`

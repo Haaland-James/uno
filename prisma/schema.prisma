@@ -282,6 +282,8 @@ model Property {
   favourites          Favourite[]
   contactRequests     ContactRequest[]
   reports             Report[]
+  priceHistory        PriceHistory[]
+  viewEvents          PropertyView[]
 
   // DB-only indexes on unsupported columns, maintained by SQL migrations:
   // Property_geom_idx (GIST), Property_search_vector_idx (GIN).
@@ -409,6 +411,40 @@ model PropertyPhoto {
   createdAt  DateTime @default(now())
 
   @@index([propertyId])
+}
+
+// One row per price point: written on create (baseline) and whenever an edit
+// changes rent, rentPeriod or listingType. Price-drop detection compares the
+// latest two rows with the same period + listing type (item 23).
+model PriceHistory {
+  id          String      @id @default(cuid())
+  propertyId  String
+  property    Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  rent        Int
+  rentPeriod  RentPeriod
+  listingType ListingType
+  changedById String? // null for the migration backfill
+  createdAt   DateTime    @default(now())
+
+  @@index([propertyId, createdAt])
+  @@index([createdAt])
+}
+
+// One row per unique viewer per listing per Lagos day. The unique key is the
+// de-dup; Property.views is incremented only when a row is actually inserted.
+// viewerKey is "u:<userId>" or "a:<daily HMAC of ip+UA>" — no cookie involved.
+// Grows unbounded until the retention job lands (docs/TODO.md item 42).
+model PropertyView {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId     String?
+  viewerKey  String
+  day        String // "YYYY-MM-DD", Africa/Lagos
+  createdAt  DateTime @default(now())
+
+  @@unique([propertyId, viewerKey, day])
+  @@index([propertyId, createdAt])
 }
 
 model Favourite {

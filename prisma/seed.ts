@@ -264,6 +264,9 @@ async function main() {
             })
           ),
         },
+        priceHistory: {
+          create: { rent: mock.rent, rentPeriod: mock.rentPeriod as RentPeriod, listingType, createdAt: mock.createdAt },
+        },
       },
     });
     count++;
@@ -313,6 +316,9 @@ async function main() {
             isMain: order === 0,
             order,
           })),
+        },
+        priceHistory: {
+          create: { rent: e.rent, rentPeriod: e.rentPeriod, listingType: e.listingType, createdAt },
         },
       },
     });

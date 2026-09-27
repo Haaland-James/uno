@@ -63,3 +63,14 @@ export const listingCreateLimiter = new Ratelimit({
   prefix: "rl:listing:create",
   analytics: true,
 });
+
+// Property views: 60/hour per IP. View counts rank "most viewed" listings, and
+// the cookieless guest viewerKey includes the User-Agent — rotating UAs would
+// otherwise mint a fresh unique view per request. Generous for a person
+// browsing (incl. shared/CGNAT IPs); caps a script at 60 fake views/hour/IP.
+export const propertyViewLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "1 h"),
+  prefix: "rl:property:view",
+  analytics: true,
+});

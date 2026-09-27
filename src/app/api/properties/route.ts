@@ -367,6 +367,15 @@ export async function POST(req: NextRequest) {
             order: i,
           })),
         },
+        // Baseline price point, atomic with the listing (item 23 diffs against it).
+        priceHistory: {
+          create: {
+            rent: Math.round(rent),
+            rentPeriod: (w.rentPeriod ?? "YEAR") as RentPeriod,
+            listingType,
+            changedById: session.user.id,
+          },
+        },
       },
       select: { id: true, status: true },
     });

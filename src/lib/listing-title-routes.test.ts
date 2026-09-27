@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), draftUpdate: vi.fn(), gate: vi.fn(),
-  transaction: vi.fn(),
+  transaction: vi.fn(), priceCreate: vi.fn(),
 }));
 vi.mock("next-auth", () => ({ getServerSession: async () => ({ user: { id: "owner", role: "LANDLORD" } }) }));
 vi.mock("@/lib/ratelimit", () => ({ listingCreateLimiter: { limit: async () => ({ success: true }) } }));
@@ -30,8 +30,13 @@ it.each([
   expect(response.status).toBe(201);
   expect(mocks.create.mock.calls[0][0].data.title).toBe(title);
   expect(mocks.gate.mock.calls[0][0].title).toBe(title);
+  expect(mocks.create.mock.calls[0][0].data.priceHistory.create).toMatchObject({
+    rent: objective === "SELL" ? 1000000 : 200000,
+    listingType: mocks.create.mock.calls[0][0].data.listingType,
+    changedById: "owner",
+  });
 });
-const property = { id: "p", landlordId: "owner", status: "ACTIVE", deletedAt: null, propertyKind: "RESIDENTIAL", propertyType: "FLAT", listingType: "RENT", bedrooms: 2, city: "Uyo", area: "Ewet" };
+const property = { id: "p", landlordId: "owner", status: "ACTIVE", deletedAt: null, propertyKind: "RESIDENTIAL", propertyType: "FLAT", listingType: "RENT", bedrooms: 2, city: "Uyo", area: "Ewet", rent: 150000, rentPeriod: "YEAR" };
 const req = (body: unknown) => new NextRequest("http://localhost/api/properties/p", { method: "PATCH", body: JSON.stringify(body) });
 beforeEach(() => {
   vi.resetAllMocks();
@@ -40,6 +45,7 @@ beforeEach(() => {
   mocks.transaction.mockImplementation(async (fn) => fn({
     $queryRaw: vi.fn().mockResolvedValue([{ id: "p" }]),
     property: { findUniqueOrThrow: mocks.findUnique, update: mocks.update },
+    priceHistory: { create: mocks.priceCreate },
   }));
 });
 it.each([
@@ -108,6 +114,23 @@ it.each([
 it("does not rewrite titles for price-only edits or forged titles", async () => {
   await PATCH(req({ rent: 200000, title: "Forged title" }), { params: { id: "p" } });
   expect(mocks.update.mock.calls[0][0].data).not.toHaveProperty("title");
+});
+it.each([
+  [{ rent: 120000 }, { rent: 120000, rentPeriod: "YEAR", listingType: "RENT" }],
+  [{ rentPeriod: "MONTH" }, { rent: 150000, rentPeriod: "MONTH", listingType: "RENT" }],
+  [{ listingType: "SALE" }, { rent: 150000, rentPeriod: "YEAR", listingType: "SALE" }],
+])("records one price point when an edit changes the price: %j", async (body, point) => {
+  expect((await PATCH(req(body), { params: { id: "p" } })).status).toBe(200);
+  expect(mocks.priceCreate).toHaveBeenCalledTimes(1);
+  expect(mocks.priceCreate.mock.calls[0][0].data).toEqual({ propertyId: "p", ...point, changedById: "owner" });
+});
+it.each([
+  [{ rent: 150000, rentPeriod: "YEAR" }],
+  [{ bedrooms: 3 }],
+  [{ description: "Freshly painted" }],
+])("records no price point when the price is unchanged: %j", async (body) => {
+  expect((await PATCH(req(body), { params: { id: "p" } })).status).toBe(200);
+  expect(mocks.priceCreate).not.toHaveBeenCalled();
 });
 it("derives draft hints on both create and update", async () => {
   const body = { data: { propertyType: "WAREHOUSE", objective: "SELL", city: "Uyo", title: "Spam" } };
