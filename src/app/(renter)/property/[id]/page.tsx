@@ -482,6 +482,7 @@ export default function PropertyDetailPage() {
     setLoading(true);
     setNotFound(false);
     trackPropertyView(propertyId);
+    propertiesClient.recordView(propertyId);
     propertiesClient
       .detail(propertyId)
       .then((d) => {

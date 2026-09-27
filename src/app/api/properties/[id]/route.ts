@@ -8,6 +8,7 @@ import { propertyUpdateSchema } from "@/lib/validators/property";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { deriveStatusFields } from "@/lib/property-status";
+import { priceChanged, type PricePoint } from "@/lib/price-history";
 
 export async function GET(
   req: NextRequest,
@@ -50,12 +51,8 @@ export async function GET(
     isFavourited = !!fav;
   }
 
-  // Fire-and-forget view increment (don't block the response).
-  // De-duped per session via the View tracking endpoint (see below) — for now,
-  // every GET counts. Stage 4 can refine if needed.
-  db.property
-    .update({ where: { id }, data: { views: { increment: 1 } } })
-    .catch((e) => console.error("[property:view] increment failed", e));
+  // No view counting here: the map popup and the edit page also fetch this.
+  // The detail page records views via POST /api/properties/[id]/view.
 
   // Derive all public metrics (including the threshold) from one source snapshot.
   // Historical profiles may still contain defaults/seed values or a failed refresh.
@@ -121,15 +118,27 @@ export async function PATCH(
 
   const updated = await db.$transaction(async (tx) => {
     let title: string | undefined;
-    if (data.propertyType !== undefined || data.listingType !== undefined || data.bedrooms !== undefined || data.area !== undefined || data.city !== undefined) {
-      // Serialize title-affecting edits before reading facts: the authorization
-      // snapshot above may predate another PATCH. Hold the lock through commit.
+    let nextPrice: PricePoint | undefined;
+    const titleAffecting = data.propertyType !== undefined || data.listingType !== undefined || data.bedrooms !== undefined || data.area !== undefined || data.city !== undefined;
+    const priceAffecting = data.rent !== undefined || data.rentPeriod !== undefined || data.listingType !== undefined;
+    if (titleAffecting || priceAffecting) {
+      // Serialize title- and price-affecting edits before reading facts: the
+      // authorization snapshot above may predate another PATCH. Hold the lock
+      // through commit.
       await tx.$queryRaw`SELECT "id" FROM "Property" WHERE "id" = ${id} FOR UPDATE`;
       const current = await tx.property.findUniqueOrThrow({
         where: { id },
-        select: { propertyKind: true, propertyType: true, listingType: true, bedrooms: true, area: true, city: true },
+        select: { propertyKind: true, propertyType: true, listingType: true, bedrooms: true, area: true, city: true, rent: true, rentPeriod: true },
       });
-      title = generateListingTitle({ ...current, ...data });
+      if (titleAffecting) title = generateListingTitle({ ...current, ...data });
+      if (priceAffecting) {
+        const after: PricePoint = {
+          rent: data.rent ?? current.rent,
+          rentPeriod: data.rentPeriod ?? current.rentPeriod,
+          listingType: data.listingType ?? current.listingType,
+        };
+        if (priceChanged(current, after)) nextPrice = after;
+      }
     }
     const propertyData = {
       ...(title !== undefined && { title }),
@@ -194,6 +203,12 @@ export async function PATCH(
       data: propertyData,
       select: { id: true, status: true },
     });
+
+    if (nextPrice) {
+      await tx.priceHistory.create({
+        data: { propertyId: id, ...nextPrice, changedById: session.user.id },
+      });
+    }
 
     // Photos: full replacement. Only touch when the client explicitly sent them.
     if (data.photos !== undefined) {
