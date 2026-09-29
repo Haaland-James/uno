@@ -124,6 +124,12 @@ it.each([
   expect(mocks.priceCreate).toHaveBeenCalledTimes(1);
   expect(mocks.priceCreate.mock.calls[0][0].data).toEqual({ propertyId: "p", ...point, changedById: "owner" });
 });
+it("accepts a ₦345M price edit on a SALE listing and records it", async () => {
+  mocks.findUnique.mockResolvedValue({ ...property, listingType: "SALE", rent: 200_000_000 });
+  expect((await PATCH(req({ rent: 345_000_000 }), { params: { id: "p" } })).status).toBe(200);
+  expect(mocks.update.mock.calls[0][0].data.rent).toBe(345_000_000);
+  expect(mocks.priceCreate.mock.calls[0][0].data).toMatchObject({ rent: 345_000_000, listingType: "SALE" });
+});
 it.each([
   [{ rent: 150000, rentPeriod: "YEAR" }],
   [{ bedrooms: 3 }],

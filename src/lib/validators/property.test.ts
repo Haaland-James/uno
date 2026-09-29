@@ -232,8 +232,14 @@ describe("propertyUpdateSchema", () => {
     expect(propertyUpdateSchema.safeParse({ rent: 750000 }).success).toBe(true);
   });
 
-  it("still enforces the create schema's bounds on the fields it does carry", () => {
-    expect(propertyUpdateSchema.safeParse({ rent: 500 }).success).toBe(false);
+  it("accepts the same rent range as the create wizard, so SALE prices can be edited", () => {
+    expect(propertyUpdateSchema.safeParse({ rent: 345_000_000 }).success).toBe(true);
+    expect(propertyUpdateSchema.safeParse({ rent: 500 }).success).toBe(true);
+    expect(propertyUpdateSchema.safeParse({ rent: 0 }).success).toBe(false);
+    expect(propertyUpdateSchema.safeParse({ rent: -1 }).success).toBe(false);
+  });
+
+  it("still strips client-supplied titles", () => {
     expect(propertyUpdateSchema.parse({ title: "Client marketing" })).not.toHaveProperty("title");
   });
 
