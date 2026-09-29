@@ -13,10 +13,13 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { assertSeedAllowed } from "../src/lib/seed-guard";
 import { LGAS_BY_STATE, NIGERIAN_STATES } from "../config/constants";
 
 const db = new PrismaClient();
 const dryRun = process.argv.includes("--dry-run");
+// This script writes unless --dry-run is passed, so it is the apply path.
+if (!dryRun) assertSeedAllowed("backfill-state (apply)");
 
 // Build reverse map: LGA name (lowercase) → state
 const lgaToState = new Map<string, string>();

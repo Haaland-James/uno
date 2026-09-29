@@ -289,7 +289,7 @@ export default function PropertiesSearchPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white">
+    <div className="flex h-[calc(100vh-var(--env-banner-h,0px))] flex-col overflow-hidden bg-white">
       {/* ═══════════════════════════════════════════════════
            DESKTOP HEADER
          ═══════════════════════════════════════════════════ */}

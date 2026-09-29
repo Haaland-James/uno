@@ -5,6 +5,7 @@
  */
 import { PrismaClient } from "@prisma/client";
 import { generateListingTitle } from "../src/lib/listing-title";
+import { assertSeedAllowed } from "../src/lib/seed-guard";
 
 const db = new PrismaClient();
 
@@ -13,6 +14,7 @@ export async function main(args = process.argv.slice(2)) {
     throw new Error("Usage: npx tsx scripts/backfill-titles.ts --dry-run|--apply");
   }
   const dryRun = args[0] === "--dry-run";
+  if (!dryRun) assertSeedAllowed("backfill-titles --apply");
   let cursor: string | undefined;
   let scanned = 0;
   let changed = 0;

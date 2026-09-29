@@ -4,6 +4,8 @@ import { generateListingTitle } from "../src/lib/listing-title";
 import { getKindForPropertyType } from "../config/constants";
 import { coordsFor } from "../src/lib/area-coords";
 
+import { assertSeedAllowed } from "../src/lib/seed-guard";
+
 const prisma = new PrismaClient();
 
 // Stock interior shots used to pad every listing to ≥ 6 photos
@@ -139,9 +141,11 @@ function padPhotos(input: { url: string; isMain: boolean }[], propertyIndex: num
 }
 
 async function main() {
+  // Wipes users, properties and more below: refuse unless ALLOW_SEED=1 and the target is not production.
+  assertSeedAllowed("Seed (WIPES existing rows)");
   console.log("🌱 Seeding database...");
 
-  // Wipe existing data (safe — dev only)
+  // Wipe existing data (dev/staging only — guarded above)
   await prisma.contactRequest.deleteMany();
   await prisma.favourite.deleteMany();
   await prisma.savedSearch.deleteMany();
