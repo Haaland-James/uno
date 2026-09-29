@@ -7,6 +7,13 @@ import { db } from "./db";
 import { verifyOtp } from "./otp";
 import { normalizePhone } from "./phone";
 
+/**
+ * How long a token's role / agent fields / active flag are trusted before the
+ * `jwt` callback re-reads the user. Bounds how long a demoted admin, revoked
+ * agent, deactivated or deleted user keeps access on a still-valid JWT.
+ */
+export const SESSION_RECHECK_MS = 5 * 60 * 1000;
+
 const googleEnabled =
   !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
 
@@ -181,6 +188,7 @@ export const authOptions: NextAuthOptions = {
         token.role = u.role;
         token.agentStatus = u.agentStatus ?? "NONE";
         token.agentEmployment = u.agentEmployment ?? null;
+        token.checkedAt = Date.now();
       }
       // For Google OAuth, fetch DB user data into the token
       if (account?.provider === "google" && user?.email) {
@@ -195,26 +203,53 @@ export const authOptions: NextAuthOptions = {
           token.agentEmployment = dbUser.agentEmployment;
         }
       }
-      if (trigger === "update" && token.id) {
-        const fresh = await db.user.findUnique({
-          where: { id: token.id },
-          select: {
-            role: true,
-            agentStatus: true,
-            agentEmployment: true,
-            deactivatedAt: true,
-          },
-        });
-        if (fresh) {
-          token.role = fresh.role;
-          token.agentStatus = fresh.agentStatus;
-          token.agentEmployment = fresh.agentEmployment;
-          token.deactivatedAt = fresh.deactivatedAt?.toISOString() ?? null;
+      if (token.revoked) return token; // already ended; nothing to refresh
+
+      // Re-read the user when the token is stale (or the client asked via
+      // `update()`): one lookup by primary key, at most once per interval.
+      // Runs in Node here — middleware is Edge/no-Prisma and only reads the token.
+      // The refreshed token reaches the cookie via SessionProvider, which refetches
+      // /api/auth/session every 5 min and on window focus. Server code (admin, agent,
+      // API routes) calls getServerSession(), which runs this callback, so it sees
+      // fresh values even before the cookie is rewritten.
+      const stale =
+        trigger === "update" ||
+        typeof token.checkedAt !== "number" ||
+        Date.now() - token.checkedAt > SESSION_RECHECK_MS;
+      if (token.id && stale) {
+        try {
+          const fresh = await db.user.findUnique({
+            where: { id: token.id },
+            select: {
+              role: true,
+              agentStatus: true,
+              agentEmployment: true,
+              deactivatedAt: true,
+            },
+          });
+          if (!fresh) {
+            // User was deleted: end the session (middleware treats it as signed out).
+            token.revoked = true;
+          } else {
+            token.role = fresh.role;
+            token.agentStatus = fresh.agentStatus;
+            token.agentEmployment = fresh.agentEmployment;
+            // Deactivated: middleware redirects to /login?error=deactivated and clears the cookie.
+            token.deactivatedAt = fresh.deactivatedAt?.toISOString() ?? null;
+          }
+          token.checkedAt = Date.now();
+        } catch (err) {
+          // Database blip: keep the existing token rather than signing everyone
+          // out; checkedAt stays old, so the next request retries.
+          console.error("[auth] session re-check failed", err);
         }
       }
       return token;
     },
     async session({ session, token }) {
+      // A deleted or deactivated user gets an empty session, so getServerSession()
+      // returns null and API routes reject them too (middleware skips /api).
+      if (token.revoked || token.deactivatedAt) return {} as typeof session;
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;

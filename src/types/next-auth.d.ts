@@ -25,5 +25,9 @@ declare module "next-auth/jwt" {
     agentStatus: AgentStatus;
     agentEmployment: AgentEmployment | null;
     deactivatedAt?: string | null;
+    /** ms epoch of the last database re-check of role / agent fields / active flag. */
+    checkedAt?: number;
+    /** Set when the user no longer exists; middleware treats the token as signed-out. */
+    revoked?: boolean;
   }
 }
