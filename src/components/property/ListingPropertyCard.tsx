@@ -15,7 +15,7 @@ import {
 	Trash2,
 	ListPlus,
 } from "lucide-react";
-import { cn, formatCount } from "@/lib/utils";
+import { cn, formatCount, formatNaira } from "@/lib/utils";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import type { PropertyStatus, VerificationStatus } from "@/types/property";
 
@@ -38,6 +38,8 @@ interface ListingPropertyCardProps {
 	imageUrl?: string;
 	price?: number;
 	rentPeriod?: "MONTH" | "YEAR";
+	/** SALE prices are one-off, so no /yr or /mo suffix. */
+	listingType?: "RENT" | "LEASE" | "SALE";
 	currency?: string;
 	verificationStatus: VerificationStatus;
 	listingStatus: PropertyStatus;
@@ -95,11 +97,6 @@ function formatPrice(n: number, period: "MONTH" | "YEAR" = "YEAR") {
 	return `${formatted} /${period === "YEAR" ? "yr" : "mo"}`;
 }
 
-/** Just the number part — the /yr or /mo is rendered separately for the lighter weight in the Figma. */
-function formatPriceMain(n: number) {
-	return new Intl.NumberFormat("en-NG").format(n);
-}
-
 
 export function ListingPropertyCard({
 	id,
@@ -108,6 +105,7 @@ export function ListingPropertyCard({
 	imageUrl,
 	price,
 	rentPeriod = "YEAR",
+	listingType,
 	verificationStatus,
 	listingStatus,
 	stats,
@@ -179,10 +177,12 @@ export function ListingPropertyCard({
 							</h3>
 						) : typeof price === "number" && price > 0 ? (
 							<span className="text-[20px] font-extrabold text-[#161515] leading-none">
-								{formatPriceMain(price)}
-								<span className="ml-1 text-[14px] font-medium text-black/60">
-									/{rentPeriod === "YEAR" ? "yr" : "mo"}
-								</span>
+								{formatNaira(price)}
+								{listingType !== "SALE" && (
+									<span className="ml-1 text-[14px] font-medium text-black/60">
+										/{rentPeriod === "YEAR" ? "yr" : "mo"}
+									</span>
+								)}
 							</span>
 						) : (
 							<span className="text-[16px] font-semibold text-[#161515] line-clamp-1">
