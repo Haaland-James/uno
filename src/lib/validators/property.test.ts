@@ -45,10 +45,9 @@ describe("propertyCreateSchema", () => {
     expect(propertyCreateSchema.safeParse({ ...validCreate, title: "a".repeat(100) }).success).toBe(true);
   });
 
-  it("enforces the rent floor and ceiling", () => {
-    expect(propertyCreateSchema.safeParse({ ...validCreate, rent: 9999 }).success).toBe(false);
-    expect(propertyCreateSchema.safeParse({ ...validCreate, rent: 10000 }).success).toBe(true);
-    expect(propertyCreateSchema.safeParse({ ...validCreate, rent: 100000001 }).success).toBe(false);
+  it("shares the one price rule (see the price-rule tests below)", () => {
+    expect(propertyCreateSchema.safeParse({ ...validCreate, rent: 5_000_000_000 }).success).toBe(true);
+    expect(propertyCreateSchema.safeParse({ ...validCreate, rent: 0 }).success).toBe(false);
   });
 
   it("rejects an unknown property type", () => {
@@ -286,5 +285,37 @@ describe("propertyFilterSchema", () => {
 
   it("rejects a negative price bound", () => {
     expect(propertyFilterSchema.safeParse({ minPrice: -1 }).success).toBe(false);
+  });
+});
+
+// Item 55: one rule for every price field — positive, whole naira, at most
+// ₦1 trillion — on create (rent + salePrice) and on edit.
+describe("price rule", () => {
+  const wizardBase = {
+    objective: "SELL",
+    state: "Lagos",
+    city: "Lagos",
+    area: "Ikoyi",
+    propertyType: "HOUSE",
+    bedrooms: 6,
+    bathrooms: 6,
+    photos: [{ url: "https://res.cloudinary.com/demo/image/upload/a.jpg" }],
+  };
+  const wizard = (patch: Record<string, unknown>) => propertyWizardSubmitSchema.safeParse({ ...wizardBase, ...patch }).success;
+  const create = (rent: number) => propertyCreateSchema.safeParse({ ...validCreate, rent }).success;
+  const edit = (rent: number) => propertyUpdateSchema.safeParse({ rent }).success;
+
+  it.each([5_000_000_000, 1_000_000_000_000])("accepts ₦%s everywhere", (price) => {
+    expect(create(price)).toBe(true);
+    expect(edit(price)).toBe(true);
+    expect(wizard({ rent: price })).toBe(true);
+    expect(wizard({ salePrice: price })).toBe(true);
+  });
+
+  it.each([1_000_000_000_001, 0, -1, 1000.5])("rejects ₦%s everywhere", (price) => {
+    expect(create(price)).toBe(false);
+    expect(edit(price)).toBe(false);
+    expect(wizard({ rent: price })).toBe(false);
+    expect(wizard({ salePrice: price })).toBe(false);
   });
 });

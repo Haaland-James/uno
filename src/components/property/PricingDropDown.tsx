@@ -6,15 +6,18 @@ import { cn } from "@/lib/utils";
 interface PricingDropDownProps {
   minPrice?: number;
   maxPrice?: number;
+  /** Top of the slider range. Sale prices reach billions, so callers pass SALE_PRICE_MAX there. */
+  absoluteMax?: number;
   onApply?: (min: number, max: number) => void;
   className?: string;
 }
 
 const ABSOLUTE_MIN = 0;
-const ABSOLUTE_MAX = 100000000;
+export const RENT_PRICE_MAX = 100_000_000;
+export const SALE_PRICE_MAX = 10_000_000_000;
 
-function formatNaira(value: number): string {
-  if (value >= ABSOLUTE_MAX) return "₦100,00,000 +";
+function formatNaira(value: number, absoluteMax: number): string {
+  if (value >= absoluteMax) return "₦" + absoluteMax.toLocaleString("en-NG") + " +";
   return "₦" + value.toLocaleString("en-NG");
 }
 
@@ -26,10 +29,15 @@ function parseNaira(raw: string): number {
 
 export function PricingDropDown({
   minPrice = 0,
-  maxPrice = ABSOLUTE_MAX,
+  maxPrice,
+  absoluteMax = RENT_PRICE_MAX,
   onApply,
   className,
 }: PricingDropDownProps) {
+  const ABSOLUTE_MAX = absoluteMax;
+  // Keep the slider's resolution proportional: ~200 steps across the range.
+  const sliderStep = ABSOLUTE_MAX / 200;
+  maxPrice = maxPrice ?? ABSOLUTE_MAX;
   const [localMin, setLocalMin] = useState(minPrice);
   const [localMax, setLocalMax] = useState(maxPrice);
 
@@ -102,10 +110,10 @@ export function PricingDropDown({
         {/* Price range labels */}
         <div className="flex items-center justify-between gap-[8px]">
           <span className="text-[15px] md:text-[18px] font-medium text-[#0a0a0a] font-sans truncate">
-            {formatNaira(localMin)}
+            {formatNaira(localMin, ABSOLUTE_MAX)}
           </span>
           <span className="text-[15px] md:text-[18px] font-medium text-[#0a0a0a] font-sans truncate text-right">
-            {localMax >= ABSOLUTE_MAX ? "₦100,00,000 +" : formatNaira(localMax)}
+            {formatNaira(localMax, ABSOLUTE_MAX)}
           </span>
         </div>
 
@@ -123,7 +131,7 @@ export function PricingDropDown({
             type="range"
             min={ABSOLUTE_MIN}
             max={ABSOLUTE_MAX}
-            step={500000}
+            step={sliderStep}
             value={localMin}
             onChange={handleMinSlider}
             className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#af2525] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md"
@@ -133,7 +141,7 @@ export function PricingDropDown({
             type="range"
             min={ABSOLUTE_MIN}
             max={ABSOLUTE_MAX}
-            step={500000}
+            step={sliderStep}
             value={localMax}
             onChange={handleMaxSlider}
             className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#af2525] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md"
@@ -182,7 +190,7 @@ export function PricingDropDown({
                 value={maxInput}
                 onChange={handleMaxInputChange}
                 onBlur={handleMaxInputBlur}
-                placeholder="100,000,000"
+                placeholder={ABSOLUTE_MAX.toLocaleString("en-NG")}
                 className={cn(
                   "w-full h-[44px] md:h-[48px] pl-[26px] pr-[10px] rounded-[40px]",
                   "border border-[rgba(186,186,186,0.65)]",

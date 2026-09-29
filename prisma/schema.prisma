@@ -234,16 +234,16 @@ model Property {
   // Prisma treats it as Unsupported (read-only) — query via raw SQL only.
   searchVector        Unsupported("tsvector")? @map("search_vector")
   fullAddressVisible  Boolean            @default(false)
-  rent                Int
+  rent                Float
   rentPeriod          RentPeriod         @default(YEAR)
   listingType         ListingType        @default(RENT)
   currency            String             @default("NGN")
-  agencyFee           Int?
+  agencyFee           Float?
   agencyFeeMode       FeeMode            @default(FIXED)
-  legalFee            Int?
+  legalFee            Float?
   legalFeeMode        FeeMode            @default(FIXED)
-  cautionDeposit      Int?
-  serviceCharge       Int?
+  cautionDeposit      Float?
+  serviceCharge       Float?
   negotiable          Boolean            @default(false)
   status              PropertyStatus     @default(PENDING)
   availabilityStatus  AvailabilityStatus @default(AVAILABLE_NOW)
@@ -420,7 +420,7 @@ model PriceHistory {
   id          String      @id @default(cuid())
   propertyId  String
   property    Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  rent        Int
+  rent        Float
   rentPeriod  RentPeriod
   listingType ListingType
   changedById String? // null for the migration backfill

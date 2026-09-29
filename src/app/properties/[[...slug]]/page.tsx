@@ -20,7 +20,7 @@ import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton
 import { SearchMap, type MapBBox } from "@/components/property/SearchMap";
 import { BedsDropDown } from "@/components/property/BedsDropDown";
 import { PropertyTypesDropDown } from "@/components/property/PropertyTypesDropDown";
-import { PricingDropDown } from "@/components/property/PricingDropDown";
+import { PricingDropDown, RENT_PRICE_MAX, SALE_PRICE_MAX } from "@/components/property/PricingDropDown";
 import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
 import { SaveSearchPopover } from "@/components/search/SaveSearchPopover";
 import { searchStateToCriteria, summarizeCriteria } from "@/lib/saved-search-mapper";
@@ -247,9 +247,10 @@ export default function PropertiesSearchPage() {
       ? "Beds & Baths"
       : `${state.beds.join(",") || 0} bed / ${state.baths.join(",") || 0} bath`;
   const typeLabel = state.type.length === 0 ? "Home Type" : state.type.length === 1 ? state.type[0] : `${state.type.length} types`;
+  const priceMax = currentCategory === "sale" ? SALE_PRICE_MAX : RENT_PRICE_MAX;
   const priceLabel =
     state.minPrice || state.maxPrice
-      ? `₦${(state.minPrice ?? 0).toLocaleString("en-NG")} – ₦${(state.maxPrice ?? 100_000_000).toLocaleString("en-NG")}`
+      ? `₦${(state.minPrice ?? 0).toLocaleString("en-NG")} – ₦${(state.maxPrice ?? priceMax).toLocaleString("en-NG")}`
       : "Price";
   const currentSortLabel = SORT_OPTIONS.find((o) => o.value === state.sort)?.label ?? "Newest";
 
@@ -575,11 +576,12 @@ export default function PropertiesSearchPage() {
               <div className="absolute left-[450px] top-[calc(100%+4px)] z-50">
                 <PricingDropDown
                   minPrice={state.minPrice ?? 0}
-                  maxPrice={state.maxPrice ?? 100_000_000}
+                  maxPrice={state.maxPrice ?? priceMax}
+                  absoluteMax={priceMax}
                   onApply={(min, max) => {
                     navigate({
                       minPrice: min > 0 ? min : undefined,
-                      maxPrice: max < 100_000_000 ? max : undefined,
+                      maxPrice: max < priceMax ? max : undefined,
                     });
                     setOpenFilter(null);
                   }}
@@ -814,11 +816,12 @@ export default function PropertiesSearchPage() {
               <div className="border-b border-black/5 bg-white p-3">
                 <PricingDropDown
                   minPrice={state.minPrice ?? 0}
-                  maxPrice={state.maxPrice ?? 100_000_000}
+                  maxPrice={state.maxPrice ?? priceMax}
+                  absoluteMax={priceMax}
                   onApply={(min, max) => {
                     navigate({
                       minPrice: min > 0 ? min : undefined,
-                      maxPrice: max < 100_000_000 ? max : undefined,
+                      maxPrice: max < priceMax ? max : undefined,
                     });
                     setOpenFilter(null);
                   }}
