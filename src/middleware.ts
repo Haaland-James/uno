@@ -60,10 +60,13 @@ function isAgentAuthRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
-	const token = await getToken({
+	const sessionToken = await getToken({
 		req: request,
 		secret: process.env.NEXTAUTH_SECRET,
 	});
+	// The jwt callback (Node) flags a token `revoked` when its user was deleted.
+	// Middleware only reads the token — no database here (Edge runtime).
+	const token = sessionToken?.revoked ? null : sessionToken;
 
 	const publicPath = isPublic(pathname);
 
