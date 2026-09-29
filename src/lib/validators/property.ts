@@ -32,6 +32,16 @@ const photoSchema = z.object({
 	isMain: z.boolean().optional(),
 });
 
+// One rule for every price field (rent or sale price): a positive whole number
+// of naira. The ceiling is a typo guard, not a business limit. Columns are
+// DOUBLE PRECISION, exact for whole numbers up to 2^53.
+export const MAX_PRICE = 1_000_000_000_000;
+const priceSchema = z
+	.number()
+	.int("Price must be a whole number of naira")
+	.positive("Price must be greater than zero")
+	.max(MAX_PRICE, "Maximum price is ₦1,000,000,000,000");
+
 const feeValueSchema = z.object({
 	mode: z.enum(["FIXED", "PERCENT"]).default("FIXED"),
 	value: z.number().min(0).nullable(),
@@ -65,10 +75,7 @@ export const propertyCreateSchema = z.object({
 	latitude: z.number().min(-90).max(90).optional(),
 	longitude: z.number().min(-180).max(180).optional(),
 	fullAddressVisible: z.boolean().default(false),
-	rent: z
-		.number()
-		.min(10000, "Minimum rent is ₦10,000")
-		.max(100000000, "Maximum rent is ₦100,000,000"),
+	rent: priceSchema,
 	rentPeriod: z.enum(["MONTH", "YEAR"]).default("YEAR"),
 	agencyFee: z.number().min(0).optional(),
 	cautionDeposit: z.number().min(0).optional(),
@@ -180,7 +187,7 @@ export const propertyWizardSubmitSchema = z.object({
 		.min(1, "Add at least one photo"),
 
 	// Pricing — rent/lease
-	rent: z.number().positive().nullable().optional(),
+	rent: priceSchema.nullable().optional(),
 	rentPeriod: z.enum(["MONTH", "YEAR"]).default("YEAR"),
 	minimumLease: z.string().optional().default(""),
 	agencyFee: feeValueSchema.optional(),
@@ -192,7 +199,7 @@ export const propertyWizardSubmitSchema = z.object({
 	availableFrom: z.string().optional().default(""),
 
 	// Pricing — sell
-	salePrice: z.number().positive().nullable().optional(),
+	salePrice: priceSchema.nullable().optional(),
 	negotiable: z.boolean().default(false),
 	titleDocuments: z.string().optional().default(""),
 
@@ -245,11 +252,9 @@ export const propertyUpdateSchema = propertyCreateSchema
 	accessRoad: z.string().max(60).optional(),
 	fencing: z.boolean().optional(),
 
-	// The create schema's ₦10k–₦100M rent bounds are rental-shaped, but `rent`
-	// also carries a SALE listing's price. Match the wizard submit schema
-	// (positive only) so a sale can be edited; rent-vs-sale ranges are a
-	// separate product decision. Column is non-null Int, so optional, not nullable.
-	rent: z.number().positive().optional(),
+	// `rent` also carries a SALE listing's price, so it shares the create
+	// schemas' price rule. Column is non-null, so optional, not nullable.
+	rent: priceSchema.optional(),
 
 	agencyFee: z.number().min(0).nullable().optional(),
 	agencyFeeMode: z.enum(["FIXED", "PERCENT"]).optional(),

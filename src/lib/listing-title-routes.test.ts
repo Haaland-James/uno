@@ -130,6 +130,23 @@ it("accepts a ₦345M price edit on a SALE listing and records it", async () => 
   expect(mocks.update.mock.calls[0][0].data.rent).toBe(345_000_000);
   expect(mocks.priceCreate.mock.calls[0][0].data).toMatchObject({ rent: 345_000_000, listingType: "SALE" });
 });
+it("lets a ₦5B SALE listing be created, then edited to ₦6.5B with exactly one price-history row", async () => {
+  mocks.gate.mockResolvedValue({ signals: {} });
+  mocks.create.mockResolvedValue({ id: "p", status: "ACTIVE" });
+  const created = await publish(new NextRequest("http://localhost/api/properties", { method: "POST", body: JSON.stringify({
+    propertyKind: "RESIDENTIAL", propertyType: "HOUSE", objective: "SELL", bedrooms: 6, bathrooms: 6,
+    state: "Lagos", city: "Lagos", area: "Ikoyi", salePrice: 5_000_000_000,
+    photos: [{ url: "https://images.unsplash.com/example.jpg" }],
+  }) }));
+  expect(created.status).toBe(201);
+  expect(mocks.create.mock.calls[0][0].data.rent).toBe(5_000_000_000);
+
+  mocks.findUnique.mockResolvedValue({ ...property, listingType: "SALE", rent: 5_000_000_000 });
+  expect((await PATCH(req({ rent: 6_500_000_000 }), { params: { id: "p" } })).status).toBe(200);
+  expect(mocks.update.mock.calls[0][0].data.rent).toBe(6_500_000_000);
+  expect(mocks.priceCreate).toHaveBeenCalledTimes(1);
+  expect(mocks.priceCreate.mock.calls[0][0].data).toMatchObject({ rent: 6_500_000_000, listingType: "SALE" });
+});
 it.each([
   [{ rent: 150000, rentPeriod: "YEAR" }],
   [{ bedrooms: 3 }],
