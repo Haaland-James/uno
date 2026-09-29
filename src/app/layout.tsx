@@ -4,6 +4,8 @@ import { siteConfig } from "@/../config/site";
 import { siteUrl } from "@/lib/site";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { CookieConsent } from "@/components/legal/CookieConsent";
+import { EnvBanner } from "@/components/layout/EnvBanner";
+import { envBannerLabel } from "@/lib/app-env";
 
 export const metadata: Metadata = {
 	metadataBase: new URL(siteUrl()),
@@ -53,7 +55,12 @@ export default function RootLayout({
 					crossOrigin="anonymous"
 				/>
 			</head>
-			<body className="min-h-screen bg-surface-secondary font-sans antialiased">
+			<body
+				className="min-h-screen bg-surface-secondary font-sans antialiased"
+				// Height of <EnvBanner /> (h-6), so h-screen pages can subtract it.
+				style={{ "--env-banner-h": envBannerLabel(process.env.NEXT_PUBLIC_APP_ENV) ? "1.5rem" : "0px" } as React.CSSProperties}
+			>
+				<EnvBanner />
 				<SessionProvider>{children}</SessionProvider>
 				<CookieConsent />
 			</body>
