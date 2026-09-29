@@ -58,3 +58,9 @@ next-env.d.ts
 emailt-templat.html
 email template.html
 .env*
+
+# foglamp (edit token is a secret)
+.foglamp/
+
+# Git Bash crash dumps
+bash.exe.stackdump
