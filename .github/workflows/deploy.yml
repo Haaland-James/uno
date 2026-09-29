@@ -38,10 +38,12 @@ jobs:
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
             echo "environment=production" >> "$GITHUB_OUTPUT"
             echo "app_env=PROD"           >> "$GITHUB_OUTPUT"
+            echo "site_url=https://uno.srv602517.hstgr.cloud" >> "$GITHUB_OUTPUT"
             echo "tag=prod-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
           else
             echo "environment=staging" >> "$GITHUB_OUTPUT"
             echo "app_env=STAGING"     >> "$GITHUB_OUTPUT"
+            echo "site_url=https://staging-uno.srv602517.hstgr.cloud" >> "$GITHUB_OUTPUT"
             echo "tag=staging-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
           fi
 
@@ -63,6 +65,7 @@ jobs:
           # so they live in repo Variables, not Secrets.
           build-args: |
             NEXT_PUBLIC_APP_ENV=${{ steps.target.outputs.app_env }}
+            NEXT_PUBLIC_SITE_URL=${{ steps.target.outputs.site_url }}
             NEXT_PUBLIC_MAPBOX_TOKEN=${{ vars.NEXT_PUBLIC_MAPBOX_TOKEN }}
             NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ vars.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
 
