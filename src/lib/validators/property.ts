@@ -245,6 +245,12 @@ export const propertyUpdateSchema = propertyCreateSchema
 	accessRoad: z.string().max(60).optional(),
 	fencing: z.boolean().optional(),
 
+	// The create schema's ₦10k–₦100M rent bounds are rental-shaped, but `rent`
+	// also carries a SALE listing's price. Match the wizard submit schema
+	// (positive only) so a sale can be edited; rent-vs-sale ranges are a
+	// separate product decision. Column is non-null Int, so optional, not nullable.
+	rent: z.number().positive().optional(),
+
 	agencyFee: z.number().min(0).nullable().optional(),
 	agencyFeeMode: z.enum(["FIXED", "PERCENT"]).optional(),
 	legalFee: z.number().min(0).nullable().optional(),
