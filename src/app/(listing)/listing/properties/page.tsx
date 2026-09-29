@@ -307,6 +307,7 @@ export default function MyListingsPage() {
 										imageUrl={mainPhoto?.url}
 										price={l.rent}
 										rentPeriod={l.rentPeriod}
+										listingType={l.listingType}
 										verificationStatus={l.verificationStatus}
 										listingStatus={l.status ?? "AVAILABLE"}
 										stats={
