@@ -8,9 +8,11 @@
  * run twice (QStash retries). Packets add their job here, one line each.
  */
 import { runSavedSearchMatchAndDeliver } from "./saved-search-delivery";
+import { runPriceDrop } from "./price-drop";
 
 export type JobFn = (now: Date) => Promise<unknown>;
 
 export const jobs: Record<string, JobFn> = {
 	"saved-search-match": runSavedSearchMatchAndDeliver,
+	"price-drop": runPriceDrop,
 };
