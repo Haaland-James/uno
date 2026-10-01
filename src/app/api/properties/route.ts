@@ -14,6 +14,8 @@ import { authOptions } from "@/lib/auth";
 import { generateListingTitle } from "@/lib/listing-title";
 import { computeGateSignals } from "@/lib/gate";
 import { listingCreateLimiter } from "@/lib/ratelimit";
+import { canCreateListing } from "@/lib/listing-access";
+import { siteConfig } from "@/../config/site";
 import { deriveStatusFields, notDeleted } from "@/lib/property-status";
 import { pageRankedIds, reorderByIds } from "@/lib/search-ranking";
 
@@ -193,6 +195,14 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return err("unauthorized", "Sign in to publish a listing", 401);
+  }
+
+  // Phase 1: only staff list on production and the standby (see listing-access.ts).
+  // Read from the session, which re-checks the database every few minutes, so a
+  // demoted agent loses access without signing out. Runs before the rate limiter
+  // so a refused request doesn't spend the caller's budget.
+  if (!canCreateListing(session.user)) {
+    return err("forbidden", `Listing is currently limited to ${siteConfig.name} agents.`, 403);
   }
 
   // Listings go live immediately while the approval flow is on hold, so this
