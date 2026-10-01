@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { LabeledField } from "@/components/ui/LabeledField";
 import { NumberInput } from "@/components/ui/NumberInput";
 import { useListPropertyStore } from "@/stores/listPropertyStore";
+import { commercialFloorAreaPatch, commercialFloorLevelPatch } from "../commercial-fields";
 
 const ROOM_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
 	value: String(n),
@@ -40,7 +41,7 @@ export function PropertyInfoStep() {
 										placeholder="e.g. 120"
 										suffix="sqm"
 										value={data.floorAreaSqm}
-										onChange={(v) => updateData({ floorAreaSqm: v })}
+										onChange={(v) => updateData(commercialFloorAreaPatch(v))}
 										aria-label="Floor area in square metres"
 									/>
 								)}
@@ -51,7 +52,7 @@ export function PropertyInfoStep() {
 										id={id}
 										placeholder="e.g. 3rd Floor"
 										value={data.floorLevel}
-										onChange={(e) => updateData({ floorLevel: e.target.value })}
+										onChange={(e) => updateData(commercialFloorLevelPatch(e.target.value))}
 									/>
 								)}
 							</LabeledField>

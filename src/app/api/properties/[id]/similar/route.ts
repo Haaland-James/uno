@@ -4,17 +4,15 @@ import { ok, err } from "@/lib/api";
 import { toCardDto } from "@/lib/property-mappers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { notDeleted } from "@/lib/property-status";
+import { findSimilarProperties } from "@/lib/similar-properties";
 
 export async function GET(
   req: NextRequest,
   ctx: { params: { id: string } }
 ) {
   const { id } = ctx.params;
-  const limit = Math.min(
-    Number(req.nextUrl.searchParams.get("limit") ?? 6),
-    12
-  );
+  const asked = Number(req.nextUrl.searchParams.get("limit") ?? 6);
+  const limit = Number.isFinite(asked) && asked >= 1 ? Math.min(Math.floor(asked), 12) : 6;
 
   const seed = await db.property.findUnique({
     where: { id },
@@ -22,41 +20,10 @@ export async function GET(
   });
   if (!seed) return err("not_found", "Property not found", 404);
 
-  // Score: same area > same city + type, within ±40% price band
-  const priceMin = Math.floor(seed.rent * 0.6);
-  const priceMax = Math.ceil(seed.rent * 1.4);
-
-  const baseWhere = {
-    ...notDeleted,
-    id: { not: id },
-    status: "ACTIVE" as const,
-    listingType: seed.listingType,
-  };
-
-  const [similar, session] = await Promise.all([
-    db.property.findMany({
-      where: {
-        ...baseWhere,
-        OR: [
-          { area: seed.area, city: seed.city },
-          { city: seed.city, propertyType: seed.propertyType, rent: { gte: priceMin, lte: priceMax } },
-        ],
-      },
-      orderBy: [{ verificationStatus: "asc" }, { createdAt: "desc" }],
-      take: limit,
-      include: { photos: { orderBy: { order: "asc" } } },
-    }),
+  const [items, session] = await Promise.all([
+    findSimilarProperties(seed, id, limit),
     getServerSession(authOptions),
   ]);
-
-  const items = similar.length > 0
-    ? similar
-    : await db.property.findMany({
-        where: baseWhere,
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        include: { photos: { orderBy: { order: "asc" } } },
-      });
 
   let favIds = new Set<string>();
   if (session?.user?.id && items.length) {
