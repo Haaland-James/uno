@@ -543,7 +543,7 @@ export default function PropertyDetailPage() {
     return (
       <div className="flex flex-col min-h-screen bg-white animate-pulse">
         {/* Gallery skeleton */}
-        <div className="hidden md:flex gap-[10px] px-[42px] max-w-[1440px] mx-auto w-full mt-[20px]">
+        <div className="hidden md:flex gap-[10px] px-[42px] max-w-[1133px] mx-auto w-full mt-[20px]">
           <div className="flex-1 min-h-[340px] rounded-[15px] bg-neutral-200" />
           <div className="grid grid-cols-2 gap-[10px] w-[40%]">
             {[0,1,2,3].map(i => <div key={i} className="rounded-[15px] bg-neutral-200 min-h-[162px]" />)}
@@ -552,7 +552,7 @@ export default function PropertyDetailPage() {
         <div className="md:hidden w-full h-[431px] bg-neutral-200" />
 
         {/* Content skeleton */}
-        <div className="flex-1 md:px-[42px] md:max-w-[1440px] md:mx-auto md:w-full md:pb-[60px]">
+        <div className="flex-1 md:px-[42px] md:max-w-[1133px] md:mx-auto md:w-full md:pb-[60px]">
           <div className="flex gap-[42px] md:mt-[30px]">
             <div className="flex flex-col gap-[15px] w-full flex-1 px-[16px] md:px-0 pt-[20px] md:pt-0">
               {/* Price line */}
@@ -599,7 +599,11 @@ export default function PropertyDetailPage() {
   const photos = property.photos.filter((p) => p.url);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white w-full max-w-full overflow-x-hidden">
+    // overflow-x-clip, not -hidden: "hidden" turns this wrapper into a scroll container
+    // (overflow-y computes to auto), and sticky descendants then bind to it instead of
+    // the page, so the sub-nav sat 64px low and the lister card never stuck (B7, B8).
+    // "clip" cuts horizontal overflow the same way without becoming a scroll container.
+    <div className="flex flex-col min-h-screen bg-white w-full max-w-full overflow-x-clip">
       {/* ── PHOTO MODALS ── */}
       {showPhotoGrid && (
         <PhotoGridModal
@@ -630,7 +634,7 @@ export default function PropertyDetailPage() {
 
       {/* ── DESKTOP SUB-NAV BAR (sticky below header) ── */}
       <div className="hidden md:block sticky top-16 z-40 bg-white border-b border-black/10">
-        <div className="flex items-center justify-between px-[42px] max-w-[1440px] mx-auto w-full">
+        <div className="flex items-center justify-between px-[42px] max-w-[1133px] mx-auto w-full">
           <nav className="flex items-center gap-[20px]">
             <button
               onClick={handleBack}
@@ -684,7 +688,9 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* ── PHOTO GALLERY ── */}
-      <section className="md:px-[42px] md:max-w-[1440px] md:mx-auto md:w-full md:mt-[20px]">
+      {/* 1133 = the 1049px content block (680 + 42 + 327) plus 2 x 42px padding, so the
+          gallery, sub-nav, cards, similar homes and report row share one width and left edge (B9). */}
+      <section className="md:px-[42px] md:max-w-[1133px] md:mx-auto md:w-full md:mt-[20px]">
         <DesktopGallery
           photos={photos}
           onSeeMore={() => setShowPhotoGrid(true)}
@@ -975,7 +981,8 @@ export default function PropertyDetailPage() {
           </div>
 
           {/* ─── RIGHT SIDEBAR (Desktop) ─── */}
-          <div className="hidden md:block flex-shrink-0 w-[327px] sticky top-[96px] self-start">
+          {/* top = 64px header + 53px sub-nav + 16px gap, so the card clears the sticky sub-nav (B8) */}
+          <div className="hidden md:block flex-shrink-0 w-[327px] sticky top-[133px] self-start">
             <div className="bg-[#fafafa] border border-black/11 rounded-[20px] px-[7px] py-[30px]">
               <div className="flex flex-col gap-[13px] items-center">
                 {/* Profile avatar */}
@@ -1090,7 +1097,7 @@ export default function PropertyDetailPage() {
           </section>
         )}
 
-        <div className="mt-6 flex justify-center border-t border-black/5 pt-6">
+        <div className="mt-6 flex justify-center border-t border-black/5 pt-6 md:mx-auto md:max-w-[1049px]">
           <ReportListingButton propertyId={property.id} />
         </div>
 
