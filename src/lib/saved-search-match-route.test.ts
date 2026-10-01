@@ -2,7 +2,7 @@ import { createHash, createHmac, randomUUID } from "node:crypto";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ run: vi.fn() }));
-vi.mock("@/lib/jobs/saved-search-match", () => ({ runSavedSearchMatch: mocks.run }));
+vi.mock("@/lib/jobs/saved-search-delivery", () => ({ runSavedSearchMatchAndDeliver: mocks.run }));
 import { POST } from "../app/api/jobs/saved-search-match/route";
 import { jobs } from "./jobs";
 
@@ -28,7 +28,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.stubEnv("QSTASH_CURRENT_SIGNING_KEY", CURRENT);
   vi.stubEnv("QSTASH_NEXT_SIGNING_KEY", NEXT);
-  mocks.run.mockResolvedValue({ scanned: 3, matched: 1, results: [{ searchId: "s1", userId: "u1", newListingIds: ["l1"] }] });
+  mocks.run.mockResolvedValue({ scanned: 3, matched: 1, delivery: { users: 1, emailed: 1, failed: 0, skipped: 0 } });
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -56,7 +56,7 @@ it("runs the job once for a signed request and returns its summary", async () =>
   expect(res.status).toBe(200);
   expect(mocks.run).toHaveBeenCalledTimes(1);
   expect(mocks.run.mock.calls[0][0]).toBeInstanceOf(Date);
-  expect((await res.json()).data).toEqual({ scanned: 3, matched: 1, results: [{ searchId: "s1", userId: "u1", newListingIds: ["l1"] }] });
+  expect((await res.json()).data).toEqual({ scanned: 3, matched: 1, delivery: { users: 1, emailed: 1, failed: 0, skipped: 0 } });
 });
 
 it("also accepts a signature made with the next signing key (key rotation)", async () => {

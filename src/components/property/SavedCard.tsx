@@ -9,6 +9,8 @@ interface SavedCardProps {
   searchType: string;
   isActive: boolean;
   notificationsOn: boolean;
+  /** New matches since the user last opened this search; the badge hides at 0. */
+  newResultsCount?: number;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   /** Optional — when provided, the card body becomes clickable and re-runs the search */
@@ -22,6 +24,7 @@ export function SavedCard({
   searchType,
   isActive,
   notificationsOn,
+  newResultsCount = 0,
   onEdit,
   onDelete,
   onApply,
@@ -52,9 +55,19 @@ export function SavedCard({
     >
       {/* Top section */}
       <div className="flex flex-col gap-[6px]">
-        <h3 className="font-semibold text-[20px] text-[#161515] leading-tight line-clamp-2">
-          {name}
-        </h3>
+        <div className="flex items-start gap-2">
+          <h3 className="min-w-0 font-semibold text-[20px] text-[#161515] leading-tight line-clamp-2">
+            {name}
+          </h3>
+          {newResultsCount > 0 && (
+            <span
+              className="shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#af2525] text-white text-[12px] font-semibold leading-none"
+              aria-label={`${newResultsCount} new ${newResultsCount === 1 ? "match" : "matches"}`}
+            >
+              {newResultsCount > 99 ? "99+" : newResultsCount}
+            </span>
+          )}
+        </div>
         <p className="font-light text-[16px] text-[#161515]">{searchType}</p>
       </div>
 

@@ -120,6 +120,7 @@ export default function SavedSearchesPage() {
             searchType={s.searchType}
             isActive={s.isActive}
             notificationsOn={s.notificationsEnabled}
+            newResultsCount={s.newResultsCount}
             onApply={applySearch}
             onEdit={(id) => setModal({ type: "edit", id })}
             onDelete={(id) => setModal({ type: "delete", id })}
