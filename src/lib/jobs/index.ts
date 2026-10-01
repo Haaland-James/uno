@@ -9,10 +9,12 @@
  */
 import { runSavedSearchMatchAndDeliver } from "./saved-search-delivery";
 import { runPriceDrop } from "./price-drop";
+import { pruneViews } from "./prune-views";
 
 export type JobFn = (now: Date) => Promise<unknown>;
 
 export const jobs: Record<string, JobFn> = {
 	"saved-search-match": runSavedSearchMatchAndDeliver,
 	"price-drop": runPriceDrop,
+	"prune-views": pruneViews,
 };
