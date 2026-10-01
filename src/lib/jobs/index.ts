@@ -7,6 +7,10 @@
  * Every job takes `now` and returns a plain summary object, and must be safe to
  * run twice (QStash retries). Packets add their job here, one line each.
  */
+import { runSavedSearchMatch } from "./saved-search-match";
+
 export type JobFn = (now: Date) => Promise<unknown>;
 
-export const jobs: Record<string, JobFn> = {};
+export const jobs: Record<string, JobFn> = {
+	"saved-search-match": runSavedSearchMatch,
+};

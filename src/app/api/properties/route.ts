@@ -16,8 +16,9 @@ import { computeGateSignals } from "@/lib/gate";
 import { listingCreateLimiter } from "@/lib/ratelimit";
 import { canCreateListing } from "@/lib/listing-access";
 import { siteConfig } from "@/../config/site";
-import { deriveStatusFields, notDeleted } from "@/lib/property-status";
+import { deriveStatusFields } from "@/lib/property-status";
 import { pageRankedIds, reorderByIds } from "@/lib/search-ranking";
+import { buildPropertyWhere, findTextMatchIds } from "@/lib/property-where";
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -25,39 +26,7 @@ export async function GET(req: NextRequest) {
   if (!parsed.success) return zodErr(parsed.error);
   const f = parsed.data;
 
-  const where: Prisma.PropertyWhereInput = {
-    // Public list never shows non-ACTIVE or soft-deleted listings
-    ...notDeleted,
-    status: "ACTIVE",
-    ...(f.ids?.length && { id: { in: f.ids } }),
-    ...(f.listingType?.length && { listingType: { in: f.listingType } }),
-    ...(f.city && { city: { equals: f.city, mode: "insensitive" } }),
-    // Case-insensitive city-list filter via OR of equals clauses
-    ...(!f.city && f.cities?.length && {
-      OR: f.cities.map((c) => ({ city: { equals: c, mode: "insensitive" as const } })),
-    }),
-    ...(f.area && { area: { equals: f.area, mode: "insensitive" } }),
-    ...(f.type?.length && { propertyType: { in: f.type } }),
-    ...(f.beds?.length && { bedrooms: { in: f.beds } }),
-    ...(f.baths?.length && { bathrooms: { in: f.baths } }),
-    ...(f.furnishing?.length && { furnishing: { in: f.furnishing } }),
-    ...((f.minPrice !== undefined || f.maxPrice !== undefined) && {
-      rent: {
-        ...(f.minPrice !== undefined && { gte: f.minPrice }),
-        ...(f.maxPrice !== undefined && { lte: f.maxPrice }),
-      },
-    }),
-    ...(f.amenities?.length && { amenities: { hasEvery: f.amenities } }),
-    ...(f.minLng !== undefined &&
-      f.maxLng !== undefined &&
-      f.minLat !== undefined &&
-      f.maxLat !== undefined && {
-        latitude: { gte: f.minLat, lte: f.maxLat },
-        longitude: { gte: f.minLng, lte: f.maxLng },
-      }),
-    ...(f.verifiedOnly && { verificationStatus: "VERIFIED" }),
-    ...(f.availableNow && { availabilityStatus: "AVAILABLE_NOW" }),
-  };
+  const where: Prisma.PropertyWhereInput = buildPropertyWhere(f);
 
   // ── Full-text search path ──────────────────────────────────────────
   // When `q` is present, query the GIN-indexed search_vector column for
@@ -67,35 +36,9 @@ export async function GET(req: NextRequest) {
   let ftsRanked = false;
 
   if (f.q) {
-    const ftsRows = await db.$queryRaw<{ id: string; rank: number }[]>(
-      Prisma.sql`
-        SELECT id, ts_rank("search_vector", plainto_tsquery('english', ${f.q})) AS rank
-        FROM "Property"
-        WHERE "search_vector" @@ plainto_tsquery('english', ${f.q})
-          AND status = 'ACTIVE'
-          AND "deletedAt" IS NULL
-        ORDER BY rank DESC, id ASC
-        LIMIT 500
-      `
-    );
-
-    if (ftsRows.length === 0) {
-      const likeTerm = `%${f.q}%`;
-      const fallbackRows = await db.$queryRaw<{ id: string }[]>(
-        Prisma.sql`
-          SELECT id FROM "Property"
-          WHERE (area ILIKE ${likeTerm} OR city ILIKE ${likeTerm})
-            AND status = 'ACTIVE'
-            AND "deletedAt" IS NULL
-          ORDER BY id ASC
-          LIMIT 500
-        `
-      );
-      ftsIds = fallbackRows.map((r) => r.id);
-    } else {
-      ftsIds = ftsRows.map((r) => r.id);
-      ftsRanked = true;
-    }
+    const text = await findTextMatchIds(f.q);
+    ftsIds = text.ids;
+    ftsRanked = text.ranked;
 
     if (f.ids?.length) {
       const requestedIds = new Set(f.ids);

@@ -30,7 +30,7 @@ export const savedSearchesClient = {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  update: (id: string, input: { name?: string; isActive?: boolean; notifyInstant?: boolean; notifyEmail?: boolean }) =>
+  update: (id: string, input: { name?: string; isActive?: boolean; notifyInstant?: boolean; notifyEmail?: boolean; seen?: true }) =>
     getJson<SavedSearchDto>(`/api/saved-searches/${encodeURIComponent(id)}`, {
       method: "PATCH",
       body: JSON.stringify(input),

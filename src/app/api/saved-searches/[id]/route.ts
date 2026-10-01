@@ -5,7 +5,7 @@ import { updateSavedSearchSchema } from "@/lib/validators/saved-search";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-/** PATCH /api/saved-searches/[id] — rename, toggle active, change notify prefs */
+/** PATCH /api/saved-searches/[id] — rename, toggle active, change notify prefs, or `{ seen: true }` to clear the new-results badge */
 export async function PATCH(
   req: NextRequest,
   ctx: { params: { id: string } }
@@ -27,9 +27,10 @@ export async function PATCH(
   const parsed = updateSavedSearchSchema.safeParse(body);
   if (!parsed.success) return zodErr(parsed.error);
 
+  const { seen, ...changes } = parsed.data;
   const updated = await db.savedSearch.update({
     where: { id: existing.id },
-    data: parsed.data,
+    data: { ...changes, ...(seen && { newResultsCount: 0 }) },
   });
   return ok(updated);
 }

@@ -41,6 +41,8 @@ export const updateSavedSearchSchema = z.object({
   isActive: z.boolean().optional(),
   notifyInstant: z.boolean().optional(),
   notifyEmail: z.boolean().optional(),
+  // The owner opened this search: clears the new-results badge.
+  seen: z.literal(true).optional(),
 });
 
 export type CreateSavedSearchInput = z.infer<typeof createSavedSearchSchema>;

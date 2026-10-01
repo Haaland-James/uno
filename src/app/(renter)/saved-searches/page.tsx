@@ -10,6 +10,7 @@ import { DeleteSearchModal } from "@/components/saved/DeleteSearchModal";
 import { EditSearchModal } from "@/components/saved/EditSearchModal";
 import { SavedSearchPagination } from "@/components/saved/SavedSearchPagination";
 import { useSavedSearches } from "@/hooks/useSavedSearches";
+import { savedSearchesClient } from "@/lib/clients/savedSearches";
 import { criteriaToSearchState } from "@/lib/saved-search-mapper";
 import { buildSearchUrl } from "@/lib/search-url";
 import type { SavedSearchCriteria } from "@/lib/validators/saved-search";
@@ -32,6 +33,8 @@ export default function SavedSearchesPage() {
     const search = savedSearches.find((s) => s.id === id);
     if (!search) return;
     const criteria = search.criteria as SavedSearchCriteria;
+    // Opening a search clears its new-results badge. Fire and forget: failing to clear must not block navigation.
+    if (search.newResultsCount > 0) savedSearchesClient.update(id, { seen: true }).catch(() => {});
     router.push(buildSearchUrl(criteriaToSearchState(criteria)));
   }
 
