@@ -113,6 +113,15 @@ const sections: LegalSection[] = [
 					detect abuse. See our <Link href="/cookies">Cookie Policy</Link> for what
 					we store in your browser.
 				</p>
+				<p>
+					We count how many people view each listing. If you are not signed in, we
+					count the view using a one-way hash of your IP address and browser
+					details that changes every day; we set no cookie for this. If you are
+					signed in, the view is stored with your account, once per listing per
+					day. We use view data only for view counts and &ldquo;popular&rdquo;
+					rankings. Views of a listing by its own lister and by admins are not
+					counted.
+				</p>
 			</>
 		),
 	},
