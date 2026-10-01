@@ -223,8 +223,9 @@ export function PropertyCard({
       <div className={cn("flex flex-col flex-1 gap-[10px] px-[6px] pt-[10px] pb-[10px]", offMarket && "opacity-60")}>
 
         <div className="flex flex-col gap-[15px]">
-          {/* Price + bed/bath row */}
-          <div className="flex items-end justify-between">
+          {/* Price + bed/bath row. min-h = two stacked chips (2 x 24 + 4 gap on mobile,
+              2 x 27 + 4 on desktop), so a one-chip card (land) is as tall as a two-chip one. */}
+          <div className="flex items-end justify-between min-h-[52px] md:min-h-[58px]">
             <div className="flex flex-col gap-[8px] min-w-0">
               <span className="font-extrabold text-[16px] md:text-[25px] text-[#161515] leading-tight truncate">
                 {formatNaira(data.rent)}
@@ -269,30 +270,30 @@ export function PropertyCard({
             )}
           </div>
 
-          {/* Features row */}
-          {features.length > 0 && (
-            <div className="flex items-center gap-[9px] flex-wrap">
-              {features.map((feature, index) => (
-                <span key={feature} className="flex items-center gap-[9px]">
-                  <span className="text-[10px] md:text-[12px] text-[rgba(0,0,0,0.84)] whitespace-nowrap">{feature}</span>
-                  {index < features.length - 1 && (
-                    <span className="w-[3px] h-[3px] rounded-full bg-[rgba(0,0,0,0.4)]" />
-                  )}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Features row: always exactly one line tall (even with no amenities) so every
+              card in a row lines up. Items that don't fit wrap onto a second line that is
+              clipped, so only whole items show. The separator dot leads each item after the
+              first, so it is clipped together with the item it belongs to. */}
+          <div className="flex flex-wrap items-center gap-x-[9px] h-[15px] md:h-[18px] overflow-hidden">
+            {features.map((feature, index) => (
+              <span key={feature} className="flex items-center gap-[9px]">
+                {index > 0 && <span className="w-[3px] h-[3px] rounded-full bg-[rgba(0,0,0,0.4)]" />}
+                <span className="text-[10px] md:text-[12px] leading-[15px] md:leading-[18px] text-[rgba(0,0,0,0.84)] whitespace-nowrap">{feature}</span>
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* Trust badge */}
-        {data.listedByAgent && (
-          <div className="mt-auto h-[20px] flex items-center">
+        {/* Trust badge slot: always rendered at the badge's height, so agent and non-agent
+            cards are the same height and the button sits at the same place. */}
+        <div className="mt-auto h-[20px] flex items-center">
+          {data.listedByAgent && (
             <div className="inline-flex items-center gap-1 rounded-full bg-[#f5f0f0] px-2 py-0.5 text-[10px] font-semibold text-[#161515]">
               <ShieldCheck size={11} className="text-[#af2525]" />
               Listed by {siteConfig.name}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* CTA */}
         <div
