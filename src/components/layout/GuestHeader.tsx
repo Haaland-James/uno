@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { Menu, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/shared/Logo";
+import { LogoLink } from "@/components/shared/LogoLink";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { GuestMobileDrawer } from "@/components/layout/GuestMobileDrawer";
 
@@ -56,9 +57,9 @@ export function GuestHeader({ className }: { className?: string }) {
     >
       <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 md:px-10">
         {/* Logo */}
-        <Link href="/" className="flex items-center">
+        <LogoLink>
           <Logo className="h-6 w-auto md:h-8" />
-        </Link>
+        </LogoLink>
 
         {/* Centre nav — desktop only */}
         <nav className="hidden items-center gap-[62px] rounded-[45px] bg-[rgba(238,238,238,0.2)] px-[67px] py-3 backdrop-blur-sm md:flex">

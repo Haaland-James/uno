@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/shared/Logo";
+import { LogoLink } from "@/components/shared/LogoLink";
 import {
   Search,
   ChevronDown,
@@ -89,15 +90,14 @@ export function Header({ className }: { className?: string }) {
               <ChevronLeft className="h-6 w-6 text-black" strokeWidth={2} />
             </button>
           )}
-          <Link
-            href="/find"
+          <LogoLink
             className={cn(
               "items-center gap-1.5",
               isPropertyDetail ? "hidden md:flex" : "flex"
             )}
           >
             <Logo className="h-6 w-auto md:h-8" />
-          </Link>
+          </LogoLink>
         </div>
 
         {/* Right section — over main content area */}

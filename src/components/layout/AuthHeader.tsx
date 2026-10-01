@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/shared/Logo";
+import { LogoLink } from "@/components/shared/LogoLink";
 
 interface AuthHeaderProps {
   /** Which page we're on — determines the opposite link shown */
@@ -23,16 +24,16 @@ export function AuthHeader({ mode, className }: AuthHeaderProps) {
     >
       {/* Desktop: centered logo only */}
       <div className="mx-auto hidden h-16 max-w-[1440px] items-center justify-center px-10 md:flex">
-        <Link href="/" className="flex items-center">
+        <LogoLink>
           <Logo className="h-8 w-auto" />
-        </Link>
+        </LogoLink>
       </div>
 
       {/* Mobile: logo left, auth link right */}
       <div className="mx-auto flex h-16 items-center justify-between px-4 md:hidden">
-        <Link href="/" className="flex items-center">
+        <LogoLink>
           <Logo className="h-6 w-auto" />
-        </Link>
+        </LogoLink>
 
         {mode !== "verify" && (
           <Link

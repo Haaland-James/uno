@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/shared/Logo";
+import { LogoLink } from "@/components/shared/LogoLink";
+import { describeKindContext, resultNoun } from "@/lib/result-count";
 import { useSession } from "next-auth/react";
 import {
   Search,
@@ -257,6 +259,8 @@ export default function PropertiesSearchPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const placeText = describePlace(state);
   const sortContext = describeSortContext(state.sort);
+  // Name the kind when a type filter is on: "9 commercial properties listed for rent".
+  const kindContext = describeKindContext(state.type);
 
   // Pre-filled search display value
   const currentLocation = state.area ?? state.city ?? state.state;
@@ -296,9 +300,9 @@ export default function PropertiesSearchPage() {
       <header className="z-50 hidden flex-shrink-0 border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] md:block">
         <div className="flex items-center justify-between px-[41px] py-[6px]">
           <div className="flex items-center gap-[50px]">
-            <Link href="/" className="flex items-center">
+            <LogoLink>
               <Logo className="h-8 w-auto" />
-            </Link>
+            </LogoLink>
 
             {/* Pre-filled location chip — click to open autocomplete */}
             <div className="relative">
@@ -377,9 +381,9 @@ export default function PropertiesSearchPage() {
          ═══════════════════════════════════════════════════ */}
       <header className="z-50 flex h-[64px] flex-shrink-0 items-center justify-between border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] px-[15px] md:hidden">
         <div className="flex flex-1 items-center gap-[10px]">
-          <Link href="/" className="flex items-center">
+          <LogoLink>
             <Logo className="h-6 w-auto" />
-          </Link>
+          </LogoLink>
           <div className="flex-1">
             {!showSearchInline && currentLocation ? (
               <button
@@ -594,8 +598,7 @@ export default function PropertiesSearchPage() {
           <div className="flex flex-shrink-0 items-end justify-between border-b border-[rgba(0,0,0,0.06)] px-[24px] py-[12px]">
             <div className="flex flex-col gap-[3px]">
               <p className="text-[15px] font-medium text-[#161515]">
-                {loading ? "…" : total} {sortContext ? `${sortContext.toLowerCase()} ` : ""}
-                {total === 1 ? "property" : "properties"} listed
+                {loading ? "…" : total} {resultNoun(total, { sortContext, kindContext })} listed
                 {placeText ? ` ${listingLabel.toLowerCase()} in ${placeText}` : ` ${listingLabel.toLowerCase()}`}
               </p>
               {placeText && (
@@ -851,7 +854,7 @@ export default function PropertiesSearchPage() {
                   <p className="text-[13px] text-black/60">
                     {loading
                       ? "Loading…"
-                      : `${total} ${sortContext ? `${sortContext.toLowerCase()} ` : ""}${total === 1 ? "property" : "properties"} listed`}
+                      : `${total} ${resultNoun(total, { sortContext, kindContext })} listed`}
                     {placeText ? ` ${listingLabel.toLowerCase()} in ${placeText}` : ` ${listingLabel.toLowerCase()}`}
                   </p>
                   {placeText && (

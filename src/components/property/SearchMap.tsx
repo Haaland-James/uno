@@ -5,6 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import Supercluster from "supercluster";
 import type { PropertyCardData, MapPin } from "@/types/property";
 import { PRIVACY_RADIUS_M } from "@/lib/privacy";
+import { popupMetaLine } from "@/lib/map-popup-meta";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 const NG_CENTER: [number, number] = [8.6753, 9.082];
@@ -101,7 +102,7 @@ function popupHtml(p: PropertyCardData): string {
       <div class="search-map-popup__body">
         <div class="search-map-popup__price">${escapeHtml(formatPriceFull(p.rent, p.currency))}${escapeHtml(periodSuffix)}</div>
         <div class="search-map-popup__title">${escapeHtml(p.title)}</div>
-        <div class="search-map-popup__meta">${p.bedrooms} bd · ${p.bathrooms} ba · ${escapeHtml(p.area)}, ${escapeHtml(p.city)}</div>
+        <div class="search-map-popup__meta">${escapeHtml(popupMetaLine(p))}</div>
       </div>
     </a>
   `;
@@ -132,6 +133,10 @@ export function SearchMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<unknown>(null);
   const popupRef = useRef<unknown>(null);
+  // Hover-opened popups close shortly after the pointer leaves the pin AND the
+  // popup; a click "pins" the popup open until it is closed or another opens.
+  const popupPinnedRef = useRef(false);
+  const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const markersRef = useRef<MarkerHandle[]>([]);
   const mapboxRef = useRef<typeof import("mapbox-gl") | null>(null);
   const clusterRef = useRef<Supercluster<PinProps> | null>(null);
@@ -141,6 +146,18 @@ export function SearchMap({
   const [ready, setReady] = useState(false);
   // The pin currently anchoring an open popup (cleared when the popup closes).
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
+  const selectedPinIdRef = useRef<string | null>(null);
+  // Hover popups are for mouse users only; on touch, mouseenter fires on tap and would fight the click.
+  const canHoverRef = useRef(() =>
+    typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches
+  );
+  const scheduleHoverClose = (popup: { remove?: () => void }) => {
+    if (popupPinnedRef.current) return;
+    if (hoverCloseTimerRef.current) clearTimeout(hoverCloseTimerRef.current);
+    hoverCloseTimerRef.current = setTimeout(() => {
+      if (popupRef.current === popup && !popupPinnedRef.current) popup.remove?.();
+    }, 250);
+  };
 
   /**
    * The effective pin set the cluster index works on. When the page only
@@ -261,6 +278,7 @@ export function SearchMap({
     })();
     return () => {
       cancelled = true;
+      if (hoverCloseTimerRef.current) clearTimeout(hoverCloseTimerRef.current);
       const popup = popupRef.current as { remove?: () => void } | null;
       popup?.remove?.();
       popupRef.current = null;
@@ -438,16 +456,12 @@ export function SearchMap({
         el.style.background = isActive ? "#af2525" : "#1a4d2e";
         el.textContent = formatPriceShort(pin.rent, pin.currency);
 
-        el.addEventListener("mouseenter", () => {
-          el.style.background = "#af2525";
-          onMarkerHoverRef.current?.(pin.id);
-        });
-        el.addEventListener("mouseleave", () => {
-          el.style.background = pin.id === activeId ? "#af2525" : "#1a4d2e";
-          onMarkerHoverRef.current?.(null);
-        });
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
+        // Opens this pin's popup. Hover opens it only on devices with a mouse
+        // (touch keeps tap = click), without taking keyboard focus (which would
+        // scroll the page to the popup's link) and without calling onMarkerClick.
+        const openPopup = (viaHover: boolean) => {
+          if (hoverCloseTimerRef.current) clearTimeout(hoverCloseTimerRef.current);
+          if (viaHover && popupRef.current && selectedPinIdRef.current === pin.id) return; // already showing
           const existing = popupRef.current as { remove?: () => void } | null;
           existing?.remove?.();
 
@@ -459,25 +473,62 @@ export function SearchMap({
             closeOnClick: true,
             maxWidth: "280px",
             className: "search-map-popup-wrap",
+            focusAfterOpen: !viaHover,
           })
             .setLngLat([lng, lat])
             .setHTML(card ? popupHtml(card) : popupSkeletonHtml(pin))
             .addTo(map);
           popupRef.current = popup;
+          popupPinnedRef.current = !viaHover;
+          selectedPinIdRef.current = pin.id;
           setSelectedPinId(pin.id);
           popup.on("close", () => {
-            if (popupRef.current === popup) popupRef.current = null;
+            if (popupRef.current === popup) {
+              popupRef.current = null;
+              popupPinnedRef.current = false;
+              selectedPinIdRef.current = null;
+            }
             setSelectedPinId((cur) => (cur === pin.id ? null : cur));
           });
+          // Moving from the pin onto the popup (to click its link) must not close it.
+          const popupEl = (popup as unknown as { getElement: () => HTMLElement | undefined }).getElement();
+          popupEl?.addEventListener("mouseenter", () => {
+            if (hoverCloseTimerRef.current) clearTimeout(hoverCloseTimerRef.current);
+          });
+          popupEl?.addEventListener("mouseleave", () => scheduleHoverClose(popup));
 
           // Lazy-fetch the full card when the pin isn't on the current results
           // page — the bbox endpoint returns pins map-wide but list is paginated.
+          // (GET /api/properties/[id] doesn't count a view; only the detail page does.)
           if (!card) {
             void fetchCard(pin.id).then((fetched) => {
               if (!fetched) return;
               if (popupRef.current !== popup) return; // user moved on
               popup.setHTML(popupHtml(fetched));
             });
+          }
+        };
+
+        el.addEventListener("mouseenter", () => {
+          el.style.background = "#af2525";
+          onMarkerHoverRef.current?.(pin.id);
+          if (canHoverRef.current()) openPopup(true);
+        });
+        el.addEventListener("mouseleave", () => {
+          el.style.background = pin.id === activeId ? "#af2525" : "#1a4d2e";
+          onMarkerHoverRef.current?.(null);
+          if (canHoverRef.current() && popupRef.current && !popupPinnedRef.current) {
+            scheduleHoverClose(popupRef.current as { remove: () => void });
+          }
+        });
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (popupRef.current && selectedPinIdRef.current === pin.id) {
+            // Already open from hovering: a click keeps it open.
+            if (hoverCloseTimerRef.current) clearTimeout(hoverCloseTimerRef.current);
+            popupPinnedRef.current = true;
+          } else {
+            openPopup(false);
           }
           onMarkerClickRef.current?.(pin.id);
         });

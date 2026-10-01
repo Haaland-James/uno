@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Search, X, Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Logo } from "@/components/shared/Logo";
+import { LogoLink } from "@/components/shared/LogoLink";
 import { cn } from "@/lib/utils";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { resolveTextToUrl } from "@/lib/search-url";
@@ -48,9 +49,9 @@ export function BrowseHeader({
       <header className="sticky top-0 z-50 hidden h-16 w-full flex-shrink-0 border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] md:block">
         <div className="flex h-full items-center justify-between px-[41px]">
           <div className="flex items-center gap-[50px]">
-            <Link href="/" className="flex items-center">
+            <LogoLink>
               <Logo className="h-8 w-auto" />
-            </Link>
+            </LogoLink>
 
             <form
               onSubmit={handleSubmit}
@@ -112,9 +113,9 @@ export function BrowseHeader({
 
       {/* Mobile */}
       <header className="sticky top-0 z-50 flex h-[64px] flex-shrink-0 items-center justify-between border-b border-[rgba(0,0,0,0.1)] bg-[#fbfbfb] px-[15px] md:hidden">
-        <Link href="/" className="flex items-center">
+        <LogoLink>
           <Logo className="h-6 w-auto" />
-        </Link>
+        </LogoLink>
 
         <form onSubmit={handleSubmit} className="flex flex-1 items-center px-3">
           <div className="flex h-[37px] w-full items-center rounded-[40px] border border-[rgba(186,186,186,0.65)] px-3">
