@@ -81,12 +81,18 @@ it("ignores bots before touching the limiter or DB", async () => {
 	expect(mocks.createMany).not.toHaveBeenCalled();
 });
 
-it("rate-limits per client IP and returns 204 with no write when exceeded", async () => {
+it("rate-limits per client IP and listing, and returns 204 with no write when exceeded", async () => {
 	mocks.limit.mockResolvedValue({ success: false });
 	expect((await POST(req(CHROME, "203.0.113.9"), ctx)).status).toBe(204);
-	expect(mocks.limit).toHaveBeenCalledWith("203.0.113.9");
+	expect(mocks.limit).toHaveBeenCalledWith("203.0.113.9:p");
 	expect(mocks.findUnique).not.toHaveBeenCalled();
 	expect(mocks.createMany).not.toHaveBeenCalled();
+});
+
+it("keys the limiter per listing, so one IP browsing many listings is not throttled together", async () => {
+	await POST(req(CHROME, "203.0.113.9"), { params: { id: "a" } });
+	await POST(req(CHROME, "203.0.113.9"), { params: { id: "b" } });
+	expect(mocks.limit.mock.calls.map((c) => c[0])).toEqual(["203.0.113.9:a", "203.0.113.9:b"]);
 });
 
 it("skips counting when the limiter itself fails", async () => {

@@ -30,7 +30,7 @@ export async function POST(
 
   const ip = getClientIp(req);
   try {
-    const rl = await propertyViewLimiter.limit(ip);
+    const rl = await propertyViewLimiter.limit(`${ip}:${id}`);
     if (!rl.success) return noContent();
   } catch (e) {
     // Redis down: skip counting rather than count unguarded.
