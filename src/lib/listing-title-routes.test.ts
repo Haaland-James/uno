@@ -40,6 +40,9 @@ const property = { id: "p", landlordId: "owner", status: "ACTIVE", deletedAt: nu
 const req = (body: unknown) => new NextRequest("http://localhost/api/properties/p", { method: "PATCH", body: JSON.stringify(body) });
 beforeEach(() => {
   vi.resetAllMocks();
+  // These tests are about titles and pricing, not who may list: run as an open
+  // environment (unset counts as live and would 403 this non-agent session).
+  vi.stubEnv("NEXT_PUBLIC_APP_ENV", "STAGING");
   mocks.findUnique.mockResolvedValue(property);
   mocks.update.mockResolvedValue({ id: "p" });
   mocks.transaction.mockImplementation(async (fn) => fn({
