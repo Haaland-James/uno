@@ -1081,7 +1081,12 @@ export default function PropertyDetailPage() {
             <div className="hidden md:grid md:grid-cols-3 gap-[20px]">
               {similar.map((prop) => (
                 <Link key={prop.id} href={`/property/${prop.id}`}>
-                  <PropertyCard data={prop} className="w-full" />
+                  <PropertyCard
+                    data={prop}
+                    className="w-full"
+                    isFavourited={isFavourited(prop.id)}
+                    onToggleFavourite={toggleFavourite}
+                  />
                 </Link>
               ))}
             </div>
@@ -1090,7 +1095,12 @@ export default function PropertyDetailPage() {
             <div className="md:hidden flex gap-[12px] overflow-x-auto pb-[8px] no-scrollbar" style={{ scrollbarWidth: "none" }}>
               {similar.map((prop) => (
                 <Link key={prop.id} href={`/property/${prop.id}`} className="shrink-0">
-                  <PropertyCard data={prop} className="w-[234px]" />
+                  <PropertyCard
+                    data={prop}
+                    className="w-[234px]"
+                    isFavourited={isFavourited(prop.id)}
+                    onToggleFavourite={toggleFavourite}
+                  />
                 </Link>
               ))}
             </div>

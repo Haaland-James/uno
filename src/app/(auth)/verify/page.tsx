@@ -118,16 +118,22 @@ function VerifyForm() {
       <div className="flex flex-1 items-center justify-center px-5 py-16 md:py-24">
         <div className="w-full max-w-[380px]">
           <h1 className="mb-3 text-center text-[32px] font-semibold leading-tight text-[#161515] md:text-[36px]">
-            Let&apos;s Make Sure
-            <br />
-            you&apos;re Legit
+            {mode === "LOGIN" ? (
+              "Confirm Login"
+            ) : (
+              <>
+                Let&apos;s Make Sure
+                <br />
+                you&apos;re Legit
+              </>
+            )}
           </h1>
 
           <p className="mb-8 text-center text-[14px] text-[rgba(10,10,10,0.4)]">
             Please verify your email address
           </p>
 
-          <div className="mb-6 flex h-[50px] w-full items-center rounded-[25px] border border-[rgba(186,186,186,0.65)] bg-[#faf9f9] px-5">
+          <div className="mb-6 flex h-[50px] w-full items-center justify-center rounded-[25px] border border-[rgba(186,186,186,0.65)] bg-[#faf9f9] px-5">
             <span className="text-[15px] text-[#161515]">
               {email || "your@email.com"}
             </span>

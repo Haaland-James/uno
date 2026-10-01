@@ -9,6 +9,7 @@ import { useFavourites } from "@/hooks/useFavourites";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { UnfavouriteConfirmDialog } from "@/components/property/UnfavouriteConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { PropertyCardSkeleton } from "@/components/property/PropertyCardSkeleton";
 import type { PropertyCardData, PropertyType } from "@/types/property";
 
@@ -338,27 +339,23 @@ export default function FavouritesPage() {
 					</div>
 				) : !hasAnyFavourites ? (
 					<div className="w-full rounded-[20px] border border-dashed border-black/10 bg-white/60">
-						<EmptyState
-							title="Save Homes Here"
-							description={
-								<>
-									Whenever you find homes you like, select the{" "}
-									<Heart
-										size={14}
-										className="inline fill-[#af2525] text-[#af2525] align-[-1px]"
-									/>{" "}
-									to save them here.
-								</>
-							}
-							action={
-								<Link
-									href="/find"
-									className="inline-flex h-[44px] items-center justify-center rounded-full bg-[#af2525] px-6 text-[15px] font-medium text-white transition-opacity hover:opacity-90"
-								>
-									Search for Homes
-								</Link>
-							}
-						/>
+						{/* Same type and spacing as the saved-searches empty state */}
+						<div className="flex flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+							<h2 className="text-[20px] font-semibold text-[#161515] md:text-[24px]">
+								Save Homes Here
+							</h2>
+							<p className="max-w-[320px] text-[14px] text-[rgba(10,10,10,0.78)]">
+								Whenever you find homes you like, select the{" "}
+								<Heart
+									size={14}
+									className="inline fill-[#af2525] text-[#af2525] align-[-1px]"
+								/>{" "}
+								to save them here.
+							</p>
+							<Button asChild className="mt-2">
+								<Link href="/find">Search for Homes</Link>
+							</Button>
+						</div>
 					</div>
 				) : filtered.length === 0 ? (
 					<div className="w-full rounded-[20px] border border-dashed border-black/10 bg-white/60">

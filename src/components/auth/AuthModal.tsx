@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useAuthModalStore } from "@/stores/authModalStore";
-import { favouritesClient } from "@/lib/clients/favourites";
+import { replayFavourite } from "@/lib/favourites-sync";
 import { savedSearchesClient } from "@/lib/clients/savedSearches";
 import { contactsClient } from "@/lib/clients/contacts";
 import { getWhatsAppLink } from "@/lib/utils";
@@ -54,7 +54,7 @@ export function AuthModal() {
     // Replay the captured intent against the new session
     if (intent?.type === "favourite") {
       try {
-        await favouritesClient.add(intent.propertyId);
+        await replayFavourite(intent.propertyId);
         toast.success("Saved to favourites");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not save favourite — try again");

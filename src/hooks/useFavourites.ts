@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useAuthModalStore } from "@/stores/authModalStore";
 import { favouritesClient } from "@/lib/clients/favourites";
+import { onFavouritesChanged } from "@/lib/favourites-sync";
 import { toast } from "@/stores/toastStore";
 
 /**
@@ -17,20 +18,34 @@ export function useFavourites() {
   const [ids, setIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
-  // Hydrate from server when authenticated
+  // Hydrate from server when authenticated, and again whenever a favourite is
+  // saved outside this hook (the post-login intent replay in AuthModal).
   useEffect(() => {
     if (status !== "authenticated") {
       setIds(new Set());
       return;
     }
-    setLoading(true);
-    favouritesClient
-      .list()
-      .then((res) => setIds(new Set(res.items.map((p) => p.id))))
-      .catch(() => {
-        // best-effort; leave empty on failure
-      })
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    const load = (showLoading: boolean) => {
+      if (showLoading) setLoading(true);
+      favouritesClient
+        .list()
+        .then((res) => {
+          if (!cancelled) setIds(new Set(res.items.map((p) => p.id)));
+        })
+        .catch(() => {
+          // best-effort; leave as-is on failure
+        })
+        .finally(() => {
+          if (showLoading && !cancelled) setLoading(false);
+        });
+    };
+    load(true);
+    const unsubscribe = onFavouritesChanged(() => load(false));
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [status]);
 
   const toggleFavourite = useCallback(

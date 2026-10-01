@@ -111,15 +111,21 @@ export function VerifyForm({
   return (
     <form className="flex flex-col" onSubmit={handleSubmit}>
       <h2 className="mb-2 text-center text-[28px] font-semibold leading-tight text-[#161515] md:text-[32px]">
-        Let&apos;s Make Sure
-        <br />
-        you&apos;re Legit
+        {mode === "LOGIN" ? (
+          "Confirm Login"
+        ) : (
+          <>
+            Let&apos;s Make Sure
+            <br />
+            you&apos;re Legit
+          </>
+        )}
       </h2>
       <p className="mb-6 text-center text-[14px] text-[rgba(10,10,10,0.4)]">
         Please verify your email address
       </p>
 
-      <div className="mb-5 flex h-[50px] w-full items-center rounded-[25px] border border-[rgba(186,186,186,0.65)] bg-[#faf9f9] px-5">
+      <div className="mb-5 flex h-[50px] w-full items-center justify-center rounded-[25px] border border-[rgba(186,186,186,0.65)] bg-[#faf9f9] px-5">
         <span className="text-[15px] text-[#161515]">{email}</span>
       </div>
 
