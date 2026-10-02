@@ -1,5 +1,6 @@
 "use client";
 
+import { FieldError } from "@/components/ui/LabeledField";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { ImagePlus, Star, X, RotateCcw, Loader2, GripVertical } from "lucide-react";
 import {
@@ -380,6 +381,7 @@ export function PhotosStep() {
 					)}
 				</div>
 			)}
+			<FieldError name="photos" />
 		</div>
 	);
 }

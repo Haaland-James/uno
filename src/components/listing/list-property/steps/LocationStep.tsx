@@ -59,7 +59,7 @@ export function LocationStep() {
 			</p>
 
 			<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-				<LabeledField label="State" required>
+				<LabeledField name="state" label="State" required>
 					{({ id }) => (
 						<Select
 							id={id}
@@ -74,7 +74,7 @@ export function LocationStep() {
 					)}
 				</LabeledField>
 
-				<LabeledField
+				<LabeledField name="lga"
 					label="LGA / Municipality"
 					required
 					helper={
@@ -96,7 +96,7 @@ export function LocationStep() {
 					)}
 				</LabeledField>
 
-				<LabeledField
+				<LabeledField name="area"
 					label="Area / Neighbourhood"
 					required
 					className="sm:col-span-2"
@@ -119,7 +119,7 @@ export function LocationStep() {
 					)}
 				</LabeledField>
 
-				<LabeledField
+				<LabeledField name="streetAddress"
 					label="Street Address"
 					required
 					className="sm:col-span-2"

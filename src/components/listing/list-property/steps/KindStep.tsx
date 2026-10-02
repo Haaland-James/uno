@@ -59,7 +59,7 @@ export function KindStep() {
 
 			{kind ? (
 				<section>
-					<LabeledField
+					<LabeledField name="propertyType"
 						label="Specific Property Type"
 						required
 						helper={

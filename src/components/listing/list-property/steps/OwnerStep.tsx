@@ -30,7 +30,7 @@ export function OwnerStep() {
 			</p>
 
 			<div className="flex flex-col gap-5">
-				<LabeledField label="Owner&apos;s full name" required>
+				<LabeledField name="offPlatformOwnerName" label="Owner&apos;s full name" required>
 					{({ id }) => (
 						<Input
 							id={id}
@@ -42,7 +42,7 @@ export function OwnerStep() {
 						/>
 					)}
 				</LabeledField>
-				<LabeledField
+				<LabeledField name="offPlatformOwnerPhone"
 					label="Owner&apos;s phone number"
 					required
 					helper="So you can reach them about viewings, offers, and renewals."

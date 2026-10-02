@@ -38,7 +38,7 @@ export function ContactStep() {
 
 			<div className="flex flex-col gap-5">
 				<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-					<LabeledField label="First Name" required>
+					<LabeledField name="contactFirstName" label="First Name" required>
 						{({ id }) => (
 							<Input
 								id={id}
@@ -48,7 +48,7 @@ export function ContactStep() {
 							/>
 						)}
 					</LabeledField>
-					<LabeledField label="Last Name" required>
+					<LabeledField name="contactLastName" label="Last Name" required>
 						{({ id }) => (
 							<Input
 								id={id}
@@ -59,7 +59,7 @@ export function ContactStep() {
 						)}
 					</LabeledField>
 				</div>
-				<LabeledField label="Email" required>
+				<LabeledField name="contactEmail" label="Email" required>
 					{({ id }) => (
 						<Input
 							id={id}
@@ -70,7 +70,7 @@ export function ContactStep() {
 						/>
 					)}
 				</LabeledField>
-				<LabeledField label="Phone Number" required helper="Include country code if outside Nigeria">
+				<LabeledField name="contactPhone" label="Phone Number" required helper="Include country code if outside Nigeria">
 					{({ id }) => (
 						<Input
 							id={id}

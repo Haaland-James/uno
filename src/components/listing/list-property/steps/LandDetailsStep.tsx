@@ -44,7 +44,7 @@ export function LandDetailsStep() {
 
 			<div className="flex flex-col gap-5">
 				<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-					<LabeledField label="Plot Size" required helper="In square metres">
+					<LabeledField name="plotSizeSqm" label="Plot Size" required helper="In square metres">
 						{({ id }) => (
 							<NumberInput
 								id={id}
@@ -56,7 +56,7 @@ export function LandDetailsStep() {
 							/>
 						)}
 					</LabeledField>
-					<LabeledField label="Title Document" required>
+					<LabeledField name="titleDocType" label="Title Document" required>
 						{({ id }) => (
 							<Select
 								id={id}
@@ -71,7 +71,7 @@ export function LandDetailsStep() {
 				</div>
 
 				<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-					<LabeledField label="Topography">
+					<LabeledField name="topography" label="Topography">
 						{({ id }) => (
 							<Select
 								id={id}
@@ -83,7 +83,7 @@ export function LandDetailsStep() {
 							/>
 						)}
 					</LabeledField>
-					<LabeledField label="Access Road">
+					<LabeledField name="accessRoad" label="Access Road">
 						{({ id }) => (
 							<Select
 								id={id}
@@ -110,7 +110,7 @@ export function LandDetailsStep() {
 					/>
 				</div>
 
-				<LabeledField label="Brief Description" helper="Optional — share anything that makes this plot stand out">
+				<LabeledField name="briefDescription" label="Brief Description" helper="Optional — share anything that makes this plot stand out">
 					{({ id }) => (
 						<Textarea
 							id={id}

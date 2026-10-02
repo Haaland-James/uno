@@ -60,7 +60,7 @@ export function AmenitiesStep() {
 				<section className="rounded-[16px] border border-black/10 bg-white p-5">
 					<h3 className="mb-4 text-[15px] font-semibold text-black">Key Facts</h3>
 					<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-						<LabeledField label="Parking Spaces" helper="Number of cars">
+						<LabeledField name="parkingSpaces" label="Parking Spaces" helper="Number of cars">
 							{({ id }) => (
 								<NumberInput
 									id={id}
@@ -71,7 +71,7 @@ export function AmenitiesStep() {
 								/>
 							)}
 						</LabeledField>
-						<LabeledField label="Power Backup">
+						<LabeledField name="powerBackup" label="Power Backup">
 							{({ id }) => (
 								<Select
 									id={id}
@@ -83,7 +83,7 @@ export function AmenitiesStep() {
 								/>
 							)}
 						</LabeledField>
-						<LabeledField label="Water Source">
+						<LabeledField name="waterSource" label="Water Source">
 							{({ id }) => (
 								<Select
 									id={id}

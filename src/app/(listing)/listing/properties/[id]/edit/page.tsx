@@ -8,7 +8,11 @@ import { Logo } from "@/components/shared/Logo";
 import { useListPropertyStore, type ListPropertyData } from "@/stores/listPropertyStore";
 import { useUserStore } from "@/stores/userStore";
 import { getInitials } from "@/lib/utils";
-import { listingsClient } from "@/lib/clients/listings";
+import { listingsClient, ApiValidationError } from "@/lib/clients/listings";
+import { resolveFieldErrors } from "@/components/listing/list-property/field-steps";
+import { useListingErrorsStore } from "@/stores/listingErrorsStore";
+import { useScrollToFieldError } from "@/hooks/useScrollToFieldError";
+import { priceError } from "@/components/listing/list-property/validation";
 import { toast } from "@/stores/toastStore";
 import { getSteps, type StepDef, type WizardKind } from "@/components/listing/list-property/steps";
 import { LocationStep } from "@/components/listing/list-property/steps/LocationStep";
@@ -110,6 +114,7 @@ function EditPropertyPage({ id }: { id: string }) {
 	const firstName = user?.name?.split(" ")[0] ?? "Account";
 
 	const editSteps = hydrating ? [] : getEditSteps(data);
+	useScrollToFieldError(activeKey);
 
 	// Set initial active key once hydrated — skip disabled sections so we land on
 	// the first actually-editable step (typically Location).
@@ -198,6 +203,15 @@ function EditPropertyPage({ id }: { id: string }) {
 	}, [id, replaceAll, router]);
 
 	const handleSave = async () => {
+		// A price over the typo guard would only be refused by the server: say so here, under the field.
+		const tooLarge = data.objective === "SELL" ? priceError(data.salePrice) : priceError(data.rent);
+		if (tooLarge) {
+			const field = data.objective === "SELL" ? "salePrice" : "rent";
+			useListingErrorsStore.getState().setErrors({ [field]: tooLarge }, field);
+			setActiveKey("pricing");
+			toast.error(tooLarge);
+			return;
+		}
 		setSaving(true);
 		try {
 			const photos = data.photoUrls.map((url, i) => ({ url, isMain: i === data.mainPhotoIndex }));
@@ -260,7 +274,23 @@ function EditPropertyPage({ id }: { id: string }) {
 			reset();
 			router.push(returnTo);
 		} catch (e) {
-			toast.error(e instanceof Error ? e.message : "Could not save changes");
+			if (e instanceof ApiValidationError) {
+				// Same as the add flow: say what's wrong, under the field, and open its section.
+				const resolved = resolveFieldErrors(
+					e.fieldErrors,
+					{
+						kind: (data.propertyKind || "") as WizardKind,
+						objective: data.objective,
+						flowKeys: editSteps.filter((s) => !DISABLED_KEYS.has(s.key)).map((s) => s.key),
+					},
+					"edit"
+				);
+				useListingErrorsStore.getState().setErrors(resolved.messages, resolved.firstField);
+				if (resolved.step) setActiveKey(resolved.step);
+				toast.error(resolved.toast);
+			} else {
+				toast.error(e instanceof Error ? e.message : "Could not save changes");
+			}
 		} finally { setSaving(false); }
 	};
 

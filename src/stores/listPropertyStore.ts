@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { FeeValue } from "@/components/ui/FeeInput";
+import { useListingErrorsStore } from "./listingErrorsStore";
 
 export type ListingObjective = "SELL" | "RENT" | "LEASE";
 export type ListerRole = "OWNER" | "REPRESENTATIVE";
@@ -207,8 +208,11 @@ export const useListPropertyStore = create<ListPropertyState>()(
 			currentStep: 1,
 			completedSteps: [],
 
-			updateData: (patch) =>
-				set((state) => ({ data: { ...state.data, ...patch } })),
+			updateData: (patch) => {
+				// Editing a field clears the server's message about it.
+				useListingErrorsStore.getState().clearFields(Object.keys(patch));
+				set((state) => ({ data: { ...state.data, ...patch } }));
+			},
 
 			setStep: (step) => set({ currentStep: step }),
 
@@ -219,17 +223,21 @@ export const useListPropertyStore = create<ListPropertyState>()(
 						: [...state.completedSteps, step].sort((a, b) => a - b),
 				})),
 
-			reset: () =>
-				set({ data: initialData, currentStep: 1, completedSteps: [] }),
+			reset: () => {
+				useListingErrorsStore.getState().clearAll();
+				set({ data: initialData, currentStep: 1, completedSteps: [] });
+			},
 
-			replaceAll: (snap) =>
+			replaceAll: (snap) => {
+				useListingErrorsStore.getState().clearAll();
 				set({
 					// Merge against initialData so any new fields added since the draft was
 					// saved have sane defaults instead of undefined.
 					data: { ...initialData, ...snap.data },
 					currentStep: snap.currentStep,
 					completedSteps: snap.completedSteps,
-				}),
+				});
+			},
 		}),
 		{
 			name: "uno-list-property-draft",

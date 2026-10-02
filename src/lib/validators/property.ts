@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { siteConfig } from "@/../config/site";
+import { plainErrorMap } from "./plain-errors";
 
 // Photo URLs must point at hosts we actually serve images from (mirrors
 // next.config.mjs remotePatterns). Without this, the wizard and edit paths
@@ -25,7 +25,7 @@ const photoUrlSchema = z
 			return url.pathname.startsWith(`/${cloud}/`);
 		}
 		return true;
-	}, `Photo URL must be a ${siteConfig.name}-hosted image`);
+	}, "That photo couldn't be used — upload it again");
 
 const photoSchema = z.object({
 	url: photoUrlSchema,
@@ -62,7 +62,7 @@ export const propertyCreateSchema = z.object({
 	bathrooms: z.number().min(0).max(20),
 	description: z.string().max(2000).optional(),
 	size: z.number().positive().optional(),
-	yearBuilt: z.number().min(1950).refine((v) => v <= new Date().getFullYear(), { message: "Year cannot be in the future" }).optional(),
+	yearBuilt: z.number().min(1950, "Year built can't be before 1950").refine((v) => v <= new Date().getFullYear(), { message: "Year built can't be in the future" }).optional(),
 	furnishing: z.enum(["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"]).optional(),
 	condition: z.string().max(100).optional(),
 	floorNumber: z.string().max(20).optional(),
@@ -151,7 +151,7 @@ export const propertyWizardSubmitSchema = z.object({
 
 	// Description
 	size: z.number().positive().nullable().optional(),
-	yearBuilt: z.number().min(1900).refine((v) => v <= new Date().getFullYear(), { message: "Year cannot be in the future" }).nullable().optional(),
+	yearBuilt: z.number().min(1900, "Year built can't be before 1900").refine((v) => v <= new Date().getFullYear(), { message: "Year built can't be in the future" }).nullable().optional(),
 	furnishing: z.string().optional().default(""),
 	floorNumber: z.string().optional().default(""),
 	condition: z.string().optional().default(""),
@@ -269,7 +269,7 @@ export const propertyUpdateSchema = propertyCreateSchema
 	// but the edit page clears them by sending `null`. Override to accept null here.
 	description: z.string().max(2000).nullish(),
 	size: z.number().positive().nullable().optional(),
-	yearBuilt: z.number().min(1900).refine((v) => v <= new Date().getFullYear(), { message: "Year cannot be in the future" }).nullable().optional(),
+	yearBuilt: z.number().min(1900, "Year built can't be before 1900").refine((v) => v <= new Date().getFullYear(), { message: "Year built can't be in the future" }).nullable().optional(),
 	condition: z.string().max(100).nullish(),
 	floorNumber: z.string().max(20).nullish(),
 	streetAddress: z.string().max(200).nullish(),
@@ -285,3 +285,11 @@ export type PropertyCreateInput = z.infer<typeof propertyCreateSchema>;
 export type PropertyFilterInput = z.infer<typeof propertyFilterSchema>;
 export type PropertyWizardSubmitInput = z.infer<typeof propertyWizardSubmitSchema>;
 export type PropertyUpdateInput = z.infer<typeof propertyUpdateSchema>;
+
+/**
+ * Parse a listing submit / update body with plain-language messages (see
+ * plain-errors.ts). Both listing routes use these, so a refused save always
+ * carries a sentence the lister can act on.
+ */
+export const parseListingSubmit = (body: unknown) => propertyWizardSubmitSchema.safeParse(body, { errorMap: plainErrorMap });
+export const parseListingUpdate = (body: unknown) => propertyUpdateSchema.safeParse(body, { errorMap: plainErrorMap });

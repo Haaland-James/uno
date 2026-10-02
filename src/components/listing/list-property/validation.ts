@@ -1,4 +1,13 @@
 import type { ListPropertyData } from "@/stores/listPropertyStore";
+import { MAX_PRICE } from "@/lib/validators/property";
+
+/** Same sentence the server sends for a price over the typo guard. */
+export const PRICE_TOO_LARGE = `Maximum price is ₦${MAX_PRICE.toLocaleString("en-NG")}`;
+
+/** Message to show under a price field, or null when the value is fine (or empty). */
+export function priceError(value: number | null | undefined): string | null {
+	return typeof value === "number" && value > MAX_PRICE ? PRICE_TOO_LARGE : null;
+}
 
 export function isStepValid(stepKey: string, data: ListPropertyData): boolean {
 	const isLand = data.propertyKind === "LAND";
@@ -54,13 +63,14 @@ export function isStepValid(stepKey: string, data: ListPropertyData): boolean {
 			return data.photoUrls.length >= 5;
 		case "pricing":
 			if (data.objective === "SELL") {
-				return typeof data.salePrice === "number" && data.salePrice > 0;
+				return typeof data.salePrice === "number" && data.salePrice > 0 && data.salePrice <= MAX_PRICE;
 			}
 			// Land typically lists for sale, but if it's listed for rent/lease, we still
 			// require rent + minimum lease the same way.
 			return (
 				typeof data.rent === "number" &&
 				data.rent >= 10000 &&
+				data.rent <= MAX_PRICE &&
 				(isLand || data.minimumLease.trim().length > 0)
 			);
 		case "lease-terms":

@@ -8,6 +8,7 @@ import { LabeledField } from "@/components/ui/LabeledField";
 import { MoneyInput } from "@/components/ui/MoneyInput";
 import { FeeInput, type FeeValue } from "@/components/ui/FeeInput";
 import { useListPropertyStore } from "@/stores/listPropertyStore";
+import { priceError } from "@/components/listing/list-property/validation";
 import { RENT_PERIODS } from "@/../config/constants";
 
 // Defensive coercion for fee fields. Drafts persisted under the old store
@@ -61,7 +62,8 @@ export function PricingStep() {
 
 			{isSell ? (
 				<div className="flex flex-col gap-5">
-					<LabeledField
+					<LabeledField name="salePrice"
+						error={priceError(data.salePrice)}
 						label="Sale Price"
 						required
 						helper="Amount in Nigerian Naira (₦)"
@@ -83,7 +85,7 @@ export function PricingStep() {
 						onChange={(v) => updateData({ negotiable: v })}
 					/>
 
-					<LabeledField
+					<LabeledField name="titleDocuments"
 						label="Title Documents"
 						helper="e.g. Certificate of Occupancy, Deed of Assignment"
 					>
@@ -104,7 +106,8 @@ export function PricingStep() {
 							Set Basic Rent Price
 						</h3>
 						<div className="flex flex-col gap-5">
-							<LabeledField
+							<LabeledField name="rent"
+								error={priceError(data.rent)}
 								label="Rent Amount"
 								required
 								helper="Minimum ₦10,000"
@@ -119,7 +122,7 @@ export function PricingStep() {
 									/>
 								)}
 							</LabeledField>
-							<LabeledField label="Payment Period" required>
+							<LabeledField name="rentPeriod" label="Payment Period" required>
 								{({ id }) => (
 									<Select
 										id={id}
@@ -133,7 +136,7 @@ export function PricingStep() {
 									/>
 								)}
 							</LabeledField>
-							<LabeledField label="Minimum Lease Period" required>
+							<LabeledField name="minimumLease" label="Minimum Lease Period" required>
 								{({ id }) => (
 									<Select
 										id={id}
@@ -159,7 +162,7 @@ export function PricingStep() {
 							percentage of the rent.
 						</p>
 						<div className="flex flex-col gap-5">
-							<LabeledField
+							<LabeledField name="agencyFee"
 								label="Agency Fee"
 								helper={
 									agencyFee.mode === "PERCENT"
@@ -177,7 +180,7 @@ export function PricingStep() {
 									/>
 								)}
 							</LabeledField>
-							<LabeledField
+							<LabeledField name="legalFee"
 								label="Legal Fee"
 								helper={
 									legalFee.mode === "PERCENT"
@@ -195,7 +198,7 @@ export function PricingStep() {
 									/>
 								)}
 							</LabeledField>
-							<LabeledField label="Caution / Deposit" helper="Refundable security deposit">
+							<LabeledField name="cautionDeposit" label="Caution / Deposit" helper="Refundable security deposit">
 								{({ id }) => (
 									<MoneyInput
 										id={id}
@@ -214,7 +217,7 @@ export function PricingStep() {
 							Recurring Additional Costs
 						</h3>
 						<div className="flex flex-col gap-5">
-							<LabeledField
+							<LabeledField name="serviceCharge"
 								label="Yearly Service Charge"
 								helper="Optional — for shared estate services"
 							>
@@ -228,7 +231,7 @@ export function PricingStep() {
 									/>
 								)}
 							</LabeledField>
-							<LabeledField label="What's included in service charge?">
+							<LabeledField name="serviceChargeIncludes" label="What's included in service charge?">
 								{({ id }) => (
 									<Select
 										id={id}
@@ -276,7 +279,7 @@ export function PricingStep() {
 						</div>
 						{data.availability === "AVAILABLE_FROM" ? (
 							<div className="mt-3 max-w-[260px]">
-								<LabeledField label="Available From">
+								<LabeledField name="availableFrom" label="Available From">
 									{({ id }) => (
 										<Input
 											id={id}

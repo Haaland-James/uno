@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { parseWholeNumber, readWholeNumberText, showWholeNumberText } from "./whole-number-text";
 
 interface MoneyInputProps {
 	id?: string;
@@ -22,11 +23,8 @@ function formatDisplay(value: number | null): string {
 	return formatter.format(value);
 }
 
-function parseInput(raw: string): number | null {
-	const digits = raw.replace(/[^\d]/g, "");
-	if (!digits) return null;
-	return Number(digits);
-}
+/** Whole-naira text → number (see whole-number-text.ts). Kept as an export for callers and tests. */
+export const parseInput = parseWholeNumber;
 
 /**
  * Naira-formatted money input. Stores raw integer naira; displays with
@@ -42,9 +40,11 @@ export function MoneyInput({
 	"aria-label": ariaLabel,
 }: MoneyInputProps) {
 	const [focused, setFocused] = useState(false);
+	// Digits typed after a decimal point: shown while typing, never part of the value.
+	const [decimals, setDecimals] = useState<string | null>(null);
 	const symbol = CURRENCY_SYMBOLS[currency];
 
-	const displayed = useMemo(() => formatDisplay(value), [value]);
+	const displayed = useMemo(() => showWholeNumberText(formatDisplay(value), decimals), [value, decimals]);
 
 	return (
 		<div
@@ -67,8 +67,15 @@ export function MoneyInput({
 				value={displayed}
 				placeholder={placeholder}
 				onFocus={() => setFocused(true)}
-				onBlur={() => setFocused(false)}
-				onChange={(e) => onChange(parseInput(e.target.value))}
+				onBlur={() => {
+					setFocused(false);
+					setDecimals(null);
+				}}
+				onChange={(e) => {
+					const read = readWholeNumberText(e.target.value);
+					setDecimals(read.decimals);
+					onChange(read.value);
+				}}
 				className="h-full w-full bg-transparent text-[15px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
 			/>
 		</div>

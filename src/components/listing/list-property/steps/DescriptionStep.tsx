@@ -45,7 +45,7 @@ export function DescriptionStep() {
 
 			<div className="flex flex-col gap-5">
 				{!isCommercial && (
-					<LabeledField label="Property Size" helper="Floor area of the property">
+					<LabeledField name="size" label="Property Size" helper="Floor area of the property">
 						{({ id }) => (
 							<NumberInput
 								id={id}
@@ -59,7 +59,7 @@ export function DescriptionStep() {
 					</LabeledField>
 				)}
 
-				<LabeledField label="Year Built" helper="Optional">
+				<LabeledField name="yearBuilt" label="Year Built" helper="Optional">
 					{({ id }) => (
 						<NumberInput
 							id={id}
@@ -74,7 +74,7 @@ export function DescriptionStep() {
 				</LabeledField>
 
 				<div className={isCommercial ? "grid grid-cols-1 gap-5" : "grid grid-cols-1 gap-5 sm:grid-cols-2"}>
-					<LabeledField label="Furnishing Status">
+					<LabeledField name="furnishing" label="Furnishing Status">
 						{({ id }) => (
 							<Select
 								id={id}
@@ -87,7 +87,7 @@ export function DescriptionStep() {
 						)}
 					</LabeledField>
 					{!isCommercial && (
-						<LabeledField label="Floor" helper="Optional">
+						<LabeledField name="floorNumber" label="Floor" helper="Optional">
 							{({ id }) => (
 								<Input
 									id={id}
@@ -100,7 +100,7 @@ export function DescriptionStep() {
 					)}
 				</div>
 
-				<LabeledField label="Property Condition" required>
+				<LabeledField name="condition" label="Property Condition" required>
 					{({ id }) => (
 						<Select
 							id={id}
@@ -113,7 +113,7 @@ export function DescriptionStep() {
 					)}
 				</LabeledField>
 
-				<LabeledField label="Ownership Type" required>
+				<LabeledField name="ownershipType" label="Ownership Type" required>
 					{({ id }) => (
 						<Select
 							id={id}

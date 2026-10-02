@@ -17,7 +17,7 @@ export function LeaseTermsStep() {
 				Include details like what payments are due at signing and additional
 				property rules.
 			</p>
-			<LabeledField label="Lease Terms" helper="Optional — up to 750 characters">
+			<LabeledField name="leaseTerms" label="Lease Terms" helper="Optional — up to 750 characters">
 				{({ id }) => (
 					<Textarea
 						id={id}

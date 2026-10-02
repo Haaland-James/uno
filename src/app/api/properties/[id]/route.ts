@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { calculateResponseMetrics, refreshResponseMetrics } from "@/lib/response-metrics";
 import { ok, err, zodErr } from "@/lib/api";
 import { toDetailDto } from "@/lib/property-mappers";
-import { propertyUpdateSchema } from "@/lib/validators/property";
+import { parseListingUpdate } from "@/lib/validators/property";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { deriveStatusFields } from "@/lib/property-status";
@@ -99,7 +99,7 @@ export async function PATCH(
   } catch {
     return err("bad_request", "Invalid JSON body", 400);
   }
-  const parsed = propertyUpdateSchema.safeParse(body);
+  const parsed = parseListingUpdate(body);
   if (!parsed.success) return zodErr(parsed.error);
   const data = parsed.data;
 

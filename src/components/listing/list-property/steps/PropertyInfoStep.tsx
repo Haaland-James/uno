@@ -34,7 +34,7 @@ export function PropertyInfoStep() {
 				{isCommercial ? (
 					<>
 						<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-							<LabeledField label="Floor Area" required helper="In square metres">
+							<LabeledField name="floorAreaSqm" label="Floor Area" required helper="In square metres">
 								{({ id }) => (
 									<NumberInput
 										id={id}
@@ -46,7 +46,7 @@ export function PropertyInfoStep() {
 									/>
 								)}
 							</LabeledField>
-							<LabeledField label="Floor Level" helper="e.g. Ground, 3rd, Mezzanine">
+							<LabeledField name="floorLevel" label="Floor Level" helper="e.g. Ground, 3rd, Mezzanine">
 								{({ id }) => (
 									<Input
 										id={id}
@@ -58,7 +58,7 @@ export function PropertyInfoStep() {
 							</LabeledField>
 						</div>
 						<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-							<LabeledField label="Number of Units" helper="If multiple rooms / shops">
+							<LabeledField name="units" label="Number of Units" helper="If multiple rooms / shops">
 								{({ id }) => (
 									<NumberInput
 										id={id}
@@ -69,7 +69,7 @@ export function PropertyInfoStep() {
 									/>
 								)}
 							</LabeledField>
-							<LabeledField label="Fit-out State" required>
+							<LabeledField name="fitOutState" label="Fit-out State" required>
 								{({ id }) => (
 									<Select
 										id={id}
@@ -85,7 +85,7 @@ export function PropertyInfoStep() {
 					</>
 				) : (
 					<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-						<LabeledField label="No. of Bedrooms" required>
+						<LabeledField name="bedrooms" label="No. of Bedrooms" required>
 							{({ id }) => (
 								<Select
 									id={id}
@@ -97,7 +97,7 @@ export function PropertyInfoStep() {
 								/>
 							)}
 						</LabeledField>
-						<LabeledField label="No. of Bathrooms" required>
+						<LabeledField name="bathrooms" label="No. of Bathrooms" required>
 							{({ id }) => (
 								<Select
 									id={id}
@@ -112,7 +112,7 @@ export function PropertyInfoStep() {
 					</div>
 				)}
 
-				<LabeledField label="Brief Description" helper="Optional — a sentence or two">
+				<LabeledField name="briefDescription" label="Brief Description" helper="Optional — a sentence or two">
 					{({ id }) => (
 						<Textarea
 							id={id}

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { ok, err, zodErr } from "@/lib/api";
 import { propertyListQuerySchema } from "@/lib/validators/property-query";
 import {
-  propertyWizardSubmitSchema,
+  parseListingSubmit,
   type PropertyWizardSubmitInput,
 } from "@/lib/validators/property";
 import { toCardDto } from "@/lib/property-mappers";
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
     return err("bad_request", "Invalid JSON body", 400);
   }
 
-  const parsed = propertyWizardSubmitSchema.safeParse(body);
+  const parsed = parseListingSubmit(body);
   if (!parsed.success) return zodErr(parsed.error);
   const w = parsed.data;
 

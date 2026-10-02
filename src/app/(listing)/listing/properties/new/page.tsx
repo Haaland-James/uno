@@ -8,7 +8,10 @@ import { Logo } from "@/components/shared/Logo";
 import { useListPropertyStore, type ListPropertyData } from "@/stores/listPropertyStore";
 import { useUserStore } from "@/stores/userStore";
 import { getInitials } from "@/lib/utils";
-import { listingsClient, draftsClient } from "@/lib/clients/listings";
+import { listingsClient, draftsClient, ApiValidationError } from "@/lib/clients/listings";
+import { resolveFieldErrors } from "@/components/listing/list-property/field-steps";
+import { useListingErrorsStore } from "@/stores/listingErrorsStore";
+import { useScrollToFieldError } from "@/hooks/useScrollToFieldError";
 import { invalidateHasListings } from "@/hooks/useHasListings";
 import { toast } from "@/stores/toastStore";
 import { getSteps, getCountedStepInfo } from "@/components/listing/list-property/steps";
@@ -127,6 +130,7 @@ function NewPropertyPage() {
 	const isReview = currentStepDef.key === "review";
 	const canNext = isStepValid(currentStepDef.key, data);
 	const countedInfo = getCountedStepInfo(safeIdx, data.objective, wizardKind, isInHouseAgent);
+	useScrollToFieldError(currentStepDef.key);
 
 	const [draftOpen, setDraftOpen] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
@@ -265,7 +269,23 @@ function NewPropertyPage() {
 			reset();
 			router.push(exitDestination);
 		} catch (e) {
-			toast.error(e instanceof Error ? e.message : "Could not submit listing — try again");
+			if (e instanceof ApiValidationError) {
+				// The server said which fields are wrong and why: say so, and take the
+				// person to the step where they can fix the first one.
+				const resolved = resolveFieldErrors(e.fieldErrors, {
+					kind: wizardKind,
+					objective: data.objective,
+					flowKeys: steps.map((s) => s.key),
+				});
+				useListingErrorsStore.getState().setErrors(resolved.messages, resolved.firstField);
+				if (resolved.step) {
+					const idx = steps.findIndex((s) => s.key === resolved.step);
+					if (idx >= 0) setStep(idx + 1);
+				}
+				toast.error(resolved.toast);
+			} else {
+				toast.error(e instanceof Error ? e.message : "Could not submit listing — try again");
+			}
 		} finally {
 			setSubmitting(false);
 		}

@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { cn, formatNaira } from "@/lib/utils";
+import { readWholeNumberText, showWholeNumberText } from "./whole-number-text";
 
 export type FeeMode = "FIXED" | "PERCENT";
 
@@ -28,11 +29,6 @@ function format(value: number | null): string {
 	return formatter.format(value);
 }
 
-function parseDigits(raw: string): number | null {
-	const digits = raw.replace(/[^\d]/g, "");
-	if (!digits) return null;
-	return Number(digits);
-}
 
 /**
  * Fee input with a Fixed (₦) / Percent (%) toggle. Stores `{ mode, value }`.
@@ -48,9 +44,11 @@ export function FeeInput({
 	"aria-label": ariaLabel,
 }: FeeInputProps) {
 	const [focused, setFocused] = useState(false);
+	// Whole numbers only, like MoneyInput: typed decimals ("2.5") are shown but ignored, not read as 25.
+	const [decimals, setDecimals] = useState<string | null>(null);
 	const isPercent = value.mode === "PERCENT";
 
-	const displayed = useMemo(() => format(value.value), [value.value]);
+	const displayed = useMemo(() => showWholeNumberText(format(value.value), decimals), [value.value, decimals]);
 
 	const preview = useMemo(() => {
 		if (!isPercent) return null;
@@ -108,8 +106,15 @@ export function FeeInput({
 					value={displayed}
 					placeholder={placeholder}
 					onFocus={() => setFocused(true)}
-					onBlur={() => setFocused(false)}
-					onChange={(e) => onChange({ ...value, value: parseDigits(e.target.value) })}
+					onBlur={() => {
+						setFocused(false);
+						setDecimals(null);
+					}}
+					onChange={(e) => {
+						const read = readWholeNumberText(e.target.value);
+						setDecimals(read.decimals);
+						onChange({ ...value, value: read.value });
+					}}
 					className="h-full w-full bg-transparent text-[15px] font-normal text-black outline-none placeholder:text-[rgba(10,10,10,0.4)]"
 				/>
 				{isPercent ? (

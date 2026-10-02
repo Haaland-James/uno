@@ -1,5 +1,49 @@
 import type { PropertyCardData } from "@/types/property";
 
+/**
+ * A refused save: the server said which fields are wrong and why.
+ * `.message` is the first reason (plus "and N more"), so callers that only
+ * show `e.message` still show something useful, never a bare "Invalid request".
+ */
+export class ApiValidationError extends Error {
+	readonly fieldErrors: Record<string, string[]>;
+	readonly formErrors: string[];
+
+	constructor(fieldErrors: Record<string, string[]>, formErrors: string[] = []) {
+		super(summarizeValidation(fieldErrors, formErrors));
+		this.name = "ApiValidationError";
+		this.fieldErrors = fieldErrors;
+		this.formErrors = formErrors;
+	}
+}
+
+function summarizeValidation(fieldErrors: Record<string, string[]>, formErrors: string[]): string {
+	const messages = [...Object.values(fieldErrors).map((m) => m[0]), ...formErrors].filter(Boolean);
+	if (messages.length === 0) return "Some details need fixing — check the form and try again";
+	return messages.length === 1 ? messages[0] : `${messages[0]} and ${messages.length - 1} more`;
+}
+
+/** Pull `{ fieldErrors, formErrors }` out of a `validation_error` response, if that's what it is. */
+export function validationErrorFrom(json: unknown): ApiValidationError | null {
+	const error = (json as { error?: { code?: string; details?: unknown } } | null)?.error;
+	if (error?.code !== "validation_error") return null;
+	const details = error.details as { fieldErrors?: unknown; formErrors?: unknown } | undefined;
+	const fieldErrors: Record<string, string[]> = {};
+	if (details?.fieldErrors && typeof details.fieldErrors === "object") {
+		for (const [field, messages] of Object.entries(details.fieldErrors as Record<string, unknown>)) {
+			if (Array.isArray(messages)) {
+				const list = messages.filter((m): m is string => typeof m === "string");
+				if (list.length) fieldErrors[field] = list;
+			}
+		}
+	}
+	const formErrors = Array.isArray(details?.formErrors)
+		? (details.formErrors as unknown[]).filter((m): m is string => typeof m === "string")
+		: [];
+	if (Object.keys(fieldErrors).length === 0 && formErrors.length === 0) return null;
+	return new ApiValidationError(fieldErrors, formErrors);
+}
+
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
 	const res = await fetch(url, {
 		...init,
@@ -22,6 +66,8 @@ async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
 		}
 	}
 	if (!res.ok) {
+		const validation = validationErrorFrom(json);
+		if (validation) throw validation;
 		const msg =
 			(json as { error?: { message?: string } } | null)?.error?.message ??
 			`Request failed (${res.status})`;
