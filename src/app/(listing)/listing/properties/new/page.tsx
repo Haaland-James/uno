@@ -9,13 +9,13 @@ import { useListPropertyStore, type ListPropertyData } from "@/stores/listProper
 import { useUserStore } from "@/stores/userStore";
 import { getInitials } from "@/lib/utils";
 import { listingsClient, draftsClient, ApiValidationError } from "@/lib/clients/listings";
-import { resolveFieldErrors } from "@/components/listing/list-property/field-steps";
+import { resolveFieldErrors, dropHiddenFields } from "@/components/listing/list-property/field-steps";
 import { useListingErrorsStore } from "@/stores/listingErrorsStore";
 import { useScrollToFieldError } from "@/hooks/useScrollToFieldError";
 import { invalidateHasListings } from "@/hooks/useHasListings";
 import { toast } from "@/stores/toastStore";
 import { getSteps, getCountedStepInfo } from "@/components/listing/list-property/steps";
-import { isStepValid } from "@/components/listing/list-property/validation";
+import { stepProblems, firstProblemField, type Problems } from "@/components/listing/list-property/validation";
 import { StepIndicator } from "@/components/listing/list-property/StepIndicator";
 import { MobileStepBar } from "@/components/listing/list-property/MobileStepBar";
 import { WizardFooter } from "@/components/listing/list-property/WizardFooter";
@@ -128,7 +128,6 @@ function NewPropertyPage() {
 	const safeIdx = Math.min(Math.max(currentStep - 1, 0), steps.length - 1);
 	const currentStepDef = steps[safeIdx];
 	const isReview = currentStepDef.key === "review";
-	const canNext = isStepValid(currentStepDef.key, data);
 	const countedInfo = getCountedStepInfo(safeIdx, data.objective, wizardKind, isInHouseAgent);
 	useScrollToFieldError(currentStepDef.key);
 
@@ -198,8 +197,21 @@ function NewPropertyPage() {
 		saveDraftNow().catch(() => undefined);
 	}, [completedSteps.length, hydrating, saveDraftNow]);
 
+	// Show every problem under its field and scroll to the first. A problem whose
+	// field has no place on screen (nothing to render the sentence under) goes in a toast.
+	const showProblems = (problems: Problems) => {
+		useListingErrorsStore.getState().setErrors(problems, firstProblemField(problems));
+		const homeless = Object.keys(problems).find((f) => !document.querySelector(`[data-field="${f}"]`));
+		if (homeless) toast.error(problems[homeless]);
+	};
+
+	// Continue is always clickable: on an incomplete step it says what is missing instead of being a dead button.
 	const goNext = () => {
-		if (!canNext) return;
+		const problems = stepProblems(currentStepDef.key, data);
+		if (Object.keys(problems).length > 0) {
+			showProblems(problems);
+			return;
+		}
 		markCompleted(safeIdx);
 		if (safeIdx < steps.length - 1) setStep(safeIdx + 2);
 	};
@@ -244,9 +256,17 @@ function NewPropertyPage() {
 			toast.error("Please choose what you're listing");
 			return;
 		}
-		if (data.photoUrls.length < 5) {
-			toast.error("Add at least 5 photos before submitting");
-			return;
+		// Check every step with the same rules as Continue, so a gap (say, a step skipped via
+		// the step bar) is shown under its field on its own step, not as a refusal from the server.
+		for (let i = 0; i < steps.length; i++) {
+			if (steps[i].key === "review") continue;
+			const problems = stepProblems(steps[i].key, data);
+			if (Object.keys(problems).length > 0) {
+				setStep(i + 1);
+				useListingErrorsStore.getState().setErrors(problems, firstProblemField(problems));
+				toast.error(problems[Object.keys(problems)[0]]);
+				return;
+			}
 		}
 		setSubmitting(true);
 		try {
@@ -259,7 +279,10 @@ function NewPropertyPage() {
 				url,
 				isMain: i === data.mainPhotoIndex,
 			}));
-			await listingsClient.create({ ...data, photos });
+			// Send only what the chosen kind and objective show: a value left over from before they
+			// were changed would be refused with nothing on screen to fix. The draft itself isn't changed.
+			const visible = dropHiddenFields(data, { kind: wizardKind, objective: data.objective, flowKeys: steps.map((s) => s.key) });
+			await listingsClient.create({ ...visible, photos });
 			// Submitted listing supersedes any server draft this wizard was tied to.
 			if (draftIdRef.current) {
 				await draftsClient.remove(draftIdRef.current).catch(() => null);
@@ -405,7 +428,7 @@ function NewPropertyPage() {
 				onBack={goBack}
 				onNext={isReview ? handleSubmit : goNext}
 				canBack={safeIdx > 0}
-				canNext={isReview ? !submitting : canNext}
+				canNext={isReview ? !submitting : true}
 				nextLabel={isReview ? (submitting ? "Submitting…" : "Submit Listing") : "Next"}
 				hideBack={safeIdx === 0}
 			/>

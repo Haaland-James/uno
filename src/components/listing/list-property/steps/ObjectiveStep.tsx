@@ -2,6 +2,7 @@
 
 import { Home, Building2, Zap, User, Users } from "lucide-react";
 import { RadioCard } from "@/components/ui/RadioCard";
+import { FieldError } from "@/components/ui/LabeledField";
 import {
 	useListPropertyStore,
 	type ListingObjective,
@@ -51,6 +52,7 @@ export function ObjectiveStep() {
 						/>
 					))}
 				</div>
+				<FieldError name="objective" />
 			</section>
 
 			{data.objective ? (
@@ -76,6 +78,7 @@ export function ObjectiveStep() {
 							title="I am a representative of the owner"
 						/>
 					</div>
+					<FieldError name="role" />
 				</section>
 			) : null}
 		</div>

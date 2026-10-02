@@ -45,4 +45,17 @@ describe("a field's message clears when that field changes", () => {
     expect(useListingErrorsStore.getState().focusField).toBeNull();
     expect(Object.keys(errors())).toHaveLength(2);
   });
+
+  it("setFieldError sets or clears one field and leaves the others alone", () => {
+    useListingErrorsStore.getState().clearAll();
+    useListingErrorsStore.getState().setFieldError("plotSizeSqm", "Plot size must be a whole number");
+    useListingErrorsStore.getState().setFieldError("contactEmail", "Enter a valid contact email");
+    expect(errors()).toEqual({ plotSizeSqm: "Plot size must be a whole number", contactEmail: "Enter a valid contact email" });
+    useListingErrorsStore.getState().setFieldError("plotSizeSqm", null);
+    expect(errors()).toEqual({ contactEmail: "Enter a valid contact email" });
+    // clearing a field that has no message changes nothing
+    const before = useListingErrorsStore.getState().errors;
+    useListingErrorsStore.getState().setFieldError("area", null);
+    expect(useListingErrorsStore.getState().errors).toBe(before);
+  });
 });

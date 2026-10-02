@@ -14,6 +14,8 @@ interface ListingErrorsState {
 
 	setErrors: (errors: Record<string, string>, focusField: string | null) => void;
 	clearFields: (fields: string[]) => void;
+	/** Set (or, with null, clear) one field's message, leaving the others alone. */
+	setFieldError: (field: string, message: string | null) => void;
 	clearAll: () => void;
 	consumeFocus: () => void;
 }
@@ -30,6 +32,17 @@ export const useListingErrorsStore = create<ListingErrorsState>()((set) => ({
 			const next = { ...state.errors };
 			for (const f of fields) delete next[f];
 			return { errors: next };
+		}),
+
+	setFieldError: (field, message) =>
+		set((state) => {
+			if (message === null) {
+				if (!(field in state.errors)) return state;
+				const next = { ...state.errors };
+				delete next[field];
+				return { errors: next };
+			}
+			return state.errors[field] === message ? state : { errors: { ...state.errors, [field]: message } };
 		}),
 
 	clearAll: () => set({ errors: {}, focusField: null }),

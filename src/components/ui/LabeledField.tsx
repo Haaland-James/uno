@@ -3,6 +3,7 @@
 import React, { useId } from "react";
 import { cn } from "@/lib/utils";
 import { useListingErrorsStore } from "@/stores/listingErrorsStore";
+import { checkFieldOnBlur } from "@/components/listing/list-property/field-check";
 
 interface LabeledFieldProps {
 	label: string;
@@ -36,7 +37,12 @@ export function LabeledField({
 	const id = htmlFor ?? autoId;
 
 	return (
-		<div className={cn("flex flex-col gap-1.5", className)} data-field={name}>
+		<div
+			className={cn("flex flex-col gap-1.5", className)}
+			data-field={name}
+			// Leaving a text field checks it with the server's rule (focus events bubble in React).
+			onBlur={name ? (e) => checkFieldOnBlur(name, e.target) : undefined}
+		>
 			<label
 				htmlFor={id}
 				className="text-[13px] font-medium text-black/80"

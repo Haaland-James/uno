@@ -108,7 +108,8 @@ export interface ListPropertyData {
 	offPlatformOwnerPhone: string;
 }
 
-const initialData: ListPropertyData = {
+/** The empty draft: what every field is put back to on reset, and what hidden fields are dropped to on submit. */
+export const listPropertyInitialData: ListPropertyData = {
 	objective: null,
 	role: null,
 	propertyKind: "",
@@ -204,7 +205,7 @@ function coerceFee(input: unknown): FeeValue {
 export const useListPropertyStore = create<ListPropertyState>()(
 	persist(
 		(set) => ({
-			data: initialData,
+			data: listPropertyInitialData,
 			currentStep: 1,
 			completedSteps: [],
 
@@ -225,15 +226,15 @@ export const useListPropertyStore = create<ListPropertyState>()(
 
 			reset: () => {
 				useListingErrorsStore.getState().clearAll();
-				set({ data: initialData, currentStep: 1, completedSteps: [] });
+				set({ data: listPropertyInitialData, currentStep: 1, completedSteps: [] });
 			},
 
 			replaceAll: (snap) => {
 				useListingErrorsStore.getState().clearAll();
 				set({
-					// Merge against initialData so any new fields added since the draft was
+					// Merge against listPropertyInitialData so any new fields added since the draft was
 					// saved have sane defaults instead of undefined.
-					data: { ...initialData, ...snap.data },
+					data: { ...listPropertyInitialData, ...snap.data },
 					currentStep: snap.currentStep,
 					completedSteps: snap.completedSteps,
 				});
@@ -247,20 +248,20 @@ export const useListPropertyStore = create<ListPropertyState>()(
 				currentStep: state.currentStep,
 				completedSteps: state.completedSteps,
 			}),
-			// Default merge is shallow, so adding fields to `initialData` (e.g. `lga`,
+			// Default merge is shallow, so adding fields to `listPropertyInitialData` (e.g. `lga`,
 			// `latitude`) leaves them `undefined` on already-persisted drafts and
-			// validation crashes on `.trim()`. Backfill missing fields from initialData.
+			// validation crashes on `.trim()`. Backfill missing fields from listPropertyInitialData.
 			merge: (persisted, current) => {
 				const p = (persisted ?? {}) as Partial<ListPropertyState>;
 				return {
 					...current,
 					...p,
-					data: { ...initialData, ...(p.data ?? {}) },
+					data: { ...listPropertyInitialData, ...(p.data ?? {}) },
 				};
 			},
 			migrate: (persistedState: unknown, version) => {
 				const empty = {
-					data: initialData,
+					data: listPropertyInitialData,
 					currentStep: 1,
 					completedSteps: [] as number[],
 				};
@@ -270,7 +271,7 @@ export const useListPropertyStore = create<ListPropertyState>()(
 					currentStep?: number;
 					completedSteps?: number[];
 				};
-				const data: ListPropertyData = { ...initialData, ...(s.data ?? {}) };
+				const data: ListPropertyData = { ...listPropertyInitialData, ...(s.data ?? {}) };
 				if (version < 2) {
 					data.propertyKind =
 						((s.data as { propertyKind?: string } | undefined)?.propertyKind as ListPropertyData["propertyKind"]) ?? "";

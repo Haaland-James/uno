@@ -3,7 +3,7 @@
 import { Home, Briefcase, TreePine } from "lucide-react";
 import { RadioCard } from "@/components/ui/RadioCard";
 import { Select } from "@/components/ui/Select";
-import { LabeledField } from "@/components/ui/LabeledField";
+import { LabeledField, FieldError } from "@/components/ui/LabeledField";
 import { useListPropertyStore } from "@/stores/listPropertyStore";
 import { PROPERTY_KINDS, PROPERTY_TYPES_BY_KIND, type PropertyKind } from "@/../config/constants";
 
@@ -55,6 +55,7 @@ export function KindStep() {
 						/>
 					))}
 				</div>
+				<FieldError name="propertyKind" />
 			</section>
 
 			{kind ? (

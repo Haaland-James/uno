@@ -1,5 +1,5 @@
 import { propertyWizardSubmitSchema, type PropertyWizardSubmitInput } from "@/lib/validators/property";
-import type { ListingObjective } from "@/stores/listPropertyStore";
+import { listPropertyInitialData, type ListPropertyData, type ListingObjective } from "@/stores/listPropertyStore";
 import type { WizardKind } from "./steps";
 
 /**
@@ -26,6 +26,9 @@ type StepOf = (ctx: FieldContext) => string | null;
 
 const at = (step: string): StepOf => () => step;
 const sellOnly = (step: string): StepOf => (ctx) => (ctx.objective === "SELL" ? step : null);
+// Property info shows bedrooms/bathrooms for houses only, and four extra questions for commercial only.
+const notCommercial = (step: string): StepOf => (ctx) => (ctx.kind === "COMMERCIAL" ? null : step);
+const commercialOnly = (step: string): StepOf => (ctx) => (ctx.kind === "COMMERCIAL" ? step : null);
 const notSell = (step: string): StepOf => (ctx) => (ctx.objective === "SELL" ? null : step);
 // Commercial listings mirror floor area/level into size/floor number in Property info
 // and hide the Description-step copies, so their errors belong on Property info.
@@ -49,8 +52,8 @@ const FIELD_STEP: Record<keyof PropertyWizardSubmitInput, StepOf> = {
 	geocodeAccuracy: at("location"),
 	fullAddressVisible: at("location"),
 
-	bedrooms: at("property-info"),
-	bathrooms: at("property-info"),
+	bedrooms: notCommercial("property-info"),
+	bathrooms: notCommercial("property-info"),
 	briefDescription: (ctx) => (ctx.kind === "LAND" ? "land-details" : "property-info"),
 
 	size: sizeLike,
@@ -67,10 +70,10 @@ const FIELD_STEP: Record<keyof PropertyWizardSubmitInput, StepOf> = {
 	waterSource: at("amenities"),
 	internetReady: at("amenities"),
 
-	floorAreaSqm: at("property-info"),
-	floorLevel: at("property-info"),
-	units: at("property-info"),
-	fitOutState: at("property-info"),
+	floorAreaSqm: commercialOnly("property-info"),
+	floorLevel: commercialOnly("property-info"),
+	units: commercialOnly("property-info"),
+	fitOutState: commercialOnly("property-info"),
 
 	plotSizeSqm: at("land-details"),
 	titleDocType: at("land-details"),
@@ -176,4 +179,23 @@ export function resolveFieldErrors(
 		firstField: first?.step ? first.field : null,
 		toast: !first ? "Some details need fixing — check the form and try again" : extra > 0 ? `${first.message} and ${extra} more` : first.message,
 	};
+}
+
+/**
+ * The draft as it should be sent: every field the chosen kind and objective hide
+ * is put back to its empty default, so a value left over from before the kind or
+ * objective was changed (a year built on what is now a land listing) can't be
+ * refused by the server when there is nothing on screen to fix. The draft the
+ * person sees is not touched: this returns a copy.
+ *
+ * A field is hidden when it has no step in the current flow (`stepForField` is null).
+ * Only fields the server validates are considered; the rest of the draft passes through.
+ */
+export function dropHiddenFields<T extends ListPropertyData>(data: T, ctx: FieldContext): T {
+	const out: Record<string, unknown> = { ...(data as unknown as Record<string, unknown>) };
+	const defaults = listPropertyInitialData as unknown as Record<string, unknown>;
+	for (const field of MAPPED_FIELDS) {
+		if (field in out && stepForField(field, ctx) === null) out[field] = defaults[field];
+	}
+	return out as T;
 }
